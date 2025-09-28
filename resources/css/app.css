@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    box-sizing: border-box;
+}
+::-webkit-scrollbar {
+    display: none;
+}
+
+* {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+
+.main-container {
+    background-position: center;
+}
+
+.shadow-container {
+    border-radius: 20px;
+    background-color: #ffffff;
+    box-shadow:  5px 5px 16px #bdbdbd,
+                -5px -5px 16px #ffffff;
+}
+
+[data-popper-arrow]::before {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #3b82f6; /* tooltip color */
+    bottom: -13px; 
+    left: 50%;
+    transform: translateX(-50%);
+}

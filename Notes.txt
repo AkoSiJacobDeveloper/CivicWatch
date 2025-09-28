@@ -1,0 +1,8 @@
+php artisan locations:populate
+- Adds barangays and sitios if not yet present.
+
+php artisan locations:populate --update
+- Updates availability/description if barangay already exists.
+
+php artisan locations:populate --fresh
+- Deletes all barangays and sitios, then repopulates from the $locationData.
