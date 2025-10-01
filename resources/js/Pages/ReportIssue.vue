@@ -1,6 +1,7 @@
 <script setup>
 import { Head, router, usePage, useForm } from '@inertiajs/vue3';
 import { ref, nextTick, onMounted, computed } from 'vue';
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import axios from 'axios';
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
@@ -14,6 +15,7 @@ const imagePreview = ref(null);
 const issueTypes = ref([]);
 const barangays = ref([]);
 const isSubmitting = ref(false); 
+const customIssueDescription = ref('');
 
 // Form data
 const form = useForm({
@@ -83,6 +85,7 @@ function handleFileChange(event) {
 // Reset form
 async function resetForm() {
     form.reset();
+    customIssueDescription.value = '';
     
     if (imagePreview.value) {
         URL.revokeObjectURL(imagePreview.value);
@@ -127,6 +130,7 @@ function submitForm() {
     const formData = new FormData();
     formData.append('title', form.title || '');
     formData.append('issue_type', form.issue_type || '');
+    formData.append('custom_issue_description', form.issue_type === 'Other' ? customIssueDescription.value : '');
     formData.append('description', form.description || '');
     formData.append('sender_name', form.sender_name || '');
     formData.append('contact_number', form.contact_number || '');
@@ -197,42 +201,71 @@ onMounted(async () => {
                 <div class="my-5">
                     <form @submit.prevent="submitForm" enctype="multipart/form-data">
                         <div class="flex gap-3">
-                            <!-- TITLE -->
-                            <div class="mb-4 w-1/2 relative">
-                                <input
-                                    v-model="form.title"
-                                    type="text"
-                                    id="title"
-                                    placeholder=""
-                                    class="block p-4 pt-4 w-full text-base bg-white text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer dark:bg-[#2c2c2c]"
-                                    required
-                                />
-                                <label 
-                                    for="title" 
-                                    class="absolute text-base text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-5 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1 dark:bg-[#2c2c2c]">
-                                    Title
-                                </label>
-                    
+                            <div class="w-1/2 mb-1">
+                                <!-- TITLE -->
+                                <div class="relative">
+                                    <input
+                                        v-model="form.title"
+                                        type="text"
+                                        id="title"
+                                        placeholder=""
+                                        maxlength="50"
+                                        class="block p-4 pt-4 w-full text-base bg-white text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer dark:bg-[#2c2c2c]"
+                                        required
+                                    />
+                                    
+                                    
+                                    <label 
+                                        for="title" 
+                                        class="absolute rounded text-base text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-4 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1 dark:bg-[#2c2c2c]">
+                                        Title
+                                    </label>
+                                </div>
+
+                                <!-- Character Indicator -->
+                                <div 
+                                    :class="[
+                                        'text-xs text-right',
+                                        form.title.length > 45 ? 'text-red-500' : 'text-gray-500'
+                                    ]"
+                                >
+                                    {{ form.title.length }}/50
+                                </div>
+
+                                <!-- Error -->
                                 <div v-if="form.errors.title" class="text-red-500 text-sm mt-1">
                                     {{ form.errors.title }}
                                 </div>
                             </div>
-
-                            <!-- SENDER NAME -->
-                            <div class="mb-4 w-1/2 relative">
-                                <input
-                                    v-model="form.sender_name"
-                                    type="text"
-                                    id="sender_name"
-                                    placeholder=""
-                                    class="block p-4 pt-4 w-full text-base bg-white text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer dark:bg-[#2c2c2c]"
-                                    required
-                                />
-                                <label 
-                                    for="sender_name" 
-                                    class="absolute text-base text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-[#2c2c2c] px-5 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">
-                                    Sender Name
-                                </label>
+                    
+                            <div class=" w-1/2">
+                                <!-- SENDER NAME -->
+                                <div class="relative">
+                                    <input
+                                        v-model="form.sender_name"
+                                        type="text"
+                                        id="sender_name"
+                                        placeholder=""
+                                        maxlength="50"
+                                        class="block p-4 pt-4 w-full text-base bg-white text-gray-900 bg-transparent rounded-lg border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer dark:bg-[#2c2c2c]"
+                                        required
+                                    />
+                                    <label 
+                                        for="sender_name" 
+                                        class="absolute rounded text-base text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-[#2c2c2c] px-4 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">
+                                        Sender Name
+                                    </label>
+                                </div>
+                                <!-- Character Indicator -->
+                                <div 
+                                    :class="[
+                                        'text-xs text-right',
+                                        form.sender_name.length > 45 ? 'text-red-500' : 'text-gray-500'
+                                    ]"
+                                >
+                                    {{ form.sender_name.length }}/50
+                                </div>
+                                <!-- Error -->
                                 <div v-if="form.errors.sender_name" class="text-red-500 text-sm mt-1">
                                     {{ form.errors.sender_name }}
                                 </div>
@@ -241,23 +274,83 @@ onMounted(async () => {
 
                         <!-- ISSUE TYPE -->
                         <div class="mb-4">
-                            <!-- <label for="issue_type" class="font-bold block mb-1">Issue Type</label> -->
-                            <select 
+                            <!-- Headless UI-->
+                            <Listbox 
                                 v-model="form.issue_type"
-                                id="issue_type"
-                                class="block p-4 w-full text-base bg-white text-gray-500 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
-                                required
+                                as="div"
+                                class="relative"
                             >
-                                <option value="">Select an issue type</option>
-                                <option 
-                                    v-for="issueType in issueTypes" 
-                                    :key="issueType.id" 
-                                    :value="issueType.name"
-                                    class="dark:bg-[#2c2c2c]"
+                                <ListboxButton
+                                    class="flex justify-between items-center text-left p-4 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                                    required
                                 >
-                                    {{ issueType.name }}
-                                </option>
-                            </select>
+                                    {{ form.issue_type || 'Select an issue type' }}
+
+                                    <svg
+                                        class="w-5 h-5 text-gray-400"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                        >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M5.23 7.21a.75.75 0 011.06.02L10 11.292l3.71-4.06a.75.75 0 111.08 1.04l-4.25 4.65a.75.75 0 01-1.08 0l-4.25-4.65a.75.75 0 01.02-1.06z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </ListboxButton>
+
+                                <ListboxOptions
+                                    class="absolute z-50 mt-4 w-full bg-white rounded-lg shadow-lg border border-gray-300 dark:bg-[#2c2c2c] max-h-56 overflow-y-auto"
+                                >
+                                    <ListboxOption
+                                        v-for="issueType in issueTypes" 
+                                        :key="issueType.id" 
+                                        :value="issueType.name"
+                                        class="dark:bg-[#2c2c2c] px-4 py-2 hover:bg-blue-100 transition-all duration-100"
+                                    >
+                                        {{ issueType.name }}
+                                    </ListboxOption>
+
+                                    <!-- Other -->
+                                    <ListboxOption
+                                        value="Other"
+                                        class="dark:bg-[#2c2c2c] px-4 py-2 hover:bg-blue-100 transition-all duration-100 border-t border-gray-200 dark:border-gray-600"
+                                    >
+                                        Other
+                                    </ListboxOption>
+
+                                    
+                                </ListboxOptions>
+                            </Listbox>
+
+                            <div v-if="form.issue_type === 'Other'" class="mt-3">
+                                <div class="relative">
+                                    <input
+                                        v-model="customIssueDescription"
+                                        type="text"
+                                        id="custom_issue_description"
+                                        placeholder=""
+                                        maxlength="100"
+                                        class="block p-4 pt-4 w-full text-base bg-white text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer dark:bg-[#2c2c2c]"
+                                        required
+                                    />
+                                    <label 
+                                        for="custom_issue_description" 
+                                        class="absolute rounded text-base text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white px-4 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1 dark:bg-[#2c2c2c]">
+                                        Please specify the issue type
+                                    </label>
+                                </div>
+
+                                <div 
+                                    :class="[
+                                        'text-xs text-right',
+                                        customIssueDescription.length > 90 ? 'text-red-500' : 'text-gray-500'
+                                    ]"
+                                >
+                                    {{ customIssueDescription.length }}/100
+                                </div>
+                            </div>
 
                             <div v-if="form.errors.issue_type" class="text-red-500 text-sm mt-1">
                                 {{ form.errors.issue_type }}
@@ -269,32 +362,59 @@ onMounted(async () => {
                             <div class=" flex gap-3 items-center">
                                 <!-- BARANGAY -->
                                 <div class="w-1/2">
-                                    <select 
+                                    <Listbox 
                                         v-model="form.barangay_id"
-                                        id="barangay"
-                                        @change="onBarangayChange"
-                                        class="block p-4 w-full text-base bg-white text-gray-500 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
-                                        required
+                                        as="div"
+                                        class="relative w-full"
                                     >
-                                        <option value="">Select Barangay</option>
-                                        <option 
-                                            v-for="barangay in barangays.filter(b => b.is_available)" 
-                                            :key="barangay.id" 
-                                            :value="barangay.id"
-                                            class="dark:bg-[#2c2c2c]"
+                                        <ListboxButton
+                                            class="flex justify-between items-center text-left p-4 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                                            required
                                         >
-                                            {{ barangay.name }}
-                                        </option>
-                                        <optgroup label="Coming Soon" v-if="barangays.filter(b => !b.is_available).length > 0">
-                                            <option 
-                                                v-for="barangay in barangays.filter(b => !b.is_available)" 
-                                                :key="barangay.id" 
+                                            {{ barangays.find(b => b.id === form.barangay_id)?.name || 'Select Barangay' }}
+
+                                            <svg
+                                                class="w-5 h-5 text-gray-400"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 20 20"
+                                                fill="currentColor"
+                                            >
+                                                <path
+                                                    fill-rule="evenodd"
+                                                    d="M5.23 7.21a.75.75 0 011.06.02L10 11.292l3.71-4.06a.75.75 0 111.08 1.04l-4.25 4.65a.75.75 0 01-1.08 0l-4.25-4.65a.75.75 0 01.02-1.06z"
+                                                    clip-rule="evenodd"
+                                                />
+                                            </svg>
+                                        </ListboxButton>
+
+                                        <ListboxOptions
+                                            class="absolute z-50 mt-4 w-full bg-white rounded-lg shadow-lg border border-gray-300 dark:bg-[#2c2c2c] max-h-56 overflow-y-auto"
+                                        >
+                                            <!-- Available Barangays -->
+                                            <ListboxOption
+                                                v-for="barangay in barangays.filter(b => b.is_available)"
+                                                :key="barangay.id"
+                                                :value="barangay.id"
+                                                class="px-4 py-2 hover:bg-blue-100 transition-all duration-100 cursor-pointer dark:hover:bg-gray-700"
+                                            >
+                                                {{ barangay.name }}
+                                            </ListboxOption>
+
+                                            <!-- Coming Soon Group -->
+                                            <div v-if="barangays.some(b => !b.is_available)" class="px-4 py-2 text-gray-500 text-sm font-semibold">
+                                                Coming Soon
+                                            </div>
+                                            <ListboxOption
+                                                v-for="barangay in barangays.filter(b => !b.is_available)"
+                                                :key="barangay.id"
+                                                :value="null"
                                                 disabled
+                                                class="px-4 py-2 text-gray-400 cursor-not-allowed dark:text-gray-500"
                                             >
                                                 {{ barangay.name }} (Not Available)
-                                            </option>
-                                        </optgroup>
-                                    </select>
+                                            </ListboxOption>
+                                        </ListboxOptions>
+                                    </Listbox>
                                     <div v-if="form.errors.barangay_id" class="text-red-500 text-sm mt-1">
                                         {{ form.errors.barangay_id }}
                                     </div>
@@ -305,22 +425,44 @@ onMounted(async () => {
                                     class="w-1/2"
                                     v-if="form.barangay_id && availableSitios.length > 0"
                                 >
-                                    <select 
+                                    <Listbox 
                                         v-model="form.sitio_id"
-                                        id="sitio"
-                                        class="block p-4 w-full text-base bg-white text-gray-500 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
-                                        required
+                                        as="div"
+                                        class="relative w-full"
                                     >
-                                        <option value="">Select Sitio</option>
-                                        <option 
-                                            v-for="sitio in availableSitios" 
-                                            :key="sitio.id" 
-                                            :value="sitio.id"
-                                            class="dark:bg-[#2c2c2c]"
+                                        <ListboxButton
+                                            class="flex justify-between items-center text-left p-4 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                                            required
                                         >
-                                            {{ sitio.name }}
-                                        </option>
-                                    </select>
+                                            {{ availableSitios.find(s => s.id === form.sitio_id)?.name || 'Select Sitio' }}
+
+                                            <svg
+                                                class="w-5 h-5 text-gray-400"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 20 20"
+                                                fill="currentColor"
+                                            >
+                                                <path
+                                                    fill-rule="evenodd"
+                                                    d="M5.23 7.21a.75.75 0 011.06.02L10 11.292l3.71-4.06a.75.75 0 111.08 1.04l-4.25 4.65a.75.75 0 01-1.08 0l-4.25-4.65a.75.75 0 01.02-1.06z"
+                                                    clip-rule="evenodd"
+                                                />
+                                            </svg>
+                                        </ListboxButton>
+
+                                        <ListboxOptions
+                                            class="absolute z-50 mt-4 w-full bg-white rounded-lg shadow-lg border border-gray-300 dark:bg-[#2c2c2c] max-h-56 overflow-y-auto"
+                                        >
+                                            <ListboxOption
+                                                v-for="sitio in availableSitios"
+                                                :key="sitio.id"
+                                                :value="sitio.id"
+                                                class="px-4 py-2 hover:bg-blue-100 transition-all duration-100 cursor-pointer dark:hover:bg-gray-700"
+                                            >
+                                                {{ sitio.name }}
+                                            </ListboxOption>
+                                        </ListboxOptions>
+                                    </Listbox>
                                     <div v-if="form.errors.sitio_id" class="text-red-500 text-sm mt-1">
                                         {{ form.errors.sitio_id }}
                                     </div>
@@ -446,7 +588,8 @@ onMounted(async () => {
 
                                 <button 
                                     class="flex-1 bg-red-500 py-3 rounded text-white text-sm "
-                                    type="reset"
+                                    type="button"
+                                    @click="resetForm"
                                 >
                                     Clear
                                 </button>

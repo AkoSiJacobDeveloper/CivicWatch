@@ -4,6 +4,7 @@ import { Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { initTooltips } from 'flowbite';
 import { useForm } from '@inertiajs/vue3';
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import FilterModal from '@/Components/FilterModal.vue';
@@ -354,6 +355,25 @@ const handleBulkAction = (action) => {
         }
         showDuplicateModal.value = true;
     }
+
+    if (action === 'bulk-approve') {
+        if (selectedReports.value.length === 0) {
+            alert('Please select at least 1 report to approve.');
+            return;
+        }
+        
+        if (!confirm(`Approve ${selectedReports.value.length} selected report(s)?`)) {
+            return;
+        }
+        
+        router.post(route('admin.reports.bulk-approve'), {
+            report_ids: selectedReports.value
+        }, {
+            onSuccess: () => {
+                selectedReports.value = [];
+            }
+        });
+    }
 };
 
 const markAsDuplicate = () => {
@@ -569,6 +589,7 @@ const markAsDuplicate = () => {
                         </div>
 
                         <div class="flex gap-2 w-[20%]">
+
                             <!-- Bulk action dropdown (only show when reports are selected) -->
                             <select 
                                 @change="handleBulkAction($event.target.value)"
@@ -582,8 +603,10 @@ const markAsDuplicate = () => {
                             >
                                 <option value="">Actions</option>
                                 <option value="mark-duplicate">Mark as Duplicate</option>
+                                <option value="bulk-approve">Approved Selected</option>
                             </select>
                             
+
                             <!-- Filter -->
                             <button 
                                 @click="openFilterModal"
@@ -784,7 +807,7 @@ const markAsDuplicate = () => {
                                     <td class="px-3 py-4">
                                         <div class="flex items-center gap-2">
                                             <span
-                                                :class="['text-sm font-semibold text-center rounded-full border py-1 px-3',
+                                                :class="['text-xs font-semibold text-center rounded-full border py-1 px-3',
                                                     report.priority_level === 'low' ? 'text-green-800' : 
                                                     report.priority_level === 'medium' ? 'text-amber-800' :
                                                     report.priority_level === 'high' ? 'text-red-500' : '' 
@@ -844,7 +867,7 @@ const markAsDuplicate = () => {
                                             @click="viewDetails(report.id)"
                                             class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-sm hover:shadow-md group"
                                         >
-                                            View Details
+                                            Details
                                             <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                             </svg>

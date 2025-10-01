@@ -484,4 +484,17 @@ class ReportsController extends Controller
             return redirect()->back()->with('error', 'Failed to mark reports as duplicates. Please try again.');
         }
     }
+
+    public function bulkApprove(Request $request)
+    {
+        $validated = $request->validate([
+            'report_ids' => 'required|array|min:1',
+            'report_ids.*' => 'exists:reports,id'
+        ]);
+
+        Report::whereIn('id', $validated['report_ids'])
+                ->update(['status' => 'in_progress']);
+
+        return redirect()->back()->with('success', 'Reports approved successfully!');
+    }
 }

@@ -60,7 +60,8 @@ Route::prefix('admin')->group(function () {
         Route::put('/reports/reject/{report}', [ReportsController::class, 'reject'])->name('report.rejected');
 
         Route::post('/reports/mark-duplicate', [ReportsController::class, 'markAsDuplicate'])->name('admin.reports.mark-duplicate');
-
+        Route::post('/reports/bulk-approve', [ReportsController::class, 'bulkApprove'])->name('admin.reports.bulk-approve');
+        
         // Review
         Route::get('/reviews', [ReviewController::class, 'showInAdmin'])->name('system.review');
         Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.delete');

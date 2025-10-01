@@ -40,6 +40,7 @@ class ReportIssueController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'issue_type' => 'required|string',
+            'custom_issue_description' => 'nullable|string|max:255',
             'description' => 'required|string',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'barangay_id' => 'required|exists:barangays,id',
@@ -114,6 +115,7 @@ class ReportIssueController extends Controller
             'tracking_code' => $trackingCode,
             'title' => $validated['title'],
             'issue_type' => $validated['issue_type'],
+            'custom_issue_description' => $validated['custom_issue_description'] ?? null,
             'description' => $validated['description'],
             'image' => $imagePath,
             'barangay_name' => $barangay->name,

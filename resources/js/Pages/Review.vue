@@ -46,14 +46,13 @@ function openReviewModal() {
                                 <img :src="'/Images/SVG/quote-30-double-open.svg'" alt="Quotation Icon" class="h-12">
                                 <p class="text-sm text-gray-600 dark:text-[#faf9f6]">{{ review.created_at }}</p>
                             </div>
-                            <div class="h-32">
+                            <div class="h-32 overflow-y-auto">
                                 <p class="text-gray-600 text-base dark:text-[#faf9f6]">{{ review.review_message }}</p>
                             </div>
-                            
                         </div>
                         
                         <div class="">
-                            <h3 class="font-bold text-base">{{ review.name }}</h3>
+                            <h3 class="font-bold text-base font-[Poppins]">{{ review.name }}</h3>
                             <p class="text-gray-600 text-sm mb-2 dark:text-[#faf9f6]">{{ review.location }}</p>
                         </div>
                     </div>

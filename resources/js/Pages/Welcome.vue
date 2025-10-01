@@ -160,11 +160,14 @@ const scrollRightIssues = () => {
     <GuestLayout>
         <main class="pt-[50px]">
             <!-- Hero Section -->
-            <section class="w-full h-screen bg-[url('/Images/herobg.jpg')] bg-cover bg-center bg-no-repeat relative">
-                <div class="flex items-center h-screen md:px-10 lg:px-32 w-[100%] md:w-[70%]">
-                    <div ref="heroContent" class="flex flex-col px-3 observe-me animate-on-scroll">
-                        <h1 class="text-[#FAF9F6] text-4xl lg:text-6xl/snug font-bold tracking-wide font-[Poppins]">Helping <span class="text-blue-700">Communities</span> <span class="text-blue-700">Report</span> and Resolve Local Issues in <span class="text-blue-700">Realtime</span></h1>
-                        <p class="text-[#FAF9F6] mb-5 text-xs md:text-base">Bridge the gap between residents and local authorities</p>
+            <section class="flex justify-center items-center w-full h-screen bg-cover bg-center bg-no-repeat relative hero-section">
+                <div class="absolute inset-0 bg-black/50"></div>
+                <div class="flex items-center h-screen md:px-10 lg:px-32 w-[100%] md:w-[85%] z-[10]">
+                    <div ref="heroContent" class="flex items-center flex-col px-3 observe-me animate-on-scroll text-center">
+                        <!-- <h1 class="text-[#FAF9F6] text-4xl lg:text-6xl/snug font-bold tracking-wide font-[Poppins]">Helping <span class="text-blue-700">Communities</span> <span class="text-blue-700">Report</span> and Resolve Local Issues in <span class="text-blue-700">Realtime</span></h1>
+                        <p class="text-[#FAF9F6] mb-5 text-xs md:text-base">Bridge the gap between residents and local authorities</p> -->
+                        <h1 class="text-[#FAF9F6] text-4xl lg:text-6xl/snug font-bold tracking-wide font-[Poppins]">Your <span class="text-blue-400">Voice</span>. Your <span class="text-blue-400">Neighborhood</span>. Real-Time <span class="text-blue-400">Action</span>.</h1>
+                        <p class="text-[#FAF9F6] mb-5 text-xs md:text-base">Your reports help <span class="text-blue-400 font-semibold">Brgy. Cabulijan</span> grow safer, cleaner, and better for everyone.</p>
                         <CallToActionBtn />
                     </div>
                 </div>
@@ -203,7 +206,7 @@ const scrollRightIssues = () => {
                             :style="`transition-delay: ${index * 100}ms`"
                             ref="howItWorksItems"
                         >
-                            <div class="border-t border-l border-r p-5 border-b-4 border-b-[#3B82F6] px-10 py-5 w-[300px] h-[300px] lg:h-64 lg:w-auto flex flex-col justify-center rounded-[20px] bg-white shadow-[5px_5px_16px_#bdbdbd,-5px_-5px_16px_#ffffff] dark:bg-[#2c2c2c] dark:text-[#FAF9F6] dark:border-b-4 dark:border-b-[#3B82F6] dark:border-t-0 dark:border-l-0 dark:border-r-0 dark:shadow-none">
+                            <div class="border-t border-l border-r p-5 border-b-4 border-b-[#3B82F6] px-10 py-5 w-[300px] h-[300px] lg:h-64 lg:w-auto flex flex-col justify-center rounded-[20px] bg-white shadow-[5px_5px_16px_#bdbdbd,-5px_-5px_16px_#ffffff] dark:bg-[#2c2c2c] dark:text-[#FAF9F6] dark:border-b-4 dark:border-b-[#3B82F6] dark:border-t-0 dark:border-l-0 dark:border-r-0 dark:shadow-none overflow-y-hidden">
                                 <div class="">
                                     <img :src="step.img" alt="Image" class="h-15 lg:h-16 mb-5 dark:invert-0" />
                                 </div>
@@ -349,13 +352,13 @@ const scrollRightIssues = () => {
                                 <img :src="'/Images/SVG/quote-30-double-open.svg'" alt="Quotation Icon" class="h-12">
                                 <p class="text-sm text-gray-600 dark:text-[#faf9f6]">{{ review.created_at }}</p>
                             </div>
-                            <div class="h-32">
+                            <div class="h-32 overflow-y-auto">
                                 <p class="text-gray-600 dark:text-[#faf9f6]">{{ review.review_message }}</p>
                             </div>
                         </div>
                         
                         <div class="mt-6">
-                            <h3 class="font-bold text-lg dark:text-[#faf9f6]">{{ review.name }}</h3>
+                            <h3 class="font-bold text-base dark:text-[#faf9f6] font-[Poppins]">{{ review.name }}</h3>
                             <p class="text-gray-600 text-sm mb-2 dark:text-[#faf9f6]">{{ review.location }}</p>
                         </div>
                     </div>
@@ -372,6 +375,9 @@ const scrollRightIssues = () => {
 </template>
 
 <style scoped>
+.hero-section {
+    background-image: url('/Images/herobg3.jpg');
+}
 /* Animation classes for scroll-driven animations */
 .observe-me {
     opacity: 0;

@@ -349,8 +349,6 @@ const finalizeRejection = () => {
                     </div>
                 </footer>
 
-
-
                 <!-- Image and Side Details -->
                 <!-- <div class="flex gap-5 h-96">
                     <div v-if="report" class="w-1/2">
@@ -363,7 +361,6 @@ const finalizeRejection = () => {
                     <div class="w-1/2 flex ">
                         <div v-if="report" class="pl-5 flex flex-col gap-5">
                             <div>
-                               
                                 
                             </div>
                             <div class=" grid grid-cols-2 gap-4">

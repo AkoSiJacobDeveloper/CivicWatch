@@ -39,6 +39,7 @@ const submit = () => {
 
     <GuestLayout>
         <main class="dark:text-[#FAF9F6]">
+            <!-- Hero Section -->
             <section class="hero-section h-screen text-[#000] md:px-10 lg:px-32 flex ">
                 <div class="w-full h-full md:w-1/2 md:flex justify-center items-center">
                     <div class="">

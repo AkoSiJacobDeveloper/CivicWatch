@@ -12,6 +12,7 @@ class Report extends Model
         'tracking_code',
         'title',
         'issue_type',
+        'custom_issue_description',
         'description',
         'image',
         'barangay_name',
