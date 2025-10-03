@@ -10,6 +10,7 @@ use App\Http\Controllers\PendingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SSE\DashboardSSEController;
 use App\Models\Barangay;
 use App\Http\Controllers\TrackReportController;
 use App\Http\Controllers\Api\LocationController;
@@ -36,6 +37,9 @@ Route::prefix('contact-us')->name('contact.')->group(function() {
 // Tracking Reports
 Route::get('/track-reports', [TrackReportController::class, 'index'])->name('trackreports');
 
+// Polling
+Route::get('/api/dashboard-data', [App\Http\Controllers\API\DashboardDataController::class, 'getDashboardData'])
+    ->name('api.dashboard-data');
 
 Route::middleware(['auth', \App\Http\Middleware\isAdmin::class])->group(function () {
     Route::get('Admin/Dashboard', [ReportsController::class, 'index'])->name('admin.dashboard');
@@ -59,8 +63,10 @@ Route::prefix('admin')->group(function () {
         Route::put('/reports/resolved/{report}', [ReportsController::class, 'resolved'])->name('report.resolved');
         Route::put('/reports/reject/{report}', [ReportsController::class, 'reject'])->name('report.rejected');
 
+        // Bulk Actions
         Route::post('/reports/mark-duplicate', [ReportsController::class, 'markAsDuplicate'])->name('admin.reports.mark-duplicate');
         Route::post('/reports/bulk-approve', [ReportsController::class, 'bulkApprove'])->name('admin.reports.bulk-approve');
+        Route::post('/reports/bulk-resolved', [ReportsController::class, 'bulkResolved'])->name('admin.reports.bulk-resolve');
         
         // Review
         Route::get('/reviews', [ReviewController::class, 'showInAdmin'])->name('system.review');

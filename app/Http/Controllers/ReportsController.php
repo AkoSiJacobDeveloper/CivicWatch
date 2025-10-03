@@ -497,4 +497,16 @@ class ReportsController extends Controller
 
         return redirect()->back()->with('success', 'Reports approved successfully!');
     }
+
+    public function bulkResolved(Request $request) {
+        $validated = $request->validate([
+            'report_ids' => 'required|array|min:1',
+            'report_ids.*' => 'exists:reports,id'
+        ]);
+
+        Report::whereIn('id', $validated['report_ids'])
+                ->update(['status' => 'resolved']);
+            
+        return redirect()->back()->with('success', 'Reports resolved successfully!');
+    }
 }

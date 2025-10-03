@@ -1,9 +1,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
-import axios from 'axios';
 import { initTooltips } from 'flowbite';
 import { useForm } from '@inertiajs/vue3';
+import { useToast } from 'vue-toastification';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 
 import AdminLayout from '@/Layouts/AdminLayout.vue';
@@ -30,6 +30,7 @@ const props = defineProps({
     }
 });
 
+const toast = useToast();
 const selectedReports = ref([]);
 const showDuplicateModal = ref(false);
 const primaryReportId = ref(null);
@@ -46,6 +47,76 @@ const activeFilters = ref({
     startDate: '',
     endDate: ''
 });
+
+// Bulk actions options
+const bulkActions = [
+    { id: null, name: 'Actions', disabled: true },
+    { id: 'mark-duplicate', name: 'Mark as Duplicate' },
+    { id: 'bulk-approve', name: 'Approve Selected' },
+    { id: 'bulk-resolved', name: 'Resolve Selected' },
+    { id: 'bulk-reject', name: 'Reject Selected' },
+    { id: 'bulk-delete', name: 'Delete Selected' },
+    { id: 'revert', name: 'Revert Status' }
+];
+
+const selectedBulkAction = ref(bulkActions[0]);
+
+function handleBulkAction(action) {
+    if (!action || action.disabled) return;
+
+    if (action.id === 'mark-duplicate') {
+        if (selectedReports.value.length < 2) {
+            alert('Please select at least 2 reports to mark as duplicates.');
+            return;
+        }
+        showDuplicateModal.value = true;
+    }
+
+    if (action.id === 'bulk-approve') {
+        if (selectedReports.value.length === 0) {
+            alert('Please select at least 1 report to approve.');
+            return;
+        }
+        
+        if (!confirm(`Approve ${selectedReports.value.length} selected report(s)?`)) {
+            return;
+        }
+        
+        router.post(route('admin.reports.bulk-approve'), {
+            report_ids: selectedReports.value
+        }, {
+            onSuccess: () => {
+                toast.success('Selected Reports Successfully Approved!')
+                selectedReports.value = [];
+                selectedBulkAction.value = bulkActions[0];
+            }
+        });
+    }
+
+    if (action.id === 'bulk-resolved') {
+        if(selectedReports.value.length === 0) {
+            alert('Please select at least 1 report to resolve');
+            return;
+        }
+
+        if (!confirm(`Resolve ${selectedReports.value.length} selected report(s)?`)) {
+            return;
+        }
+
+        router.post(route('admin.reports.bulk-resolve'), {
+            report_ids: selectedReports.value
+        }, {
+            onSuccess: () => {
+                toast.success('Selected Reports Successfully Resolved!')
+                selectedReports.value = [];
+                selectedBulkAction.value = bulkActions[0]; // Reset to default
+            }
+        });
+    }
+
+    // Reset selection after action
+    selectedBulkAction.value = bulkActions[0];
+}
 
 function handleApplyFilters(filters) {
     console.log('Received filters:', filters);
@@ -98,7 +169,6 @@ function handleApplyFilters(filters) {
     });
 }
 
-// 3. Update clearAllFilters to include location filters
 function clearAllFilters() {
     activeFilters.value = {
         issueType: '',
@@ -118,7 +188,6 @@ function clearAllFilters() {
     });
 }
 
-// 4. Update hasActiveFilters to include location filters
 const hasActiveFilters = computed(() => {
     return activeFilters.value.issueType || 
         activeFilters.value.priorityLevel ||
@@ -128,7 +197,6 @@ const hasActiveFilters = computed(() => {
         activeFilters.value.endDate;
 });
 
-// 5. Update clearFilter function to properly handle all filter types
 function clearFilter(filterType) {
     const params = {
         status: props.status || 'all',
@@ -347,35 +415,6 @@ const selectAllReports = (event) => {
     }
 };
 
-const handleBulkAction = (action) => {
-    if (action === 'mark-duplicate') {
-        if (selectedReports.value.length < 2) {
-            alert('Please select at least 2 reports to mark as duplicates.');
-            return;
-        }
-        showDuplicateModal.value = true;
-    }
-
-    if (action === 'bulk-approve') {
-        if (selectedReports.value.length === 0) {
-            alert('Please select at least 1 report to approve.');
-            return;
-        }
-        
-        if (!confirm(`Approve ${selectedReports.value.length} selected report(s)?`)) {
-            return;
-        }
-        
-        router.post(route('admin.reports.bulk-approve'), {
-            report_ids: selectedReports.value
-        }, {
-            onSuccess: () => {
-                selectedReports.value = [];
-            }
-        });
-    }
-};
-
 const markAsDuplicate = () => {
     if (!primaryReportId.value) {
         alert('Please select a primary report.');
@@ -387,9 +426,11 @@ const markAsDuplicate = () => {
         duplicate_report_ids: selectedReports.value.filter(id => id !== primaryReportId.value)
     }, {
         onSuccess: () => {
+            toast.success('Reports Successfully Updated!');
             showDuplicateModal.value = false;
             selectedReports.value = [];
             primaryReportId.value = null;
+            selectedBulkAction.value = bulkActions[0]; // Reset to default
         },
         onError: (errors) => {
             alert('Failed to mark reports as duplicates. Please try again.');
@@ -588,31 +629,67 @@ const markAsDuplicate = () => {
                             </li>
                         </div>
 
-                        <div class="flex gap-2 w-[20%]">
-
-                            <!-- Bulk action dropdown (only show when reports are selected) -->
-                            <select 
-                                @change="handleBulkAction($event.target.value)"
-                                :disabled="selectedReports.length === 0"
-                                :class="[
-                                    'focus:outline-none font-medium rounded-lg text-sm px-4 py-2 flex-1 mb-1 transition-all duration-300 ',
-                                    selectedReports.length === 0 
-                                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed border-none' 
-                                        : 'bg-inherit border-gray-200 cursor-pointer'
-                                ]"
+                        <div class="flex gap-2 w-[25%]">
+                            <!-- Bulk action Listbox -->
+                            <Listbox 
+                                as="div" 
+                                v-model="selectedBulkAction" 
+                                @update:modelValue="handleBulkAction"
+                                class="relative w-1/2"
                             >
-                                <option value="">Actions</option>
-                                <option value="mark-duplicate">Mark as Duplicate</option>
-                                <option value="bulk-approve">Approved Selected</option>
-                            </select>
-                            
+                                <ListboxButton
+                                    :class="[
+                                        'w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-300 mb-1',
+                                        selectedReports.length === 0 
+                                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed border-gray-200' 
+                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                                    ]"
+                                    :disabled="selectedReports.length === 0"
+                                >
+                                    <span class="truncate">{{ selectedBulkAction.name }}</span>
+                                    <svg 
+                                        class="w-4 h-4 ml-2 -mr-1 transition-transform duration-200"
+                                        :class="{ 'rotate-180': open }"
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </ListboxButton>
+
+                                <ListboxOptions
+                                    class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden focus:outline-none"
+                                >
+                                    <ListboxOption
+                                        v-for="action in bulkActions"
+                                        :key="action.id"
+                                        :value="action"
+                                        :disabled="action.disabled || selectedReports.length === 0"
+                                        v-slot="{ active, selected }"
+                                    >
+                                        <li
+                                            :class="[
+                                                'px-4 py-2 text-sm cursor-pointer transition-colors duration-200',
+                                                action.disabled || selectedReports.length === 0
+                                                    ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                                                    : active
+                                                    ? 'bg-blue-100 text-blue-900'
+                                                    : 'text-gray-700',
+                                                selected ? 'bg-blue-50 text-blue-700' : ''
+                                            ]"
+                                        >
+                                            {{ action.name }}
+                                        </li>
+                                    </ListboxOption>
+                                </ListboxOptions>
+                            </Listbox>
 
                             <!-- Filter -->
                             <button 
                                 @click="openFilterModal"
-                                class=" flex items-center justify-center px-4 py-2 gap-2 rounded-lg border hover:bg-blue-700 group hover:text-white transition-all duration-300 mb-1 flex-1"
+                                class="flex items-center justify-center px-4 py-2 gap-2 rounded-lg border hover:bg-blue-700 group hover:text-white transition-all duration-300 mb-1 w-1/2"
                             >
-                                <!-- <img :src="'/Images/SVG/sliders-horizontal.svg'" alt="Sliders Icon" class="h-5 w-5"> -->
                                 <svg 
                                     class="w-4 h-4 group-hover:text-white transition-all duration-300 text-center" 
                                     fill="none" 
@@ -807,7 +884,7 @@ const markAsDuplicate = () => {
                                     <td class="px-3 py-4">
                                         <div class="flex items-center gap-2">
                                             <span
-                                                :class="['text-xs font-semibold text-center rounded-full border py-1 px-3',
+                                                :class="['text-xs font-semibold text-center rounded-full border py-2 px-4',
                                                     report.priority_level === 'low' ? 'text-green-800' : 
                                                     report.priority_level === 'medium' ? 'text-amber-800' :
                                                     report.priority_level === 'high' ? 'text-red-500' : '' 
@@ -822,7 +899,7 @@ const markAsDuplicate = () => {
                                     <td class="px-3 py-4">
                                         <div class="flex justify-start">
                                             <span :class="[
-                                                'inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border shadow-sm',
+                                                'inline-flex items-center px-4 py-2 rounded-full text-xs font-semibold border shadow-sm',
                                                 report.status === 'Pending' ? 'bg-amber-100 text-amber-800 border-amber-200' :
                                                 report.status === 'In Progress' ? 'bg-blue-100 text-blue-800 border-blue-200' :
                                                 report.status === 'Resolved' ? 'bg-green-100 text-green-800 border-green-200' :
@@ -846,14 +923,14 @@ const markAsDuplicate = () => {
                                     <td class="px-3 py-4">
                                         <div class="flex items-center gap-2">
                                             <span
-                                                class="text-gray-500 text-xs font-semibold text-center rounded-full border py-1 px-3"
+                                                class="text-gray-500 text-xs font-semibold text-center rounded-full border py-2 px-4"
                                                 v-if="report.status.toLowerCase() !== 'duplicate'"
                                             >
                                                 Primary
                                             </span>
 
                                             <span
-                                                class="text-gray-500 text-xs font-semibold text-center rounded-full border py-1 px-3"
+                                                class="text-gray-500 text-xs font-semibold text-center rounded-full border py-2 px-4"
                                                 v-else 
                                             >
                                                 Dup of #{{ report.duplicate_of_report_id }}
@@ -865,7 +942,7 @@ const markAsDuplicate = () => {
                                     <td class="px-3 py-4">
                                         <button 
                                             @click="viewDetails(report.id)"
-                                            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-blue-600 hover:text-white hover:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-sm hover:shadow-md group"
+                                            class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-blue-600 hover:text-white hover:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-sm hover:shadow-md group"
                                         >
                                             Details
                                             <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -949,7 +1026,7 @@ const markAsDuplicate = () => {
                     <!-- Header -->
                     <div class="flex justify-between items-center p-5 border-b bg-blue-700 rounded-t-lg">
                         <h3 class="text-lg font-semibold font-[Poppins] text-white">Mark as Duplicate</h3>
-                        <button @click="$emit('close')" class="p-1 rounded">
+                        <button @click="showDuplicateModal = false" class="p-1 rounded">
                             <img :src="'/Images/SVG/x (white).svg'" alt="Close Icon" class="w-5 h-5">
                         </button>
                     </div>
@@ -993,7 +1070,6 @@ const markAsDuplicate = () => {
                     </div>
                 </div>
             </div>
-
         </main>
     </AdminLayout>
 </template>
