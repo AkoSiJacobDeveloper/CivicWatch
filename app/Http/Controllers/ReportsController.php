@@ -509,4 +509,103 @@ class ReportsController extends Controller
             
         return redirect()->back()->with('success', 'Reports resolved successfully!');
     }
+
+    public function bulkDelete(Request $request)
+    {
+        // Validate only rejected reports can be deleted
+        $validated = $request->validate([
+            'report_ids' => 'required|array',
+            'report_ids.*' => 'exists:reports,id'
+        ]);
+
+        // Get reports and check if all are rejected
+        $reports = Report::whereIn('id', $validated['report_ids'])->get();
+        
+        // Check the RAW database value, not the accessor
+        $nonRejected = $reports->filter(function($report) {
+            // Get the raw attribute from database
+            $rawStatus = $report->getRawOriginal('status');
+            return $rawStatus !== 'rejected';
+        });
+        
+        if ($nonRejected->count() > 0) {
+            return back()->withErrors(['message' => 'Only rejected reports can be deleted.']);
+        }
+
+        // Soft delete
+        Report::whereIn('id', $validated['report_ids'])->delete();
+
+        return back()->with('success', 'Reports moved to trash successfully.');
+    }
+
+    public function trash()
+    {
+        $reports = Report::onlyTrashed()
+            ->with(['category', 'barangay', 'sitio'])
+            ->latest()
+            ->paginate(10);
+        
+        return Inertia::render('Admin/Trash', [
+            'reports' => $reports
+        ]);
+    }
+
+    public function restore($id)
+    {   
+        $report = Report::onlyTrashed()->findOrFail($id);
+        $report->restore();
+        return back()->with('success', 'Report restored successfully.');
+    }
+
+    public function forceDelete($id)
+    {
+        $report = Report::onlyTrashed()->findOrFail($id);
+        $report->forceDelete();
+        return back()->with('success', 'Report permanently deleted.');
+    }
+
+    public function bulkRevert(Request $request)
+    {
+        $validated = $request->validate([
+            'report_ids' => 'required|array',
+            'report_ids.*' => 'exists:reports,id'
+        ]);
+
+        $revertedCount = 0;
+        
+        // Get the reports first to work with the model instances
+        $reports = Report::whereIn('id', $validated['report_ids'])->get();
+        
+        foreach ($reports as $report) {
+            $currentStatus = $report->getRawOriginal('status'); // Get the raw database value
+            
+            $newStatus = null;
+            
+            switch ($currentStatus) {
+                case 'in_progress':
+                    $newStatus = 'pending';
+                    break;
+                    
+                case 'resolved':
+                    $newStatus = 'in_progress';
+                    break;
+                    
+                case 'rejected':
+                    $newStatus = 'pending';
+                    break;
+            }
+            
+            if ($newStatus) {
+                // Update using the model to trigger any mutators/accessors
+                $report->update(['status' => $newStatus]);
+                $revertedCount++;
+            }
+        }
+
+        if ($revertedCount > 0) {
+            return back()->with('success', $revertedCount . ' report(s) reverted successfully!');
+        } else {
+            return back()->with('info', 'No reports were eligible for reverting.');
+        }
+    }
 }

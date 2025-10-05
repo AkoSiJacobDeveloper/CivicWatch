@@ -144,7 +144,7 @@ const finalizeRejection = () => {
             <section class="flex  items-center gap-2">
                 <div>
                     <Link :href="backUrl">
-                        <img :src="'/Images/SVG/arrow-circle-left.svg'" alt="Back Icon">
+                        <img :src="'/Images/SVG/arrow-circle-left-fill (700).svg'" alt="Back Icon">
                     </Link>
                 </div>
                 <h1 class="font-semibold text-2xl font-[Poppins] ">Report Details</h1>
@@ -167,7 +167,6 @@ const finalizeRejection = () => {
                             </span>
                             <div class="mt-3">
                                 <h3 class="font-bold text-3xl font-[Poppins] ">{{ report.title }}</h3>
-                                
                             </div>
                         </div>
 
@@ -187,6 +186,7 @@ const finalizeRejection = () => {
                             </p>
                         </div>
 
+                        
                         <div
                             v-if="report.duplicates && report.duplicates.length > 0"
                             class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[30%] p-2 rounded-lg"
@@ -205,6 +205,18 @@ const finalizeRejection = () => {
                                 </ul>
                                 
                             </p>
+                        </div>
+
+                        <!-- Reason for Rejection -->
+                        <div
+                            v-if="report.status === 'Rejected'"
+                            class="flex items-center border-l-4 border-red-800 bg-gradient-to-r from-red-200 to-red-100 w-[30%] p-2 rounded-lg"
+                        >
+                            <div class="flex flex-col ml-1">
+                                <p>This report was rejected for the following reason:</p>
+                                <p class="font-semibold">{{ report.rejection_reason }}</p>
+                            </div>
+                            
                         </div>
                     </div>
                 </header>
@@ -348,54 +360,6 @@ const finalizeRejection = () => {
                         </button>
                     </div>
                 </footer>
-
-                <!-- Image and Side Details -->
-                <!-- <div class="flex gap-5 h-96">
-                    <div v-if="report" class="w-1/2">
-                        <img 
-                            :src="`/storage/${report.image}`" 
-                            :alt="report.title"
-                            class="w-full h-full object-cover rounded-lg"
-                        >
-                    </div>
-                    <div class="w-1/2 flex ">
-                        <div v-if="report" class="pl-5 flex flex-col gap-5">
-                            <div>
-                                
-                            </div>
-                            <div class=" grid grid-cols-2 gap-4">
-                                <div v-for="(detail, index) in details" :key="index" class="flex flex-col justify-center rounded">
-                                    <div class="flex gap-2 items-center">
-                                        <div class="w-7 h-7 rounded-full flex items-center justify-center">
-                                            <img :src="detail.icon" alt="icon" class="w-4 h-4">
-                                        </div>
-                                        <h3 class="font-bold text-base font-[Poppins]">{{ detail.label }}</h3>
-                                    </div> 
-                                    <p class="mt-3 text-sm ml-10 text-gray-700">{{ detail.subtext }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div> -->
-
-                <!-- Description and other details -->
-                <!-- <div class="flex flex-col mt-10 mb-5">
-                    <div class="rounded">
-                        <div class="flex gap-2 items-center">
-                            <div class="w-7 h-7 rounded-full flex items-center justify-center">
-                                <img :src="'/Images/SVG/file-text.svg'" alt="Icon" class="w-4 h-4">
-                            </div>
-                            <h3 class="font-bold text-base font-[Poppins]">Description</h3>
-                        </div>
-                        <div class="border p-3 mt-3 rounded bg-gray-200">
-                            <p v-if="report" class="text-sm ">{{ report.description }}</p>
-                        </div>
-                    </div>
-                </div> -->
-
-                <div class="flex justify-between">
-                    
-                </div>
             </section>
 
             <DeleteModal 

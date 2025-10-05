@@ -18,10 +18,12 @@ const reasons = [
 
 const selectedRejectReason = ref('')
 const otherReason = ref('')
+const errorMessage = ref('')
 
 const resetFields = () => {
     selectedRejectReason.value = ''
     otherReason.value = ''
+    errorMessage.value = ''
 }
 
 watch(
@@ -39,9 +41,23 @@ const handleCancel = () => {
 }
 
 function confirmRejection() {
+    // Validate that a reason is provided
+    if (!selectedRejectReason.value) {
+        errorMessage.value = 'Please select a reason for rejection'
+        return
+    }
+
+    // If "Other" is selected, validate that text is provided
+    if (selectedRejectReason.value === 'Other' && !otherReason.value.trim()) {
+        errorMessage.value = 'Please specify the reason for rejection'
+        return
+    }
+
     const reasonToSend = selectedRejectReason.value === 'Other' 
         ? otherReason.value
         : selectedRejectReason.value
+    
+    errorMessage.value = ''
 
     emit('confirm', reasonToSend)
     resetFields
@@ -70,6 +86,12 @@ function confirmRejection() {
                 <!-- Modal Content -->
                 <div class="flex flex-col">
                     <p class="font-semibold text-lg mb-2">Reason for Rejecting the Report</p>
+
+                    <!-- Error Message -->
+                    <div v-if="errorMessage" class="mb-3 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+                        {{ errorMessage }}
+                    </div>
+
                     <label 
                         v-for="(reason, index) in reasons" 
                         :key="index"
@@ -101,22 +123,22 @@ function confirmRejection() {
             </div>
 
             <!--Footer/Action Buttons -->
-                <div class="flex justify-end border-t">
-                    <div class="p-5 flex gap-3">
-                        <button 
-                            @click="handleCancel" 
-                            class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-all duration-300 flex-1"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            @click="confirmRejection" 
-                            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-all duration-300 flex-1"
-                        >
-                            Confirm
-                        </button>
-                    </div>
+            <div class="flex justify-end border-t">
+                <div class="p-5 flex gap-3">
+                    <button 
+                        @click="handleCancel" 
+                        class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-all duration-300 flex-1"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        @click="confirmRejection" 
+                        class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-all duration-300 flex-1"
+                    >
+                        Confirm
+                    </button>
                 </div>
+            </div>
         </div>
     </div>
 </template>

@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import { initTooltips } from 'flowbite';
 import { useForm } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
+import Swal from 'sweetalert2'
 
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import FilterModal from '@/Components/FilterModal.vue';
@@ -48,74 +49,282 @@ const activeFilters = ref({
     endDate: ''
 });
 
-// Bulk actions options
-const bulkActions = [
-    { id: null, name: 'Actions', disabled: true },
-    { id: 'mark-duplicate', name: 'Mark as Duplicate' },
-    { id: 'bulk-approve', name: 'Approve Selected' },
-    { id: 'bulk-resolved', name: 'Resolve Selected' },
-    { id: 'bulk-reject', name: 'Reject Selected' },
-    { id: 'bulk-delete', name: 'Delete Selected' },
-    { id: 'revert', name: 'Revert Status' }
-];
+const hasPrimaryReports = computed(() => {
+    return selectedReports.value.some(reportId => {
+        const report = props.reports.data.find(r => r.id === reportId);
+        return report?.status?.toLowerCase() !== 'duplicate';
+    });
+});
 
-const selectedBulkAction = ref(bulkActions[0]);
+const hasOnlyDuplicates = computed(() => {
+    return selectedReports.value.length > 0 && 
+        selectedReports.value.every(reportId => {
+            const report = props.reports.data.find(r => r.id === reportId);
+            return report?.status?.toLowerCase() === 'duplicate';
+        });
+});
+
+const canMarkAsDuplicate = computed(() => {
+    if (selectedReports.value.length < 2) return false;
+    
+    // Check if we have at least one non-duplicate report to be primary
+    const hasValidPrimary = selectedReports.value.some(reportId => {
+        const report = props.reports.data.find(r => r.id === reportId);
+        const status = report?.status?.toLowerCase();
+        return status && status !== 'duplicate' && status !== 'resolved';
+    });
+    
+    return hasValidPrimary && !hasResolvedReports.value;
+});
+
+const hasPendingReports = computed(() => {
+    return selectedReports.value.some(reportId => {
+        const report = props.reports.data.find(r => r.id === reportId);
+        return report?.status?.toLowerCase() === 'pending';
+    });
+});
+
+const hasInProgressReports = computed(() => {
+    return selectedReports.value.some(reportId => {
+        const report = props.reports.data.find(r => r.id === reportId);
+        return report?.status?.toLowerCase() === 'in progress';
+    });
+});
+
+const hasRejectedReports = computed(() => {
+    return selectedReports.value.some(reportId => {
+        const report = props.reports.data.find(r => r.id === reportId);
+        return report?.status?.toLowerCase() === 'rejected';
+    });
+});
+
+const hasNonRejectedReports = computed(() => {
+    return selectedReports.value.some(reportId => {
+        const report = props.reports.data.find(r => r.id === reportId);
+        return report?.status?.toLowerCase() !== 'rejected';
+    });
+});
+
+// Check if any selected reports are resolved
+const hasResolvedReports = computed(() => {
+    return selectedReports.value.some(reportId => {
+        const report = props.reports.data.find(r => r.id === reportId);
+        return report?.status?.toLowerCase() === 'resolved';
+    });
+});
+
+// Check if any selected reports are NOT rejected (for trash)
+const canRevertReports = computed(() => {
+    return selectedReports.value.some(reportId => {
+        const report = props.reports.data.find(r => r.id === reportId);
+        const status = report?.status?.toLowerCase();
+        return status && status !== 'pending' && status !== 'duplicate';
+    });
+});
+
+
+// Bulk actions options with conditional disabling
+const bulkActions = computed(() => {
+    const actions = [
+        { id: null, name: 'Actions', disabled: true },
+        { id: 'mark-duplicate', name: 'Mark as Duplicate' },
+        { id: 'bulk-approve', name: 'Approve Selected' },
+        { id: 'bulk-resolved', name: 'Resolve Selected' },
+        { id: 'bulk-delete', name: 'Move to Trash' },
+        { id: 'revert', name: 'Revert Status' }
+    ];
+
+    return actions.map(action => {
+        if (action.disabled) return action;
+
+        let disabled = false;
+        let disabledReason = '';
+
+        switch (action.id) {
+            case 'mark-duplicate':
+                disabled = !canMarkAsDuplicate.value;
+                if (selectedReports.value.length < 2) {
+                    disabledReason = 'Select at least 2 reports to mark as duplicates';
+                } else if (!hasPrimaryReports.value) {
+                    disabledReason = 'Need at least one non-duplicate report as primary';
+                } else if (hasResolvedReports.value) {
+                    disabledReason = 'Cannot mark resolved reports as duplicate';
+                }
+                break;
+
+            case 'bulk-approve':
+                // Can only approve pending reports
+                disabled = !hasPendingReports.value || hasInProgressReports.value || hasResolvedReports.value || hasRejectedReports.value;
+                disabledReason = 'Can only approve pending reports';
+                break;
+
+            case 'bulk-resolved':
+                // Can only resolve in progress reports
+                disabled = !hasInProgressReports.value || hasPendingReports.value || hasResolvedReports.value || hasRejectedReports.value;
+                disabledReason = 'Can only resolve in progress reports';
+                break;
+
+            case 'bulk-delete':
+                // Can only delete rejected reports
+                disabled = hasNonRejectedReports.value;
+                disabledReason = 'Can only move rejected reports to trash';
+                break;
+
+            case 'revert':
+                // Enhanced revert logic
+                if (hasOnlyDuplicates.value) {
+                    disabled = true;
+                    disabledReason = 'Duplicate reports cannot be reverted';
+                } else {
+                    disabled = !canRevertReports.value;
+                    disabledReason = 'Can only revert in progress, resolved, or rejected reports';
+                }
+                break;
+        }
+
+        return { ...action, disabled, disabledReason };
+    });
+});
+
+const selectedBulkAction = ref(bulkActions.value[0]);
 
 function handleBulkAction(action) {
-    if (!action || action.disabled) return;
-
-    if (action.id === 'mark-duplicate') {
-        if (selectedReports.value.length < 2) {
-            alert('Please select at least 2 reports to mark as duplicates.');
-            return;
+    if (!action || action.disabled) {
+        if (action?.disabledReason) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Action Not Available',
+                text: action.disabledReason
+            });
         }
-        showDuplicateModal.value = true;
+        return;
     }
 
-    if (action.id === 'bulk-approve') {
-        if (selectedReports.value.length === 0) {
-            alert('Please select at least 1 report to approve.');
-            return;
-        }
-        
-        if (!confirm(`Approve ${selectedReports.value.length} selected report(s)?`)) {
-            return;
-        }
-        
-        router.post(route('admin.reports.bulk-approve'), {
-            report_ids: selectedReports.value
-        }, {
-            onSuccess: () => {
-                toast.success('Selected Reports Successfully Approved!')
-                selectedReports.value = [];
-                selectedBulkAction.value = bulkActions[0];
-            }
+    // Common validations
+    if (selectedReports.value.length === 0) {
+        Swal.fire({
+            icon: 'info',
+            title: 'No Reports Selected',
+            text: 'Please select at least 1 report.'
         });
+        return;
     }
 
-    if (action.id === 'bulk-resolved') {
-        if(selectedReports.value.length === 0) {
-            alert('Please select at least 1 report to resolve');
-            return;
-        }
-
-        if (!confirm(`Resolve ${selectedReports.value.length} selected report(s)?`)) {
-            return;
-        }
-
-        router.post(route('admin.reports.bulk-resolve'), {
-            report_ids: selectedReports.value
-        }, {
-            onSuccess: () => {
-                toast.success('Selected Reports Successfully Resolved!')
-                selectedReports.value = [];
-                selectedBulkAction.value = bulkActions[0]; // Reset to default
+    // Action-specific handlers
+    const actionHandlers = {
+        'mark-duplicate': () => {
+            if (selectedReports.value.length < 2) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selection Required',
+                    text: 'Please select at least 2 reports to mark as duplicates.'
+                });
+                return;
             }
-        });
-    }
+            showDuplicateModal.value = true;
+        },
 
-    // Reset selection after action
-    selectedBulkAction.value = bulkActions[0];
+        'bulk-approve': () => {
+            Swal.fire({
+                title: `Approve ${selectedReports.value.length} pending report(s)?`,
+                text: 'This will move the selected reports to "In Progress" status.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Approve',
+                cancelButtonText: 'Cancel'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    executeBulkAction('admin.reports.bulk-approve', 'Selected Reports Successfully Approved!');
+                }
+            });
+        },
+
+        'bulk-resolved': () => {
+            Swal.fire({
+                title: `Resolve ${selectedReports.value.length} report(s)?`,
+                text: 'This will mark the selected reports as resolved.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Resolve',
+                cancelButtonText: 'Cancel'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    executeBulkAction('admin.reports.bulk-resolve', 'Selected Reports Successfully Resolved!');
+                }
+            });
+        },
+
+        'bulk-delete': () => {
+            Swal.fire({
+                title: `Move ${selectedReports.value.length} rejected report(s) to trash?`,
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Move to Trash',
+                cancelButtonText: 'Cancel'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    executeBulkAction('admin.reports.bulk-delete', 'Selected reports successfully moved to Trash!');
+                }
+            });
+        },
+
+        'revert': () => {
+            Swal.fire({
+                title: `Revert ${selectedReports.value.length} report(s) to previous status?`,
+                text: 'This will change the status back to the previous state in the workflow.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, Revert',
+                cancelButtonText: 'Cancel'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    executeBulkAction('admin.reports.bulk-revert', 'Selected reports successfully reverted!');
+                }
+            });
+        }
+    };
+
+    const handler = actionHandlers[action.id];
+    if (handler) handler();
+}
+
+// Helper function for bulk actions
+function executeBulkAction(routeName, successMessage) {
+    Swal.fire({
+        title: 'Processing...',
+        didOpen: () => Swal.showLoading(),
+        allowOutsideClick: false,
+        showConfirmButton: false
+    });
+
+    router.post(route(routeName), {
+        report_ids: selectedReports.value
+    }, {
+        onSuccess: () => {
+            Swal.close();
+            toast.success(successMessage);
+            selectedReports.value = [];
+            selectedBulkAction.value = bulkActions.value[0];
+        },
+        onError: (errors) => {
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed',
+                text: 'Action failed. Please try again.'
+            });
+            console.error('Bulk action failed:', errors);
+        }
+    });
 }
 
 function handleApplyFilters(filters) {
@@ -270,13 +479,11 @@ onMounted(() => {
 const theads = [    
     { heading: 'Image', img: '/Images/SVG/image.svg' },
     { heading: 'Title', img: '/Images/SVG/text-t (1).svg' },
-    { heading: 'Description', img: '/Images/SVG/align-left.svg' },
-    { heading: 'Type', img: '/Images/SVG/tag (1).svg' },
     { heading: 'Sender', img: '/Images/SVG/user.svg' },
-    { heading: 'Contact Number', img: '/Images/SVG/phone-call.svg' },
+    { heading: 'Type', img: '/Images/SVG/tag (1).svg' },
+    { heading: 'Description', img: '/Images/SVG/align-left.svg' },
     { heading: 'Level', img: '/Images/SVG/flag.svg' },
     { heading: 'Status', img: '/Images/SVG/hourglass (1).svg' },
-    { heading: 'Note', img: '/Images/SVG/note.svg'},
     { heading: 'Action', img: '/Images/SVG/play.svg' }
 ];
 
@@ -417,25 +624,90 @@ const selectAllReports = (event) => {
 
 const markAsDuplicate = () => {
     if (!primaryReportId.value) {
-        alert('Please select a primary report.');
-        return;
+        // Auto-select the first non-duplicate report as primary if none selected
+        const firstPrimary = selectedReports.value.find(reportId => {
+            const report = props.reports.data.find(r => r.id === reportId);
+            return report?.status?.toLowerCase() !== 'duplicate';
+        });
+        
+        if (firstPrimary) {
+            primaryReportId.value = firstPrimary;
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Primary Report Required',
+                text: 'Please select which report should be the primary one.'
+            });
+            return;
+        }
     }
 
-    router.post(route('admin.reports.mark-duplicate'), {
-        primary_report_id: primaryReportId.value,
-        duplicate_report_ids: selectedReports.value.filter(id => id !== primaryReportId.value)
-    }, {
-        onSuccess: () => {
-            toast.success('Reports Successfully Updated!');
-            showDuplicateModal.value = false;
-            selectedReports.value = [];
-            primaryReportId.value = null;
-            selectedBulkAction.value = bulkActions[0]; // Reset to default
-        },
-        onError: (errors) => {
-            alert('Failed to mark reports as duplicates. Please try again.');
+    const primaryReport = props.reports.data.find(r => r.id === primaryReportId.value);
+    const duplicateCount = selectedReports.value.length - 1;
+    
+    Swal.fire({
+        title: 'Confirm Mark as Duplicate',
+        html: `
+            <div class="text-left">
+                <p><strong>Primary Report:</strong> #${primaryReportId.value} - ${primaryReport?.title}</p>
+                <p><strong>Duplicates:</strong> ${duplicateCount} report(s) will be marked as duplicates</p>
+                <p class="text-sm text-gray-600 mt-2">The primary report will remain active, while duplicates will be consolidated under it.</p>
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Mark as Duplicate',
+        cancelButtonText: 'Cancel'
+    }).then(result => {
+        if (result.isConfirmed) {
+            router.post(route('admin.reports.mark-duplicate'), {
+                primary_report_id: primaryReportId.value,
+                duplicate_report_ids: selectedReports.value.filter(id => id !== primaryReportId.value)
+            }, {
+                onSuccess: () => {
+                    toast.success(`Successfully marked ${duplicateCount} report(s) as duplicates!`);
+                    showDuplicateModal.value = false;
+                    selectedReports.value = [];
+                    primaryReportId.value = null;
+                    selectedBulkAction.value = bulkActions.value[0];
+                },
+                onError: (errors) => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Failed',
+                        text: 'Failed to mark reports as duplicates. Please try again.'
+                    });
+                }
+            });
         }
     });
+};
+
+watch(selectedReports, (newValue) => {
+    console.log('Selected reports changed:', newValue);
+    
+    if (newValue.length === 0) {
+        selectedBulkAction.value = bulkActions.value[0];
+    } else {
+        // Find the first available (not disabled) bulk action
+        const availableAction = bulkActions.value.find(action => !action.disabled && action.id !== null);
+        if (availableAction) {
+            selectedBulkAction.value = availableAction;
+        }
+    }
+}, { deep: true });
+
+// Helper methods for duplicate handling
+const isReportDuplicate = (reportId) => {
+    const report = props.reports.data.find(r => r.id === reportId);
+    return report?.status?.toLowerCase() === 'duplicate';
+};
+
+const getReportTitle = (reportId) => {
+    const report = props.reports.data.find(r => r.id === reportId);
+    return report?.title || 'Unknown Report';
 };
 </script>
 
@@ -629,22 +901,22 @@ const markAsDuplicate = () => {
                             </li>
                         </div>
 
-                        <div class="flex gap-2 w-[25%]">
+                        <div class="flex gap-2 w-[30%]">
                             <!-- Bulk action Listbox -->
                             <Listbox 
                                 as="div" 
                                 v-model="selectedBulkAction" 
                                 @update:modelValue="handleBulkAction"
-                                class="relative w-1/2"
+                                class="relative flex-grow"
                             >
                                 <ListboxButton
                                     :class="[
                                         'w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-lg border transition-all duration-300 mb-1',
-                                        selectedReports.length === 0 
+                                        selectedReports.length === 0 || selectedBulkAction.disabled
                                             ? 'bg-gray-200 text-gray-500 cursor-not-allowed border-gray-200' 
                                             : 'bg-white text-gray-700 border-gray-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                                     ]"
-                                    :disabled="selectedReports.length === 0"
+                                    :disabled="selectedReports.length === 0 || selectedBulkAction.disabled"
                                 >
                                     <span class="truncate">{{ selectedBulkAction.name }}</span>
                                     <svg 
@@ -658,37 +930,46 @@ const markAsDuplicate = () => {
                                     </svg>
                                 </ListboxButton>
 
-                                <ListboxOptions
-                                    class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden focus:outline-none"
+                                <transition
+                                    enter-active-class="transition duration-100 ease-out"
+                                    enter-from-class="transform scale-95 opacity-0"
+                                    enter-to-class="transform scale-100 opacity-100"
+                                    leave-active-class="transition duration-75 ease-in"
+                                    leave-from-class="transform scale-100 opacity-100"
+                                    leave-to-class="transform scale-95 opacity-0"
                                 >
-                                    <ListboxOption
-                                        v-for="action in bulkActions"
-                                        :key="action.id"
-                                        :value="action"
-                                        :disabled="action.disabled || selectedReports.length === 0"
-                                        v-slot="{ active, selected }"
+                                    <ListboxOptions
+                                        class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden focus:outline-none"
                                     >
-                                        <li
-                                            :class="[
-                                                'px-4 py-2 text-sm cursor-pointer transition-colors duration-200',
-                                                action.disabled || selectedReports.length === 0
-                                                    ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                                                    : active
-                                                    ? 'bg-blue-100 text-blue-900'
-                                                    : 'text-gray-700',
-                                                selected ? 'bg-blue-50 text-blue-700' : ''
-                                            ]"
+                                        <ListboxOption
+                                            v-for="action in bulkActions"
+                                            :key="action.id"
+                                            :value="action"
+                                            :disabled="action.disabled || selectedReports.length === 0"
+                                            v-slot="{ active, selected }"
                                         >
-                                            {{ action.name }}
-                                        </li>
-                                    </ListboxOption>
-                                </ListboxOptions>
+                                            <li
+                                                :class="[
+                                                    'px-4 py-2 text-sm cursor-pointer transition-colors duration-200',
+                                                    action.disabled || selectedReports.length === 0
+                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                        : active
+                                                        ? 'bg-blue-100 text-blue-900'
+                                                        : 'text-gray-700',
+                                                    selected ? 'bg-blue-50 text-blue-700' : ''
+                                                ]"
+                                            >
+                                                {{ action.name }}
+                                            </li>
+                                        </ListboxOption>
+                                    </ListboxOptions>
+                                </transition>
                             </Listbox>
 
                             <!-- Filter -->
                             <button 
                                 @click="openFilterModal"
-                                class="flex items-center justify-center px-4 py-2 gap-2 rounded-lg border hover:bg-blue-700 group hover:text-white transition-all duration-300 mb-1 w-1/2"
+                                class="flex items-center justify-center px-4 py-2 gap-2 rounded-lg border hover:bg-blue-700 group hover:text-white transition-all duration-300 mb-1 flex-grow"
                             >
                                 <svg 
                                     class="w-4 h-4 group-hover:text-white transition-all duration-300 text-center" 
@@ -705,6 +986,17 @@ const markAsDuplicate = () => {
                                 </svg>
                                 <p class="text-sm font-medium text-center group-hover:text-white">Filter</p>
                             </button>
+
+                            <!-- Trash -->
+                            <Link 
+                                :href="route('report.trash')"
+                                class="flex items-center justify-center px-4 py-2 gap-2 rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 transition-all duration-300 mb-1 flex-grow"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                <p class="text-sm font-medium">Trash</p>
+                            </Link>
                         </div>
                     </ul>
                 </div>
@@ -737,13 +1029,13 @@ const markAsDuplicate = () => {
                     <div class="">
                         <table class="w-full">
                             <thead class="border-b-2 border-gray-200">
-                                <tr class="grid grid-cols-[50px_100px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr] items-center">
+                                <tr class="grid grid-cols-[50px_100px_150px_3fr_3fr_3fr_2fr_2fr_2fr] items-center">
                                     <th class="px-3 py-4 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider font-[Poppins]">
                                         <!-- ADD CHECKBOX COLUMN -->
                                         <input 
                                             type="checkbox" 
                                             :checked="selectedReports.length > 0 && 
-                                                    selectedReports.length === props.reports.data.filter(r => r.status.toLowerCase() !== 'duplicate').length"
+                                            selectedReports.length === props.reports.data.filter(r => r.status.toLowerCase() !== 'duplicate').length"
                                             @change="selectAllReports"
                                             class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                                         >
@@ -760,7 +1052,7 @@ const markAsDuplicate = () => {
 
                             <tbody class="bg-white divide-y divide-gray-100">
                                 <tr v-for="(report, index) in props.reports.data" :key="index" 
-                                    class="grid grid-cols-[50px_100px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr] hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 group">
+                                    class="grid grid-cols-[50px_100px_150px_3fr_3fr_3fr_2fr_2fr_2fr] hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 group">
 
                                     <!-- Checkbox Column -->
                                     <td class="px-3 py-4 flex items-center justify-center">
@@ -772,24 +1064,26 @@ const markAsDuplicate = () => {
                                                 :disabled="report.status.toLowerCase() === 'duplicate'" 
                                                 :class="[
                                                     'w-4 h-4 text-blue-600 rounded focus:ring-blue-500',
-                                                    report.status.toLowerCase() === 'duplicate' 
+                                                    report.status.toLowerCase() === 'duplicate'
                                                         ? 'bg-gray-300 cursor-not-allowed' 
                                                         : 'bg-gray-100 border-gray-300'
                                                 ]"
-                                                :data-tooltip-target="`tooltip-duplicate-${report.id}`"
+                                                :data-tooltip-target="`tooltip-${report.id}`"
                                                 :data-tooltip-trigger="report.status.toLowerCase() === 'duplicate' ? 'hover' : 'none'"
                                             >
 
                                             <div 
-                                                :id="`tooltip-duplicate-${report.id}`" 
+                                                :id="`tooltip-${report.id}`" 
                                                 role="tooltip" 
                                                 class="absolute z-20 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg shadow-sm opacity-0 tooltip w-48"
                                             >
-                                                This report is already marked as a duplicate
+                                                <span v-if="report.status.toLowerCase() === 'duplicate'">
+                                                    This report is already marked as a duplicate
+                                                </span>
                                                 <div 
                                                     class="tooltip-arrow" 
                                                     data-popper-arrow>
-                                                </div>
+                                                </div>  
                                             </div>
                                         </div>
                                     </td>
@@ -826,25 +1120,15 @@ const markAsDuplicate = () => {
                                         </div>
                                     </td>
 
-                                    <!-- Description Column -->
+                                    <!-- Sender Column -->
                                     <td class="px-3 py-4">
-                                        <span 
-                                            :data-tooltip-target="`desc-tooltip-${report.id}`"
-                                            data-tooltip-placement="top"
-                                            class="text-sm text-gray-900 cursor-help group-hover:text-blue-500 transition-colors duration-200"
-                                        >
-                                            {{  report.description.length > 30 ? report.description.substring(0, 30) + '...' : report.description    }}
-                                        </span>
-                                        <div 
-                                            :id="`desc-tooltip-${report.id}`" 
-                                            role="tooltip" 
-                                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip w-48 text-center"
-                                        >
-                                            {{ report.description }}
-                                            <div class="tooltip-arrow" data-popper-arrow></div>
+                                        <div class="flex flex-col">
+                                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-500">{{ report.sender }}</span>
+                                            <span class="text-xs font-medium text-gray-500 group-hover:text-blue-500">{{ report.location }}</span>
+                                            <span class="text-xs text-gray-500 group-hover:text-blue-500">{{ report.contact }}</span>
                                         </div>
                                     </td>
-
+                                    
                                     <!-- Type Column -->
                                     <td class="px-3 py-4">
                                         <span 
@@ -864,21 +1148,33 @@ const markAsDuplicate = () => {
                                         </div>
                                     </td>
 
-                                    <!-- Sender Column -->
+                                    <!-- Description Column -->
                                     <td class="px-3 py-4">
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-500">{{ report.sender }}</span>
-                                            <span class="text-xs text-gray-500 mt-1 group-hover:text-blue-500">{{ report.location }}</span>
+                                        <span 
+                                            :data-tooltip-target="`desc-tooltip-${report.id}`"
+                                            data-tooltip-placement="top"
+                                            class="text-sm text-gray-900 cursor-help group-hover:text-blue-500 transition-colors duration-200"
+                                        >
+                                            {{  report.description.length > 30 ? report.description.substring(0, 30) + '...' : report.description    }}
+                                        </span>
+                                        <div 
+                                            :id="`desc-tooltip-${report.id}`" 
+                                            role="tooltip" 
+                                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip w-48 text-center"
+                                        >
+                                            {{ report.description }}
+                                            <div class="tooltip-arrow" data-popper-arrow></div>
                                         </div>
                                     </td>
 
+
                                     <!-- Contact Column -->
-                                    <td class="px-3 py-4">
+                                    <!-- <td class="px-3 py-4">
                                         <div class="flex items-center gap-2">
                                             <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                                             <span class="text-sm font-medium text-gray-700 group-hover:text-blue-500">{{ report.contact }}</span>
                                         </div>
-                                    </td>
+                                    </td> -->
 
                                     <!-- Priority Level -->
                                     <td class="px-3 py-4">
@@ -920,7 +1216,7 @@ const markAsDuplicate = () => {
                                     </td>
 
                                     <!-- Note Column -->
-                                    <td class="px-3 py-4">
+                                    <!-- <td class="px-3 py-4">
                                         <div class="flex items-center gap-2">
                                             <span
                                                 class="text-gray-500 text-xs font-semibold text-center rounded-full border py-2 px-4"
@@ -936,7 +1232,7 @@ const markAsDuplicate = () => {
                                                 Dup of #{{ report.duplicate_of_report_id }}
                                             </span>
                                         </div>
-                                    </td>
+                                    </td> -->
 
                                     <!-- Action Column -->
                                     <td class="px-3 py-4">
@@ -1022,32 +1318,44 @@ const markAsDuplicate = () => {
 
             <!-- Duplicate Modal -->
             <div v-if="showDuplicateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div class="rounded-lg shadow-lg bg-white">
+                <div class="rounded-lg shadow-lg bg-white w-full max-w-md mx-4">
                     <!-- Header -->
                     <div class="flex justify-between items-center p-5 border-b bg-blue-700 rounded-t-lg">
                         <h3 class="text-lg font-semibold font-[Poppins] text-white">Mark as Duplicate</h3>
-                        <button @click="showDuplicateModal = false" class="p-1 rounded">
+                        <button @click="showDuplicateModal = false" class="p-1 rounded hover:bg-blue-600 transition-colors">
                             <img :src="'/Images/SVG/x (white).svg'" alt="Close Icon" class="w-5 h-5">
                         </button>
                     </div>
                     
                     <!-- Body -->
                     <div class="p-5">
-                        <p class="text-sm text-gray-600 mb-4">Select which report should be the primary one (all others will be marked as duplicates):</p>
+                        <p class="text-sm text-gray-600 mb-4">Select which report should be the <strong>primary</strong> one. All other selected reports will be marked as duplicates of this report.</p>
                     
-                        <div class="space-y-2 mb-4 max-h-60 overflow-y-auto">
-                            <div v-for="reportId in selectedReports" :key="reportId" class="flex items-center">
+                        <div class="space-y-3 mb-4 max-h-60 overflow-y-auto">
+                            <div v-for="reportId in selectedReports" :key="reportId" 
+                                class="flex items-center p-2 rounded border hover:bg-gray-50 transition-colors">
                                 <input 
                                     type="radio" 
                                     :id="`report-${reportId}`" 
                                     :value="reportId" 
                                     v-model="primaryReportId"
                                     class="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                                    :disabled="isReportDuplicate(reportId)"
                                 >
-                                <label :for="`report-${reportId}`" class="ml-2 text-sm">
-                                    Report #{{ reportId }}
+                                <label :for="`report-${reportId}`" class="ml-2 text-sm flex-1">
+                                    <div class="font-medium">Report #{{ reportId }}</div>
+                                    <div class="text-xs text-gray-500">{{ getReportTitle(reportId) }}</div>
+                                    <div v-if="isReportDuplicate(reportId)" class="text-xs text-orange-600 font-medium">
+                                        (Already a duplicate)
+                                    </div>
                                 </label>
                             </div>
+                        </div>
+                        
+                        <div v-if="primaryReportId" class="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
+                            <strong>Primary Report:</strong> #{{ primaryReportId }} - {{ getReportTitle(primaryReportId) }}
+                            <br>
+                            <strong>Duplicates:</strong> {{ selectedReports.length - 1 }} report(s)
                         </div>
                     </div>
                     
@@ -1062,7 +1370,13 @@ const markAsDuplicate = () => {
                             </button>
                             <button 
                                 @click="markAsDuplicate" 
-                                class="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white  hover:bg-blue-700 transition-all duration-300"
+                                :disabled="!primaryReportId"
+                                :class="[
+                                    'px-4 py-2 text-sm rounded-lg transition-all duration-300',
+                                    primaryReportId 
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                ]"
                             >
                                 Confirm
                             </button>

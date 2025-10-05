@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Report extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'tracking_code',
         'title',
@@ -25,8 +27,17 @@ class Report extends Model
         'rejection_reason',
     ];
 
+    public function getSenderAttribute()
+    {
+        return $this->sender_name;
+    }
+
     public function getStatusAttribute($value) {
         return ucwords(str_replace('_', ' ', $value));
+    }
+
+    public function setStatusAttribute($value) {
+        $this->attributes['status'] = strtolower(str_replace(' ', '_', $value));
     }
 
     public function category(): BelongsTo

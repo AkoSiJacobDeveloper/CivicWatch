@@ -10,6 +10,9 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import 'flowbite';
+import VueSweetalert2 from 'vue-sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css'
+
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 import { faFacebook, faTwitter, faTiktok, faInstagram } from '@fortawesome/free-brands-svg-icons';
@@ -29,6 +32,7 @@ createInertiaApp({
             .use(plugin)
             .use(ZiggyVue)
             .use(Toast)
+            .use(VueSweetalert2)
             .component('font-awesome-icon', FontAwesomeIcon)
             .mount(el);
             

@@ -10,7 +10,6 @@ use App\Http\Controllers\PendingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\SSE\DashboardSSEController;
 use App\Models\Barangay;
 use App\Http\Controllers\TrackReportController;
 use App\Http\Controllers\Api\LocationController;
@@ -51,6 +50,8 @@ Route::prefix('admin')->group(function () {
 
     // Protected admin routes
     Route::middleware(['auth', 'admin'])->group(function () {
+        Route::get('/reports/trash', [ReportsController::class, 'trash'])->name('report.trash');
+
         Route::get('/dashboard', [ReportsController::class, 'getReportCounts'])->name('admin.dashboard');
         Route::get('/reports', [ReportsController::class, 'index'])->name('admin.reports');
         Route::get('/pending-reports', [ReportsController::class, 'pendingReports'])->name('admin.pending-reports');
@@ -67,7 +68,13 @@ Route::prefix('admin')->group(function () {
         Route::post('/reports/mark-duplicate', [ReportsController::class, 'markAsDuplicate'])->name('admin.reports.mark-duplicate');
         Route::post('/reports/bulk-approve', [ReportsController::class, 'bulkApprove'])->name('admin.reports.bulk-approve');
         Route::post('/reports/bulk-resolved', [ReportsController::class, 'bulkResolved'])->name('admin.reports.bulk-resolve');
-        
+        Route::post('/reports/bulk-delete', [ReportsController::class, 'bulkDelete'])->name('admin.reports.bulk-delete');
+        Route::post('/reports/bulk-revert', [ReportsController::class, 'bulkRevert'])->name('admin.reports.bulk-revert');
+
+        // Soft delete routes
+        Route::post('/reports/{report}/restore', [ReportsController::class, 'restore'])->name('admin.reports.restore');
+        Route::delete('/reports/{report}/force-delete', [ReportsController::class, 'forceDelete'])->name('admin.reports.force-delete');
+
         // Review
         Route::get('/reviews', [ReviewController::class, 'showInAdmin'])->name('system.review');
         Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.delete');
