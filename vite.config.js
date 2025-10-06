@@ -4,12 +4,14 @@ import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
     // server: {
-    //     host: '0.0.0.0', // allow all devices in network to connect
+    //     host: '0.0.0.0',
     //     port: 5173,
     //     strictPort: true,
-    //     origin: 'http://10.0.9.119:5173', // this is Vite's own URL
+    //     hmr: {
+    //         host: '10.165.13.40', // Your IP for Hot Module Replacement
+    //     },
     //     cors: {
-    //         origin: 'http://10.0.9.119:8000', // ✅ allow Laravel server
+    //         origin: ['http://10.165.13.40:8000', 'http://localhost:8000'],
     //         credentials: true,
     //     },
     // },

@@ -39,6 +39,14 @@ Route::get('/track-reports', [TrackReportController::class, 'index'])->name('tra
 // Polling
 Route::get('/api/dashboard-data', [App\Http\Controllers\API\DashboardDataController::class, 'getDashboardData'])
     ->name('api.dashboard-data');
+Route::get('/api/reports-data', function() {
+    $totalReports = \App\Models\Report::count();
+    
+    return response()->json([
+        'totalReports' => $totalReports,
+        'timestamp' => now()->toISOString()
+    ]);
+});
 
 Route::middleware(['auth', \App\Http\Middleware\isAdmin::class])->group(function () {
     Route::get('Admin/Dashboard', [ReportsController::class, 'index'])->name('admin.dashboard');

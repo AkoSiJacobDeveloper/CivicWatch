@@ -97,7 +97,7 @@ onMounted(() => {
 
         <div class="px-3 md:px-10 lg:px-32 py-12 bg-blue-700 text-[#FAF9F6] dark:bg-[#1e1e1e] dark:text-[#FAF9F6]">
             <!-- Main Footer Content -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
                 <!-- Company Info -->
                 <div class="lg:col-span-2">
                     <ApplicationLogo class="mb-5" />
@@ -195,7 +195,7 @@ onMounted(() => {
                                 />
                                 <div class="group-hover:translate-x-1 transition-transform duration-300">
                                     <div class="text-xs opacity-70 uppercase tracking-wide">{{ contact.label }}</div>
-                                    <span class="text-sm md:text-base">{{ contact.text }}</span>
+                                    <span class="text-xs md:text-base">{{ contact.text }}</span>
                                 </div>
                             </button>
                         </li>
@@ -205,7 +205,7 @@ onMounted(() => {
 
             <!-- Footer Bottom -->
             <div class="border-t border-blue-600 dark:border-gray-700 pt-6">
-                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex md:flex-row justify-between items-center gap-4">
                     <p class="text-xs md:text-sm opacity-80">
                         &copy; {{ new Date().getFullYear() }} CivicWatch. All rights reserved.
                     </p>

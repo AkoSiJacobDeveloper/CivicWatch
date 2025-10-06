@@ -193,15 +193,15 @@ onMounted(async () => {
 
                 <!-- NOTICE -->
                 <div v-if="barangays.filter(b => !b.is_available).length > 0" class="mt-5 p-3 bg-yellow-50 border border-yellow-200 rounded-md dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-100">
-                    <p class="text-sm">
+                    <p class="text-xs md:text-sm">
                         <strong>Notice:</strong> We're currently piloting in select barangays only. Other locations coming soon!
                     </p>
                 </div>
                 
                 <div class="my-5">
                     <form @submit.prevent="submitForm" enctype="multipart/form-data">
-                        <div class="flex gap-3">
-                            <div class="w-1/2 mb-1">
+                        <div class="md:flex gap-3">
+                            <div class="md:w-1/2 mb-1">
                                 <!-- TITLE -->
                                 <div class="relative">
                                     <input
@@ -238,7 +238,7 @@ onMounted(async () => {
                                 </div>
                             </div>
                     
-                            <div class=" w-1/2">
+                            <div class="md:w-1/2">
                                 <!-- SENDER NAME -->
                                 <div class="relative">
                                     <input
@@ -359,9 +359,9 @@ onMounted(async () => {
 
                         <!-- LOCATION SECTION -->
                         <div class="mb-8 flex flex-col gap-3">
-                            <div class=" flex gap-3 items-center">
+                            <div class="md:flex md:gap-3 items-center">
                                 <!-- BARANGAY -->
-                                <div class="w-1/2">
+                                <div class="mb-4 md:w-1/2 md:mb-0">
                                     <Listbox 
                                         v-model="form.barangay_id"
                                         as="div"
@@ -422,7 +422,7 @@ onMounted(async () => {
 
                                 <!-- SITIO -->
                                 <div 
-                                    class="w-1/2"
+                                    class="md:w-1/2"
                                     v-if="form.barangay_id && availableSitios.length > 0"
                                 >
                                     <Listbox 
@@ -479,9 +479,9 @@ onMounted(async () => {
                             </div>
                         </div>
 
-                        <div class="flex gap-3">
+                        <div class="md:flex gap-3">
                             <!-- UPLOAD PHOTO -->
-                            <div class="mb-4 w-1/2">
+                            <div class="mb-4 md:w-1/2 md:mb-0">
                                 <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Upload Photo</label>
                                 <input
                                     type="file"
@@ -510,7 +510,7 @@ onMounted(async () => {
                             </div>
 
                             <!-- CONTACT NUMBER -->
-                            <div class="mb-4 w-1/2">
+                            <div class="mb-4 md:w-1/2">
                                 <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Contact Number</label>
                                 <div class="">
                                     <div class="">
@@ -536,9 +536,9 @@ onMounted(async () => {
                             </div>
                         </div>
 
-                        <div class="flex gap-3">
+                        <div class="md:flex gap-3">
                             <!-- DESCRIPTION -->
-                            <div class="mb-4 w-1/2">
+                            <div class="mb-4 md:w-1/2 md:mb-0">
                                 <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Description</label>
                                 <textarea
                                     v-model="form.description"
@@ -554,7 +554,7 @@ onMounted(async () => {
                             </div>
 
                             <!-- ADDITIONAL NOTES -->
-                            <div class="mb-4 w-1/2">
+                            <div class="mb-4 md:w-1/2 md:mb-0">
                                 <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Additional Notes <span class="text-xs font-normal text-blue-500">(Optional)</span></label>
                                 <textarea
                                     v-model="form.remarks"
@@ -570,10 +570,10 @@ onMounted(async () => {
                         </div>
                         
                         <!-- SUBMIT SECTION -->
-                        <div class="flex justify-between">
+                        <div class="md:flex justify-between">
                             <div class="g-recaptcha my-4 :dark:bg-[#2c2c2c]"></div>
                         
-                            <div class="flex justify-center items-center w-64 gap-2">
+                            <div class="flex justify-center items-center md:w-64 gap-2">
                                 <button 
                                     type="submit" 
                                     class="flex-1 bg-blue-600 py-3 rounded text-white hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center"

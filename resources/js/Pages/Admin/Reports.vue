@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import { initTooltips } from 'flowbite';
 import { useForm } from '@inertiajs/vue3';
@@ -709,6 +709,136 @@ const getReportTitle = (reportId) => {
     const report = props.reports.data.find(r => r.id === reportId);
     return report?.title || 'Unknown Report';
 };
+
+const currentReportIds = computed(() => {
+    return props.reports.data.map(report => report.id);
+});
+const previousReportIds = ref([]);
+
+const newReportIds = ref(new Set());
+const newReportTimeouts = ref({});
+
+// Add this method to check if a report is new
+const isNewReport = (reportId) => {
+    return newReportIds.value.has(reportId);
+};
+
+const markAsNewReport = (reportId) => {
+    newReportIds.value.add(reportId);
+    
+    // Remove the indicator after 8 seconds (you can adjust between 5-10 seconds)
+    const timeoutId = setTimeout(() => {
+        newReportIds.value.delete(reportId);
+        delete newReportTimeouts.value[reportId];
+    }, 8000);
+    
+    newReportTimeouts.value[reportId] = timeoutId;
+};
+
+const isPolling = ref(true)
+const pollInterval = ref(null)
+const newReportIndicator = ref(false)
+const previousReportCount = ref(props.reports?.total || 0)
+
+// Polling function for reports
+const fetchReportsData = async () => {
+    try {
+        const response = await fetch('/api/reports-data')
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const newData = await response.json()
+        
+        // Check if new reports arrived
+        if (newData.totalReports > previousReportCount.value) {
+            newReportIndicator.value = true
+            
+            const newReportsCount = newData.totalReports - previousReportCount.value
+            toast.info(`📨 ${newReportsCount} New report received!`)
+            
+            // Store current IDs before refresh to compare after reload
+            const currentIdsBeforeRefresh = [...currentReportIds.value];
+            
+            // Only refresh if we're on the "All" tab or "Pending" tab where new reports would appear
+            const shouldAutoRefresh = activeStatus.value === 'all' || activeStatus.value === 'pending'
+            
+            if (shouldAutoRefresh) {
+                // Auto-refresh after 3 seconds
+                setTimeout(() => {
+                    router.reload({ preserveScroll: true, preserveState: true })
+                    
+                    // After reload, compare and mark new reports
+                    setTimeout(() => {
+                        const currentIdsAfterRefresh = currentReportIds.value;
+                        const newReportIds = currentIdsAfterRefresh.filter(id => !currentIdsBeforeRefresh.includes(id));
+                        
+                        newReportIds.forEach(reportId => {
+                            markAsNewReport(reportId);
+                        });
+                    }, 500);
+                }, 3000)
+            } else {
+                // If not auto-refreshing, we can't determine which specific reports are new
+                // So we'll mark the first few reports in the current list as new (fallback)
+                if (props.reports.data && props.reports.data.length > 0) {
+                    const newestReports = props.reports.data.slice(0, newReportsCount);
+                    newestReports.forEach(report => {
+                        markAsNewReport(report.id);
+                    });
+                }
+            }
+        }
+        
+        // Update previous count
+        previousReportCount.value = newData.totalReports
+        
+    } catch (error) {
+        console.error('❌ Reports polling error:', error)
+    }
+}
+
+// Start polling
+const startReportsPolling = () => {
+    isPolling.value = true
+    console.log('🔄 Starting reports polling every 3 seconds')
+    
+    // Fetch immediately
+    fetchReportsData()
+    
+    // Then set up interval (10 seconds for reports page)
+    pollInterval.value = setInterval(fetchReportsData, 3000)
+}
+
+// Stop polling
+const stopReportsPolling = () => {
+    isPolling.value = false
+    if (pollInterval.value) {
+        clearInterval(pollInterval.value)
+        pollInterval.value = null
+    }
+    console.log('🛑 Reports polling stopped')
+}
+
+// Initialize polling when component mounts
+onMounted(() => {
+    // Store initial report IDs
+    previousReportIds.value = [...currentReportIds.value];
+    startReportsPolling()
+})
+
+onUnmounted(() => {
+    stopReportsPolling();
+    
+    // Clear all new report timeouts
+    Object.values(newReportTimeouts.value).forEach(timeoutId => {
+        clearTimeout(timeoutId);
+    });
+    newReportTimeouts.value = {};
+    newReportIds.value.clear();
+    previousReportIds.value = [];
+});
 </script>
 
 <template>
@@ -1236,15 +1366,29 @@ const getReportTitle = (reportId) => {
 
                                     <!-- Action Column -->
                                     <td class="px-3 py-4">
-                                        <button 
-                                            @click="viewDetails(report.id)"
-                                            class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-blue-600 hover:text-white hover:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-sm hover:shadow-md group"
-                                        >
-                                            Details
-                                            <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                            </svg>
-                                        </button>
+                                        <div class="flex items-center gap-2">
+                                            <button 
+                                                @click="viewDetails(report.id)"
+                                                class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-blue-600 hover:text-white hover:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-sm hover:shadow-md group"
+                                            >
+                                                Details
+                                                <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                </svg>
+                                            </button>
+                                            
+                                            <!-- New Report Indicator - Moved to right side -->
+                                            <span 
+                                                v-if="isNewReport(report.id)"
+                                                class="relative flex items-center justify-center"
+                                            >
+                                                <!-- Pulsing dot -->
+                                                <span class="flex h-3 w-3">
+                                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                                </span>
+                                            </span>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>

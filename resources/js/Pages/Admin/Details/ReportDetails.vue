@@ -177,10 +177,10 @@ const finalizeRejection = () => {
                         >
                             <p 
                                 class="ml-1">
-                                This report has been identified as a duplicate and consolidated with Report ID: # 
+                                This report has been identified as a duplicate and consolidated with Report ID: 
                                 <Link 
                                     :href="`/admin/reports/${ report.duplicate_of_report_id }`" 
-                                    class="font-semibold underline hover:text-blue-700 transition-all duration-300">{{ report.duplicate_of_report_id }}
+                                    class="font-semibold underline hover:text-blue-700 transition-all duration-300">#{{ report.duplicate_of_report_id }}
                                 </Link> 
                                 The primary issue is being tracked under the referenced report.
                             </p>
@@ -193,11 +193,11 @@ const finalizeRejection = () => {
                         >
                             <p 
                                 class="ml-1">
-                                This is the primary report for this issue with a Report ID: #
+                                This is the primary report for this issue with a Report ID:
                                 <ul>
                                     <li v-for="dup in report.duplicates" :key="dup.id">
                                         <Link :href="`/admin/reports/${dup.id}`" class="font-semibold underline hover:text-blue-700 transition-all duration-300">
-                                            {{ dup.id }} 
+                                            #{{ dup.id }} 
                                         </Link>
                                         duplicate reports have been consolidated here for efficient resolution.
                                     </li>

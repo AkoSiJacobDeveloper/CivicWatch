@@ -3,6 +3,8 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import Bargraph from '@/Components/Analytics/Bargraph.vue'
 import Linegraph from '@/Components/Analytics/Linegraph.vue'
 import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useToast } from 'vue-toastification';
+
 
 const props = defineProps({
     totalReports: Number,
@@ -12,6 +14,14 @@ const props = defineProps({
     rejected: Number,
     reportCounts: Object,
     monthlyReports: Array
+})
+
+const previousCounts = ref({
+    totalReports: props.totalReports || 0,
+    pending: props.pending || 0,
+    in_progress: props.in_progress || 0,
+    resolved: props.resolved || 0,
+    rejected: props.rejected || 0
 })
 
 // Reactive data that will be updated via polling
@@ -25,6 +35,7 @@ const dashboardData = ref({
     monthlyReports: props.monthlyReports || []
 })
 
+const toast = useToast()
 const connectionStatus = ref('connected')
 const lastUpdated = ref(new Date().toLocaleTimeString())
 const pollInterval = ref(null)
@@ -39,17 +50,26 @@ const fetchDashboardData = async () => {
             throw new Error(`HTTP error! status: ${response.status}`)
         }
         
-        const data = await response.json()
+        const newData = await response.json()
         
+        const oldData = { ...dashboardData.value }
+
         // Update reactive data
         dashboardData.value = {
             ...dashboardData.value,
-            ...data
+            ...newData
         }
+
+        if (newData.pending > oldData.pending) {
+            toast.info('New Report Submitted!')
+        }
+
+        previousCounts.value = { ...dashboardData.value }
+
         lastUpdated.value = new Date().toLocaleTimeString()
         connectionStatus.value = 'connected'
         
-        console.log('📊 Polling data received:', data)
+        console.log('📊 Polling data received:', newData)
         
     } catch (error) {
         console.error('❌ Polling error:', error)
@@ -60,13 +80,13 @@ const fetchDashboardData = async () => {
 // Start polling
 const startPolling = () => {
     isPolling.value = true
-    console.log('🔄 Starting polling every 5 seconds')
+    console.log('🔄 Starting polling every 3 seconds')
     
     // Fetch immediately
     fetchDashboardData()
     
     // Then set up interval
-    pollInterval.value = setInterval(fetchDashboardData, 3000) // 5 seconds
+    pollInterval.value = setInterval(fetchDashboardData, 3000) // 3 seconds
 }
 
 // Stop polling
