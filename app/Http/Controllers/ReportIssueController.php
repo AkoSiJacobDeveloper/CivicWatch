@@ -5,14 +5,24 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\Report;
 use App\Models\Barangay;
 use App\Models\Sitio;
 use Carbon\Carbon;
 use Inertia\Inertia;
+use App\Services\FirebaseService; // ADD THIS LINE
+
 
 class ReportIssueController extends Controller
 {
+    protected $firebaseService; // ADD THIS LINE
+
+    public function __construct() // ADD THIS CONSTRUCTOR
+    {
+        $this->firebaseService = new FirebaseService();
+    }
+
     public function index()
     {
         $barangays = Barangay::with(['sitios' => function($query) {
@@ -110,7 +120,7 @@ class ReportIssueController extends Controller
             $priority = 'Low';
         }
 
-        // Create the report
+        // Create the report in MySQL
         $report = Report::create([
             'tracking_code' => $trackingCode,
             'title' => $validated['title'],
@@ -126,6 +136,25 @@ class ReportIssueController extends Controller
             'priority_level' => $priority,
             'status' => 'pending',
         ]);
+
+        // ========== ADD THIS FIREBASE SECTION ==========
+        try {
+            // Map your fields to what the alarm system expects
+            $firebaseData = [
+                'type' => $validated['issue_type'],
+                'severity' => strtolower($priority), // Convert "High" to "high"
+                'description' => $validated['description'],
+                'location' => $barangay->name . ', ' . $sitio->name
+            ];
+
+            // Send to Firebase (use the report ID as document ID)
+            $this->firebaseService->sendReportToFirestore($report->id, $firebaseData);
+            
+        } catch (\Exception $e) {
+            // Log error but don't break the report submission
+            Log::error('Failed to send report to Firebase: ' . $e->getMessage());
+        }
+        // ========== END FIREBASE SECTION ==========
 
         return redirect()->back()->with([
             'tracking_code' => $trackingCode,
