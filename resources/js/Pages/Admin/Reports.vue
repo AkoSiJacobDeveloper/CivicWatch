@@ -122,7 +122,6 @@ const canRevertReports = computed(() => {
     });
 });
 
-
 // Bulk actions options with conditional disabling
 const bulkActions = computed(() => {
     const actions = [
@@ -756,32 +755,31 @@ const fetchReportsData = async () => {
             newReportIndicator.value = true
             
             const newReportsCount = newData.totalReports - previousReportCount.value
-            toast.info(`📨 ${newReportsCount} New report received!`)
             
             // Store current IDs before refresh to compare after reload
             const currentIdsBeforeRefresh = [...currentReportIds.value];
+            
+            // Show toast immediately
+            toast.info(`📨 ${newReportsCount} new report(s) received!`)
             
             // Only refresh if we're on the "All" tab or "Pending" tab where new reports would appear
             const shouldAutoRefresh = activeStatus.value === 'all' || activeStatus.value === 'pending'
             
             if (shouldAutoRefresh) {
-                // Auto-refresh after 3 seconds
+                // Refresh immediately
+                router.reload({ preserveScroll: true, preserveState: true })
+                
+                // After reload, compare and mark new reports
                 setTimeout(() => {
-                    router.reload({ preserveScroll: true, preserveState: true })
+                    const currentIdsAfterRefresh = currentReportIds.value;
+                    const newReportIdsArray = currentIdsAfterRefresh.filter(id => !currentIdsBeforeRefresh.includes(id));
                     
-                    // After reload, compare and mark new reports
-                    setTimeout(() => {
-                        const currentIdsAfterRefresh = currentReportIds.value;
-                        const newReportIds = currentIdsAfterRefresh.filter(id => !currentIdsBeforeRefresh.includes(id));
-                        
-                        newReportIds.forEach(reportId => {
-                            markAsNewReport(reportId);
-                        });
-                    }, 500);
-                }, 3000)
+                    newReportIdsArray.forEach(reportId => {
+                        markAsNewReport(reportId);
+                    });
+                }, 1000); // Increased timeout to ensure page is fully loaded
             } else {
-                // If not auto-refreshing, we can't determine which specific reports are new
-                // So we'll mark the first few reports in the current list as new (fallback)
+                // If not auto-refreshing, mark current reports as new
                 if (props.reports.data && props.reports.data.length > 0) {
                     const newestReports = props.reports.data.slice(0, newReportsCount);
                     newestReports.forEach(report => {

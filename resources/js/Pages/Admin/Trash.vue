@@ -136,7 +136,7 @@ const permanentDelete = async (id) => {
                     <div class="">
                         <table class="w-full">
                             <thead class="border-b-2 border-gray-200">
-                                <tr class="grid grid-cols-[100px_100px_1.5fr_1fr_1fr_1fr_1fr_1fr_1.5fr] items-center">
+                                <tr class="grid grid-cols-[100px_1.5fr_1.5fr_1fr_1fr_1fr_1fr_1fr_1fr] items-center">
                                     <th v-for="(thead, index) in theads" :key="index" 
                                         class="px-3 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider font-[Poppins]">
                                         <div class="flex items-center gap-2">
@@ -149,7 +149,7 @@ const permanentDelete = async (id) => {
 
                             <tbody class="bg-white divide-y divide-gray-100">
                                 <tr v-for="(report, index) in props.reports.data" :key="index" 
-                                    class="grid grid-cols-[100px_100px_1.5fr_1fr_1fr_1fr_1fr_1fr_1.5fr] hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 group">
+                                    class="grid grid-cols-[100px_1.5fr_1.5fr_1fr_1fr_1fr_1fr_1fr_1fr] hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 group">
                 
                                     <!-- Image Column -->
                                     <td class="px-3 py-4">
@@ -298,10 +298,9 @@ const permanentDelete = async (id) => {
                                             <!-- Restore Button -->
                                             <button 
                                                 @click="restoreReport(report.id)"
-                                                class="flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-300 rounded-full hover:bg-green-600 hover:text-white hover:border-green-600 focus:outline-none focus:ring-4 focus:ring-green-100 transition-all duration-200 shadow-sm hover:shadow-md group flex-grow"
+                                                class="flex items-center justify-center gap-2 py-2 text-xs font-medium text-green-700 bg-green-50 border border-green-300 rounded-full hover:bg-green-600 hover:text-white hover:border-green-600 focus:outline-none focus:ring-4 focus:ring-green-100 transition-all duration-200 shadow-sm hover:shadow-md group flex-grow"
                                             >
-                                                Restore
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg class="h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                                 </svg>
                                             </button>
@@ -309,10 +308,9 @@ const permanentDelete = async (id) => {
                                             <!-- Permanent Delete Button -->
                                             <button 
                                                 @click="permanentDelete(report.id)"
-                                                class="flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium text-red-700 bg-red-50 border border-red-300 rounded-full hover:bg-red-600 hover:text-white hover:border-red-600 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all duration-200 shadow-sm hover:shadow-md group flex-grow"
+                                                class="flex items-center justify-center gap-2 py-2 text-xs font-medium text-red-700 bg-red-50 border border-red-300 rounded-full hover:bg-red-600 hover:text-white hover:border-red-600 focus:outline-none focus:ring-4 focus:ring-red-100 transition-all duration-200 shadow-sm hover:shadow-md group flex-grow"
                                             >
-                                                Delete
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg class="h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                 </svg>
                                             </button>

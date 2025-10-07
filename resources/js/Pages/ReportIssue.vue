@@ -163,7 +163,7 @@ function submitForm() {
             }
         },
         onFinish: () => {
-            isSubmitting.value = false; // Ensure loading state is reset
+            isSubmitting.value = false;
         }
     });
 }
