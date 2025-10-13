@@ -15,12 +15,12 @@ class ReportLocationBackfillSeeder extends Seeder
             ->whereNull('barangay_name')
             ->orWhereNull('sitio_name')
             ->chunk(100, function ($reports) {
-                foreach ($reports as $report) {
-                    $report->update([
-                        'barangay_name' => $report->barangay?->name ?? 'Unknown Barangay',
-                        'sitio_name'    => $report->sitio?->name ?? 'Unknown Sitio',
-                    ]);
-                }
-            });
+            foreach ($reports as $report) {
+                $report->update([
+                    'barangay_name' => $report->barangay?->name ?? 'Unknown Barangay',
+                    'sitio_name'    => $report->sitio?->name ?? 'Unknown Sitio',
+                ]);
+            }
+        });
     }
 }

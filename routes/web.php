@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AnnouncementCategoriesController;
 use App\Http\Controllers\BarangayController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportIssueController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\PendingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\AudienceController;
 use App\Models\Barangay;
 use App\Http\Controllers\TrackReportController;
 use App\Http\Controllers\Api\LocationController;
@@ -64,6 +66,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/reports', [ReportsController::class, 'index'])->name('admin.reports');
         Route::get('/pending-reports', [ReportsController::class, 'pendingReports'])->name('admin.pending-reports');
         Route::get('/in-progress', [ReportsController::class, 'inProgress'])->name('admin.in-progress');
+        Route::get('/projects', fn() => Inertia::render('Admin/Projects'))->name('admin.projects');
         Route::get('/resolved-reports', [ReportsController::class, 'resolvedReports'])->name('admin.resolved-reports');
         Route::get('/rejected-reports', [ReportsController::class, 'rejectedReports'])->name('admin.rejected-reports');
         Route::get('/reports/{id}', [ReportsController::class, 'show'])->name('reports.show');
@@ -95,7 +98,10 @@ Route::prefix('admin')->group(function () {
         Route::put('/issue-type/{issueType}', [IssueController::class, 'update'])->name('admin.issue-type.update');
         Route::delete('/issue-type/{issueType}', [IssueController::class, 'destroy'])->name('admin.issue-type.delete');
 
-        
+        Route::get('/announcements', fn() => Inertia::render('Admin/Announcements'));
+        Route::get('/announcements/create-announcement', [AnnouncementCategoriesController::class, 'index'])->name('admin.announcement.index');
+        Route::post('/announcement', [AnnouncementCategoriesController::class, 'store'])->name('admin.announcement.create');
+        //Fetching data to the Announcement Page
     });
 });
 

@@ -1460,7 +1460,7 @@ onUnmounted(() => {
 
             <!-- Duplicate Modal -->
             <div v-if="showDuplicateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div class="rounded-lg shadow-lg bg-white w-full max-w-md mx-4">
+                <div class="rounded-lg shadow-lg bg-white w-full max-w-xl mx-4">
                     <!-- Header -->
                     <div class="flex justify-between items-center p-5 border-b bg-blue-700 rounded-t-lg">
                         <h3 class="text-lg font-semibold font-[Poppins] text-white">Mark as Duplicate</h3>
@@ -1472,7 +1472,6 @@ onUnmounted(() => {
                     <!-- Body -->
                     <div class="p-5">
                         <p class="text-sm text-gray-600 mb-4">Select which report should be the <strong>primary</strong> one. All other selected reports will be marked as duplicates of this report.</p>
-                    
                         <div class="space-y-3 mb-4 max-h-60 overflow-y-auto">
                             <div v-for="reportId in selectedReports" :key="reportId" 
                                 class="flex items-center p-2 rounded border hover:bg-gray-50 transition-colors">

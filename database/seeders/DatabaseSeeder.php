@@ -21,7 +21,12 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            AdminSeeder::class,
             ReportLocationBackfillSeeder::class,
+            DepartmentSeeder::class,
+            DocumentsSeeder::class,
+            AnnouncementCategorySeeder::class,
+            TargetAudiencesSeeder::class,
         ]);
     }
 }

@@ -85,12 +85,12 @@ function deleteReview() {
                                 <img :src="'/Images/SVG/quote-30-double-open.svg'" alt="Quotation Icon" class="h-12">
                                 <p class=" text-gray-600">{{ review.created_at }}</p>
                             </div>
-                            <div class="h-32 overflow-y-auto">
+                            <div class="h-[145px] overflow-y-auto">
                                 <p class="text-gray-600 text-base">{{ review.review_message }}</p>
                             </div>
                         </div>
                             
-                        <div class="mt-3 flex justify-between items-center">
+                        <div class=" flex justify-between items-center">
                             <div>
                                 <h3 class="font-bold text-base font-[Poppins]">{{ review.name }}</h3>
                                 <p class="text-gray-600 text-sm ">{{ review.location }}</p>

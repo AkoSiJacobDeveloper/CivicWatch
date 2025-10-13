@@ -50,31 +50,21 @@ const links = [
             <path d="m17.418 3.623-.018-.008a6.713 6.713 0 0 0-2.4-.569V2h1a1 1 0 1 0 0-2h-2a1 1 0 0 0-1 1v2H9.89A6.977 6.977 0 0 1 12 8v5h-2V8A5 5 0 1 0 0 8v6a1 1 0 0 0 1 1h8v4a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-4h6a1 1 0 0 0 1-1V8a5 5 0 0 0-2.582-4.377ZM6 12H4a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2Z"/>
         </svg>`
     },
-    { 
-        url: '/admin/locations', 
-        urlPage: 'Locations', 
-        image: '/Images/SVG/map-pin-area.svg',
-        svg: `<svg class="shrink-0 w-5 h-5 text-white transition duration-75 dark:text-gray-400 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 20">
-            <path d="M8 0a7.992 7.992 0 0 0-6.583 12.535 1 1 0 0 0 .12.183l.12.146c.112.145.227.285.326.4l5.245 6.374a1 1 0 0 0 1.545-.003l5.092-6.205c.206-.222.4-.455.578-.7l.127-.155a.934.934 0 0 0 .122-.192A8.001 8.001 0 0 0 8 0ZM6 8a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z"/>
-        </svg>`
+]
+
+const secLinks = [
+    {
+        url: '/admin/announcements',
+        urlPage: 'Announcements',
+        image: '/Images/SVG/megaphone-fill.svg',
+        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#ffffff" viewBox="0 0 256 256"><path d="M200,72H160.2c-2.91-.17-53.62-3.74-101.91-44.24A16,16,0,0,0,32,40V200a16,16,0,0,0,26.29,12.25c37.77-31.68,77-40.76,93.71-43.3v31.72A16,16,0,0,0,159.12,214l11,7.33A16,16,0,0,0,194.5,212l11.77-44.36A48,48,0,0,0,200,72ZM179,207.89l0,.11-11-7.33V168h21.6ZM200,152H168V88h32a32,32,0,1,1,0,64Z"></path></svg>`
     },
-    // {
-    //     url: '/admin/trash',
-    //     urlPage: 'Trash',
-    //     image: '/Images/SVG/trash.svg',
-    //     svg: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#ffffff" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM112,168a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm0-120H96V40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8Z"></path></svg>`
-    // }
-    // {
-    //     url: '/admin/settings',
-    //     urlPage: 'Settings',
-    //     image: '/Images/SVG/gear-six.svg',
-    //     svg: `<svg class="shrink-0 w-5 h-5 text-white transition duration-75 
-    //         dark:text-gray-400 dark:group-hover:text-white" 
-    //         aria-hidden="true" xmlns="http://www.w3.org/2000/svg" 
-    //         fill="currentColor" viewBox="0 0 20 20">
-    //     <path d="M11.983 1.588a1 1 0 0 0-1.966 0l-.254 1.53a6.993 6.993 0 0 0-1.475.854l-1.42-.821a1 1 0 0 0-1.366.366l-1 1.732a1 1 0 0 0 .366 1.366l1.42.821a6.993 6.993 0 0 0 0 1.708l-1.42.821a1 1 0 0 0-.366 1.366l1 1.732a1 1 0 0 0 1.366.366l1.42-.821c.456.35.95.635 1.475.854l.254 1.53a1 1 0 0 0 1.966 0l.254-1.53a6.993 6.993 0 0 0 1.475-.854l1.42.821a1 1 0 0 0 1.366-.366l1-1.732a1 1 0 0 0-.366-1.366l-1.42-.821a6.993 6.993 0 0 0 0-1.708l1.42-.821a1 1 0 0 0 .366-1.366l-1-1.732a1 1 0 0 0-1.366-.366l-1.42.821a6.993 6.993 0 0 0-1.475-.854l-.254-1.53ZM10 13a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
-    //     </svg>`
-    // }
+    {
+        url: '/admin/projects',
+        urlPage: 'Projects',
+        image: '/Images/SVG/stack-fill.svg',
+        svg: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#ffffff" viewBox="0 0 256 256"><path d="M220,169.09l-92,53.65L36,169.09A8,8,0,0,0,28,182.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,169.09Z"></path><path d="M220,121.09l-92,53.65L36,121.09A8,8,0,0,0,28,134.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,121.09Z"></path><path d="M28,86.91l96,56a8,8,0,0,0,8.06,0l96-56a8,8,0,0,0,0-13.82l-96-56a8,8,0,0,0-8.06,0l-96,56a8,8,0,0,0,0,13.82Z"></path></svg>`
+    }
 ]
 
 const isLinkActive = (linkUrl) => {
@@ -181,6 +171,33 @@ function confirmLogout() {
                                 :class="isCollapsed ? 'opacity-0' : 'opacity-100'"
                             >
                                 {{ link.urlPage }}
+                            </span>
+                        </Link>
+                    </li>
+
+                    <hr class="border-t border-gray-400 opacity-50">
+
+                    <li
+                        v-for="(secLink, index) in secLinks" :key="index"
+                    >
+                        <Link
+                            :href="secLink.url" 
+                            class="flex items-center p-3 text-white rounded-lg dark:text-white hover:bg-blue-600 dark:hover:bg-gray-700 group transition-colors duration-200"
+                            :class="[
+                                isLinkActive(secLink.url) ? 'bg-blue-900 dark:bg-gray-700 text-black' : '',
+                                isCollapsed ? 'justify-center' : ''
+                            ]"
+                        >
+                            <!-- SVG Icon -->
+                            <div v-html="secLink.svg" class="shrink-0"></div>
+                            
+                            <!-- Link Text -->
+                            <span 
+                                v-show="!isCollapsed"
+                                class="ms-3 transition-opacity duration-300"
+                                :class="isCollapsed ? 'opacity-0' : 'opacity-100'"
+                            >
+                                {{ secLink.urlPage }}
                             </span>
                         </Link>
                     </li>

@@ -1,0 +1,143 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\AnnouncementCategory;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use App\Models\Audience;
+use App\Models\Sitio;
+use App\Models\Department;
+use App\Models\Announcement;
+use App\Models\Document;
+
+class AnnouncementCategoriesController extends Controller
+{
+    public function index() {
+        $announcementCategories = AnnouncementCategory::all();
+        $audiences = Audience::all();
+        $activePuroks = Sitio::where('is_available', 1)->get();
+        $offices = Department::all();
+        $documents = Document::all();
+
+        return Inertia::render('Admin/CreateAnnouncements', [
+            'announcementCategories' => $announcementCategories,
+            'audiences' => $audiences,
+            'activePuroks' => $activePuroks,
+            'offices' => $offices,
+            'documents' => $documents
+        ]);
+    }
+
+    public function create() {
+
+    }
+
+    public function store(Request $request)
+    {
+        // Validation - match your form field names
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|exists:announcement_categories,id',
+            'level' => 'required|in:high,medium,low',
+            'is_pinned' => 'required|in:yes,no',
+            'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt|max:5120',
+            'publish_at' => 'required|date',
+            'event_date' => 'required|date',
+            'expiry_date' => 'required|date|after:publish_at',
+            'contact_person' => 'required|string|max:255',
+            'contact_number' => 'required|string|max:20',
+            'purok' => 'nullable|string',
+            'audiences' => 'required|array',
+            'audiences.*' => 'exists:audiences,id',
+            'departments' => 'required|array',
+            'departments.*' => 'exists:departments,id',
+            'instructions' => 'nullable|string',
+            'counts' => 'nullable|integer',
+            'reg_deadline' => 'nullable|date',
+            
+            // ADD THESE FOR DOCUMENTS
+            'requirements' => 'nullable|array',
+            'requirements.*' => 'exists:documents,id',
+            'other_document' => 'nullable|string|max:100', // Add this
+        ]);
+
+        try {
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                $validated['image'] = $request->file('image')->store('announcements/images', 'public');
+            }
+
+            // Handle attachments
+            $attachmentsPaths = [];
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $attachmentsPaths[] = $file->store('announcements/attachments', 'public');
+                }
+                $validated['attachments'] = json_encode($attachmentsPaths);
+            }
+
+            // Convert is_pinned to boolean
+            $validated['is_pinned'] = $validated['is_pinned'] === 'yes';
+
+            // Map form fields to database columns
+            $announcementData = [
+                'title' => $validated['title'],
+                'category_id' => $validated['type'],
+                'level' => $validated['level'],
+                'is_pinned' => $validated['is_pinned'],
+                'content' => $validated['content'],
+                'image' => $validated['image'] ?? null,
+                'publish_at' => $validated['publish_at'],
+                'event_date' => $validated['event_date'],
+                'expiry_date' => $validated['expiry_date'],
+                'contact_person' => $validated['contact_person'],
+                'contact_number' => $validated['contact_number'],
+                'purok' => $validated['purok'] ?? null,
+                'instructions' => $validated['instructions'] ?? null,
+                'counts' => $validated['counts'] ?? 0,
+                'reg_deadline' => $validated['reg_deadline'] ?? null,
+                'other_document' => $validated['other_document'] ?? null, // Add this
+            ];
+
+            // Create the announcement
+            $announcement = Announcement::create($announcementData);
+
+            // Sync many-to-many relationships
+            if (isset($validated['audiences'])) {
+                $announcement->audiences()->sync($validated['audiences']);
+            }
+
+            if (isset($validated['departments'])) {
+                $announcement->departments()->sync($validated['departments']);
+            }
+
+            // HANDLE DOCUMENTS WITH "OTHER" OPTION
+            if (isset($validated['requirements'])) {
+                // Sync the selected documents (excluding 'other' which doesn't exist in database)
+                $announcement->documents()->sync($validated['requirements']);
+            }
+
+            // If you want to store the custom document as a new document record:
+            if (!empty($validated['other_document'])) {
+                // Option 1: Store as custom field (already done in announcementData above)
+                // The 'other_document' field is already saved in the announcement
+                
+                // Option 2: Create a new document record and attach it
+                // $customDocument = Document::firstOrCreate(
+                //     ['name' => $validated['other_document']],
+                //     ['document_type' => 'Custom']
+                // );
+                // $announcement->documents()->attach($customDocument->id);
+            }
+
+            return redirect()->route('announcements.index')
+                ->with('success', 'Announcement created successfully!');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to create announcement: ' . $e->getMessage());
+        }
+    }
+}

@@ -66,11 +66,11 @@ function confirmRejection() {
 
 <template>
     <div v-if="show"  class="fixed z-[9999] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
-        <div class="w-[35%] rounded-lg shadow-lg bg-white">
+        <div class="w-full max-w-xl mx-4 rounded-lg shadow-lg bg-white">
             <!-- Header -->
             <div class="flex justify-between items-center p-5 border-b bg-blue-700 rounded-t-lg">
                 <div>
-                    <h3 class="font-[Poppins] font-semibold text-2xl text-white">Reject Report</h3>
+                    <h3 class="text-lg font-semibold font-[Poppins] text-white">Reject Report</h3>
                 </div>
                 <!-- Close Button --> 
                 <div class="flex justify-end items-center">
@@ -82,31 +82,34 @@ function confirmRejection() {
                 </div>
             </div>
 
-            <div class="flex flex-col gap-10 p-5">
+            <div class="flex flex-col p-5">
                 <!-- Modal Content -->
-                <div class="flex flex-col">
-                    <p class="font-semibold text-lg mb-2">Reason for Rejecting the Report</p>
+                <div class="flex flex-col max-h-60 overflow-y-auto">
+                    <p class="text-sm text-gray-600 mb-4">Reason for rejecting the report</p>
 
                     <!-- Error Message -->
                     <div v-if="errorMessage" class="mb-3 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
                         {{ errorMessage }}
                     </div>
 
-                    <label 
+                    <div
                         v-for="(reason, index) in reasons" 
                         :key="index"
-                        class="mb-1"
+                        class="mb-3 border p-3 rounded"
                     >
-                        <input 
-                            type="radio"
-                            name="rejectReason"
-                            v-model="selectedRejectReason"
-                            :value="reason.placeholder" 
-                            class="mr-2"
-                            required
-                        >
-                        {{ reason.placeholder }}
-                    </label>
+                        <label>
+                            <input 
+                                type="radio"
+                                name="rejectReason"
+                                v-model="selectedRejectReason"
+                                :value="reason.placeholder" 
+                                class="mr-2"
+                                required
+                            >
+                            {{ reason.placeholder }}
+                        </label>
+                    </div>
+                    
 
                     <transition name="fade-slide">
                         <textarea 

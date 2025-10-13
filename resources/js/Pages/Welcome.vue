@@ -352,7 +352,7 @@ const scrollRightIssues = () => {
                                 <img :src="'/Images/SVG/quote-30-double-open.svg'" alt="Quotation Icon" class="h-12">
                                 <p class="text-sm text-gray-600 dark:text-[#faf9f6]">{{ review.created_at }}</p>
                             </div>
-                            <div class="h-32 overflow-y-auto">
+                            <div class="h-[145px] overflow-y-auto">
                                 <p class="text-gray-600 dark:text-[#faf9f6]">{{ review.review_message }}</p>
                             </div>
                         </div>
