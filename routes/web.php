@@ -14,6 +14,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\AudienceController;
 use App\Models\Barangay;
 use App\Http\Controllers\TrackReportController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Api\LocationController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -98,10 +99,9 @@ Route::prefix('admin')->group(function () {
         Route::put('/issue-type/{issueType}', [IssueController::class, 'update'])->name('admin.issue-type.update');
         Route::delete('/issue-type/{issueType}', [IssueController::class, 'destroy'])->name('admin.issue-type.delete');
 
-        Route::get('/announcements', fn() => Inertia::render('Admin/Announcements'));
-        Route::get('/announcements/create-announcement', [AnnouncementCategoriesController::class, 'index'])->name('admin.announcement.index');
-        Route::post('/announcement', [AnnouncementCategoriesController::class, 'store'])->name('admin.announcement.create');
-        //Fetching data to the Announcement Page
+        Route::get('/announcements/create-announcement', [AnnouncementController::class, 'index'])->name('admin.announcement.index');
+        Route::post('/announcements', [AnnouncementController::class, 'store'])->name('admin.announcement.store');
+        Route::get('/announcements', [AnnouncementController::class, 'showData'])->name('admin.pinned.report');
     });
 });
 

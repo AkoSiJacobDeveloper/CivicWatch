@@ -10,14 +10,14 @@ import CustomMultiselect from './CustomMultiselect.vue';
 const props = defineProps({
     announcementCategories: Array,
     audiences: Array,
-    activePuroks: Array,
+    // activePuroks: Array,
     offices: Array,
     documents: Array,
 })
 
 const toast = useToast();
 const levels = ['high', 'medium', 'low'];
-const isFeatureds = ['yes', 'no']
+const isFeatureds = ['yes', 'no'];
 
 const form = useForm({
     title: '',
@@ -28,6 +28,7 @@ const form = useForm({
     image: null,
     publish_at: '',
     event_date: '',
+    venue: '',
     expiry_date: '',
     contact_person: '',
     contact_number: '',
@@ -40,14 +41,12 @@ const form = useForm({
     counts: '',
     reg_deadline: '',
     other_document: '',
-    
-    // category_id: '',
-    
+    specific_area: '',
 })
 
 const purokOptions = [
     { id: 'all', name: 'All Purok' },
-    ...props.activePuroks
+    { id: 'specific', name: 'Specific Area (Specify below)' },
 ]
 
 const getPurokName = (id) => {
@@ -73,39 +72,25 @@ const imageInputRef = ref(null)
 const attachmentsInputRef = ref(null)
 
 const submitForm = () => {
-    form.transform((data) => {
-        // Helper function to extract IDs
-        const extractIds = (array) => {
-            if (!array) return [];
-            return array.map(item => item?.id || item).filter(id => id && id !== 'other');
-        };
-
-        return {
-            ...data,
-            audiences: extractIds(data.audiences),
-            departments: extractIds(data.departments),
-            requirements: extractIds(data.requirements),
-            other_document: data.other_document,
-            image: data.image
-        };
-    }).post(route('admin.announcement.create'), {
+    form.post(route('admin.announcement.store'), {
         preserveScroll: true,
+        forceFormData: true,
         onSuccess: () => {
-            // Clear file inputs using refs
             if (imageInputRef.value) imageInputRef.value.value = ''
             if (attachmentsInputRef.value) attachmentsInputRef.value.value = ''
             
-            // Clear form data
+            form.reset()
             form.image = null
             form.attachments = []
-            form.reset()
             toast.success('Announcement created successfully!');
         },
         onError: (errors) => {
-            console.log('Errors:', errors);
+            toast.error('Failed to create announcement');
+            console.log(errors)
         }
     });
 }
+
 const removeAttachment = (index) => {
     // Remove the file from the attachments array
     form.attachments.splice(index, 1)
@@ -184,7 +169,7 @@ onMounted(() => {
         <div class="grid grid-cols-2 gap-4 mb-5">
             <!-- Title -->
             <div>
-                <div  class="flex items-center gap-1">
+                <div class="flex items-center gap-1">
                     <label for="title" class="block text-sm font-[Poppins] font-medium">Title</label>
                     <button 
                         data-tooltip-target="tooltip-info-title"
@@ -208,7 +193,7 @@ onMounted(() => {
                     v-model="form.title"
                     type="text"
                     placeholder="Assembly of Barangay Officials"
-                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
                 >
             </div>
 
@@ -237,7 +222,7 @@ onMounted(() => {
                 <Listbox
                     v-model="form.type"
                     as="div"
-                    class="relative"
+                    class="relative "
                 >
                     <ListboxButton
                         class="flex justify-between items-center text-left p-3 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
@@ -260,7 +245,7 @@ onMounted(() => {
                     </ListboxButton>
 
                     <ListboxOptions
-                        class="absolute z-50  w-full bg-white rounded-lg shadow-lg border border-gray-300 dark:bg-[#2c2c2c] max-h-56 overflow-y-auto"
+                        class="absolute z-50  w-full bg-white rounded-lg shadow-lg border border-gray-300 dark:bg-[#2c2c2c] max-h-56 overflow-y-auto" 
                     >
                         <ListboxOption
                             v-for="announcementCategorie in props.announcementCategories"
@@ -373,6 +358,36 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
+
+            <!-- Venue -->
+            <div>
+                <div class="flex items-center gap-1">
+                    <label for="category" class="block text-sm font-[Poppins] font-medium">Venue</label>
+                    <button 
+                        data-tooltip-target="tooltip-info-venue"
+                        type="button"
+                        class="text-blue-500 hover:text-blue-700"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="blue" viewBox="0 0 256 256"><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path></svg>
+                    </button>
+
+                    <div 
+                        id="tooltip-info-venue"
+                        role="tooltip"
+                        class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
+                    >
+                        Venue where the events will takes place
+                        <div class="tooltip-arrow" data-popper-arrow></div>
+                    </div>
+                </div>
+
+                <input 
+                    v-model="form.venue"
+                    type="text"
+                    placeholder="e.g., Barangay Hall, Community Center, Cabulijan Basketball Court"
+                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
+                >
+            </div>
         </div>
 
         <h1 class="font-bold text-2xl mb-2 text-blue-500">Content & Media</h1>
@@ -404,7 +419,7 @@ onMounted(() => {
                         id="description"
                         rows="7"
                         placeholder="Write the announcement description here..."
-                        class=" w-full text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none"
+                        class=" w-full text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-200 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none"
                         required
                     ></textarea>
                 </div>
@@ -436,7 +451,7 @@ onMounted(() => {
                         ref="imageInputRef"  
                         type="file"
                         @change="handleImageChange"
-                        class="w-full  text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600 cursor-pointer"
+                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600 cursor-pointer "
                         accept="image/*"
                     >
                 </div>
@@ -522,7 +537,7 @@ onMounted(() => {
                     v-model="form.publish_at"
                     :min="today"
                     type="datetime-local"
-                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c] "
                     required
                     
                 >
@@ -552,7 +567,7 @@ onMounted(() => {
                 <input 
                     v-model="form.event_date"
                     type="datetime-local"
-                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
                     required
                 >
             </div>
@@ -581,7 +596,7 @@ onMounted(() => {
                 <input 
                     v-model="form.expiry_date"
                     type="datetime-local"
-                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
                     required
                 >
             </div>
@@ -620,7 +635,7 @@ onMounted(() => {
             </div>
 
             <!--- Specific Areas/Purok (Optional)-->
-            <div>
+            <!-- <div>
                 <div class="flex items-center gap-1">
                     <label for="category" class="block text-sm font-[Poppins] font-medium">Specific Areas/Purok</label>
                     <button 
@@ -681,6 +696,74 @@ onMounted(() => {
                         </ListboxOption>
                     </ListboxOptions>
                 </Listbox>
+            </div> -->
+            <div>
+                <div class="flex items-center gap-1">
+                    <label class="block text-sm font-[Poppins] font-medium">Target Area Scope</label>
+                    <button 
+                        data-tooltip-target="tooltip-info-areas"
+                        type="button"
+                        class="text-blue-500 hover:text-blue-700"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="blue" viewBox="0 0 256 256"><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path></svg>
+                    </button>
+
+                    <div 
+                        id="tooltip-info-areas"
+                        role="tooltip"
+                        class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
+                    >
+                        Target specific puroks or select 'All Purok' for everyone
+                        <div class="tooltip-arrow" data-popper-arrow></div>
+                    </div>
+                </div>
+                <Listbox v-model="form.purok" as="div" class="relative">
+                    <ListboxButton 
+                        class="flex justify-between items-center text-left p-3 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                        required
+                    >
+                        {{ form.purok === 'all' ? 'All Purok/Sitio (Recommended)' : 'Specific Area' }}
+
+                        <svg
+                            class="w-5 h-5 text-gray-400"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            >
+                            <path
+                                fill-rule="evenodd"
+                                d="M5.23 7.21a.75.75 0 011.06.02L10 11.292l3.71-4.06a.75.75 0 111.08 1.04l-4.25 4.65a.75.75 0 01-1.08 0l-4.25-4.65a.75.75 0 01.02-1.06z"
+                                clip-rule="evenodd"
+                            />
+                        </svg>
+                    </ListboxButton>
+                    <ListboxOptions 
+                        class="absolute z-50 w-full bg-white rounded-lg shadow-lg border border-gray-300 dark:bg-[#2c2c2c] max-h-56 overflow-y-auto"
+                    >
+                        <ListboxOption 
+                            v-for="purok in purokOptions" 
+                            :key="purok.id" 
+                            :value="purok.id"
+                            class="dark:bg-[#2c2c2c] px-4 py-2 hover:bg-blue-100 transition-all duration-100"
+                        >
+                            {{ purok.name }}
+                        </ListboxOption>
+                    </ListboxOptions>
+                </Listbox>
+            </div>
+
+            <!-- Specific Area -->
+            <div v-if="form.purok === 'specific'">
+                <div class="flex items-center gap-1">
+                    <label class="block text-sm font-[Poppins] font-medium">Specific Area</label>
+                    <!-- Tooltip... -->
+                </div>
+                <input 
+                    v-model="form.specific_area"
+                    type="text"
+                    placeholder="e.g., Purok 5, Sitio Centro, Near Barangay Hall"
+                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 focus:outline focus:ring-1 focus:border-blue-200 peer"
+                >
             </div>
         </div>
 
@@ -711,7 +794,7 @@ onMounted(() => {
                     v-model="form.contact_person"
                     type="text"
                     placeholder="Brgy. Capt. Jarred Ruba"
-                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline1 focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
                     required
                 >
             </div>
@@ -741,7 +824,7 @@ onMounted(() => {
                     v-model="form.contact_number"
                     type="tel"
                     placeholder="+63 912 345 6789"
-                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
                     required
                 >
             </div>
@@ -783,52 +866,53 @@ onMounted(() => {
             <div class="grid grid-cols-2 gap-4 mb-5">
                 <!-- Documents -->
                 <div>
-    <div class="flex items-center gap-1">
-        <label for="category" class="block text-sm font-[Poppins] font-medium">Documents Needed</label>
-        <button 
-            data-tooltip-target="tooltip-info-documents"
-            type="button"
-            class="text-blue-500 hover:text-blue-700"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="blue" viewBox="0 0 256 256"><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path></svg>
-        </button>
+                    <div class="flex items-center gap-1">
+                        <label for="category" class="block text-sm font-[Poppins] font-medium">Documents Needed</label>
+                        <button 
+                            data-tooltip-target="tooltip-info-documents"
+                            type="button"
+                            class="text-blue-500 hover:text-blue-700"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="blue" viewBox="0 0 256 256"><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path></svg>
+                        </button>
 
-        <div 
-            id="tooltip-info-documents"
-            role="tooltip"
-            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
-        >
-            Select documents needed for the event. Use "Other" for custom documents.
-            <div class="tooltip-arrow" data-popper-arrow></div>
-        </div>
-    </div>
+                        <div 
+                            id="tooltip-info-documents"
+                            role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
+                        >
+                            Select documents needed for the event. Use "Other" for custom documents.
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </div>
     
-    <!-- Documents Multiselect -->
-    <CustomMultiselect
-        v-model="form.requirements"
-        :options="enhancedDocuments"
-        placeholder="Select required documents"
-        label="name"
-        track-by="id"
-        :multiple="true"
-        :close-on-select="false"
-    />
-    
-    <!-- Other Document Input (Shows only when "Other" is selected) -->
-    <div v-if="hasOtherDocument" class="mt-3 transition-all duration-300">
-        <label class="block text-sm font-[Poppins] font-medium text-gray-700 mb-1">
-            Specify Other Document
-        </label>
-        <input 
-            v-model="form.other_document"
-            type="text"
-            placeholder="Enter custom document name (e.g., Voter's ID, NSO Certificate, etc.)"
-            class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            maxlength="100"
-        >
-        <p class="text-xs text-gray-500 mt-1">Enter the name of the custom document required</p>
-    </div>
-</div>
+                    <!-- Documents Multiselect -->
+                    <CustomMultiselect
+                        v-model="form.requirements"
+                        :options="enhancedDocuments"
+                        placeholder="Select required documents"
+                        label="name"
+                        track-by="id"
+                        :multiple="true"
+                        :close-on-select="false"
+                        class="border-0 bg-inherit p-0"
+                    />
+                    
+                    <!-- Other Document Input (Shows only when "Other" is selected) -->
+                    <div v-if="hasOtherDocument" class="mt-3 transition-all duration-300">
+                        <label class="block text-sm font-[Poppins] font-medium text-gray-700 mb-1">
+                            Specify Other Document
+                        </label>
+                        <input 
+                            v-model="form.other_document"
+                            type="text"
+                            placeholder="Enter custom document name (e.g., Voter's ID, NSO Certificate, etc.)"
+                            class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                            maxlength="100"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Enter the name of the custom document required</p>
+                    </div>
+                </div>
 
                 <!--Participants Slots -->
                 <div>
@@ -856,7 +940,7 @@ onMounted(() => {
                         type="number"
                         min="1"
                         placeholder="50"
-                        class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                        class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
                     >
                 </div>
 
@@ -884,7 +968,7 @@ onMounted(() => {
                     <input 
                         v-model="form.reg_deadline"
                         type="date"
-                        class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                        class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
                     >
                 </div>
 
@@ -912,8 +996,8 @@ onMounted(() => {
                     <textarea 
                         v-model="form.instructions"
                         rows="7"
-                        placeholder="E.g., Bring original and 2 photocopies, Special instructions..."
-                        class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                        placeholder="Put additional instructions or reminders here..."
+                        class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
                     ></textarea>
                 </div>
             </div>

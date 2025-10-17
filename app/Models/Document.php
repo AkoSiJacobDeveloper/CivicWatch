@@ -13,4 +13,10 @@ class Document extends Model
         'name',
         'document_type'
     ];
+
+    public function announcements()
+    {
+        return $this->belongsToMany(Announcement::class, 'announcement_documents');
+    }
+
 }

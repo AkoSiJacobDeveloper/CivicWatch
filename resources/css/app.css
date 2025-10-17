@@ -25,6 +25,13 @@
                 -5px -5px 16px #ffffff;
 }
 
+
+.shadow-container-announcement {
+    border-radius: 20px;
+    box-shadow:  5px 5px 16px #bdbdbd,
+                -5px -5px 16px #ffffff;
+}
+
 [data-popper-arrow]::before {
     content: "";
     position: absolute;

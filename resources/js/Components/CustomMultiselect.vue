@@ -115,7 +115,7 @@ const closeDropdown = () => {
         <!-- Selected Items Display -->
         <div
             class="flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer transition-all duration-200 min-h-12 hover:border-gray-400"
-            :class="{ 'ring-2 ring-blue-500 border-blue-500': isOpen }"
+            :class="{ 'ring-1 ring-blue-500 border-blue-500': isOpen }"
             @click="toggleDropdown"
         >
         <div class="flex flex-wrap items-center flex-1 gap-1">

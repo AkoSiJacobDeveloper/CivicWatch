@@ -11,31 +11,34 @@ use App\Models\Department;
 use App\Models\Announcement;
 use App\Models\Document;
 use App\Models\Attachment;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
-class AnnouncementCategoriesController extends Controller
+class AnnouncementController extends Controller
 {
     public function index() {
         $announcementCategories = AnnouncementCategory::all();
         $audiences = Audience::all();
-        $activePuroks = Sitio::where('is_available', 1)->get();
+        // $activePuroks = Sitio::where('is_available', 1)->get();
         $offices = Department::all();
         $documents = Document::all();
 
         return Inertia::render('Admin/CreateAnnouncements', [
             'announcementCategories' => $announcementCategories,
             'audiences' => $audiences,
-            'activePuroks' => $activePuroks,
+            // 'activePuroks' => $activePuroks,
             'offices' => $offices,
             'documents' => $documents
         ]);
     }
 
     public function create() {
-
+        
     }
 
-    public function store(Request $request)
-    {
+    public function store(Request $request) {
+        Log::info('Creating new announcement');
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|exists:announcement_categories,id',
@@ -45,10 +48,11 @@ class AnnouncementCategoriesController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'publish_at' => 'required|date',
             'event_date' => 'required|date',
+            'venue' => 'required|string|max:255',
             'expiry_date' => 'required|date|after:publish_at',
             'contact_person' => 'required|string|max:255',
             'contact_number' => 'required|string|max:20',
-            'purok' => 'nullable|string',
+            'purok' => 'required|in:all,specific',
             'audiences' => 'required|array',
             'audiences.*' => 'exists:audiences,id',
             'departments' => 'required|array',
@@ -59,6 +63,9 @@ class AnnouncementCategoriesController extends Controller
             'requirements' => 'nullable|array',
             'requirements.*' => 'exists:documents,id',
             'other_document' => 'nullable|string|max:100',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,txt|max:10240',
+            'specific_area' => 'nullable|string|max:255|required_if:purok,specific',
         ]);
 
         try {
@@ -70,7 +77,7 @@ class AnnouncementCategoriesController extends Controller
             // Convert is_pinned to boolean
             $validated['is_pinned'] = $validated['is_pinned'] === 'yes';
 
-            // Map form fields to database columns
+            // Create announcement
             $announcementData = [
                 'title' => $validated['title'],
                 'category_id' => $validated['type'],
@@ -80,27 +87,33 @@ class AnnouncementCategoriesController extends Controller
                 'image' => $validated['image'] ?? null,
                 'publish_at' => $validated['publish_at'],
                 'event_date' => $validated['event_date'],
+                'venue' => $validated['venue'],
                 'expiry_date' => $validated['expiry_date'],
                 'contact_person' => $validated['contact_person'],
                 'contact_number' => $validated['contact_number'],
-                'purok' => $validated['purok'] ?? null,
+                'purok' => $validated['purok'],
                 'instructions' => $validated['instructions'] ?? null,
                 'counts' => $validated['counts'] ?? 0,
                 'reg_deadline' => $validated['reg_deadline'] ?? null,
                 'other_document' => $validated['other_document'] ?? null,
+                'specific_area' => $validated['specific_area'] ?? null,
+
             ];
 
-            // Create the announcement
             $announcement = Announcement::create($announcementData);
+            $announcement->load('documents');
 
-            // Handle attachments - CREATE ACTUAL ATTACHMENT RECORDS
+            // Handle attachments
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $filePath = $file->store('announcements/attachments', 'public');
                     
                     Attachment::create([
                         'announcement_id' => $announcement->id,
-                        'file_path' => $filePath
+                        'file_path' => $filePath,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
                     ]);
                 }
             }
@@ -114,16 +127,30 @@ class AnnouncementCategoriesController extends Controller
                 $announcement->departments()->sync($validated['departments']);
             }
 
-            // Handle documents
             if (isset($validated['requirements'])) {
                 $announcement->documents()->sync($validated['requirements']);
             }
 
-            return redirect()->route('announcements.index')
+            return redirect()->route('admin.pinned.report')
                 ->with('success', 'Announcement created successfully!');
 
         } catch (\Exception $e) {
+            Log::error('Error creating announcement: ' . $e->getMessage());
             return back()->with('error', 'Failed to create announcement: ' . $e->getMessage());
         }
+    }
+    
+    public function showData() {
+        $announcements = Announcement::with(['attachments', 'category', 'documents', 'departments', 'audiences'])->get();
+
+        // Separate the pinned reports with non-pinned reports
+        $grouped = [
+            'pinned' => $announcements->where('is_pinned', 1)->values(),
+            'regular' => $announcements->where('is_pinned', 0)->values(),
+        ];
+
+        return Inertia::render('Admin/Announcements', [
+            'announcements' => $grouped,
+        ]);
     }
 }

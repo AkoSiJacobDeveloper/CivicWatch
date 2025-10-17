@@ -18,13 +18,16 @@ class Announcement extends Model
         'image',
         'publish_at', // Fixed: was 'published_at' in fillable but 'publish_at' in migration
         'event_date',
+        'venue',
         'expiry_date',
         'contact_person',
         'contact_number',
         'instructions',
         'counts',
         'reg_deadline',
-        'other_document'
+        'other_document',
+        'purok',
+        'specific_area',
     ];
 
     protected $casts = [
@@ -57,6 +60,25 @@ class Announcement extends Model
 
     public function documents()
     {
-        return $this->belongsToMany(Document::class);
+        return $this->belongsToMany(Document::class, 'announcement_documents');
+    }
+
+    public function getPublishDateAttribute() {
+        return $this->publish_at ? $this->publish_at->format('Y-m-d') : null;
+    }
+
+    public function getPublishTimeAttribute()
+    {
+        return $this->publish_at ? $this->publish_at->format('H:i') : null;
+    }
+
+    public function getEventDateAttribute($value)
+    {
+        return $value ? $this->asDateTime($value)->format('Y-m-d') : null;
+    }
+
+    public function getEventTimeAttribute($value)
+    {
+        return $value ? $this->asDateTime($value)->format('H:i') : null;
     }
 }
