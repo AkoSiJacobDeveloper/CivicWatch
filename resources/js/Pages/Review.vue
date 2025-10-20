@@ -36,8 +36,8 @@ function openReviewModal() {
 
             <!-- Review Section -->
             <section class="md:px-10 lg:px-32 py-20">
-                <div v-if="reviews.length === 0" class="text-center text-gray-500 ">
-                    No reviews yet. Be the first to write one!
+                <div v-if="!reviews.data || reviews.data.length === 0"  class="text-center text-gray-500">
+                    <p class="text-xl mb-4 py-20">No reviews yet. Be the first to write one!</p>
                 </div>
                 <div v-else class="grid grid-cols-3 gap-5">
                     <div v-for="review in props.reviews.data" :key="review.id" class="shadow-lg rounded-lg p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] ">
@@ -59,7 +59,7 @@ function openReviewModal() {
                 </div>
                 
                 <!-- Pagination -->
-                <div class="flex justify-end mt-10">
+                <div v-if="reviews.data && reviews.data.length > 0" class="flex justify-end mt-10">
                     <div class="flex items-center gap-3 rounded">
                         <template v-for="link in (props.reviews.links || [])" :key="link?.label || 'empty'">
                             <Link

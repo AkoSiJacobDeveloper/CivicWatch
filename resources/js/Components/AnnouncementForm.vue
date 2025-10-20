@@ -4,19 +4,17 @@ import { ref, onMounted, computed } from 'vue';
 import { useToast } from 'vue-toastification';
 import { initTooltips } from 'flowbite';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-// import Multiselect from 'vue-multiselect'
 import CustomMultiselect from './CustomMultiselect.vue';
 
 const props = defineProps({
     announcementCategories: Array,
     audiences: Array,
-    // activePuroks: Array,
     offices: Array,
     documents: Array,
 })
 
 const toast = useToast();
-const levels = ['high', 'medium', 'low'];
+const levels = ['urgent', 'important', 'general'];
 const isFeatureds = ['yes', 'no'];
 
 const form = useForm({
@@ -26,10 +24,8 @@ const form = useForm({
     is_pinned: '',
     content: '',
     image: null,
-    publish_at: '',
     event_date: '',
     venue: '',
-    expiry_date: '',
     contact_person: '',
     contact_number: '',
     purok: 'all',
@@ -279,9 +275,9 @@ onMounted(() => {
                         class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
                     >
                         <ul>
-                            <li><span class="text-red-700 font-semibold">High</span>: For emergency alerts and urgent matters</li>
-                            <li><span class="text-amber-700 font-semibold">Medium</span>: For important but non-critical announcements</li>
-                            <li><span class="text-green-700 font-semibold">Low</span>: For general information and routine updates</li>
+                            <li><span class="text-red-700 font-semibold">Urgent</span>: For emergency alerts and urgent matters</li>
+                            <li><span class="text-amber-700 font-semibold">Important</span>: For important but non-critical announcements</li>
+                            <li><span class="text-green-700 font-semibold">General</span>: For general information and routine updates</li>
                         </ul>
                         <div class="tooltip-arrow" data-popper-arrow></div>
                     </div>
@@ -512,37 +508,6 @@ onMounted(() => {
         
         <h1 class="font-bold text-2xl mb-2 text-blue-500">Schedule & Dates</h1>
         <div class="grid grid-cols-2 gap-4 mb-5">
-            <!-- Publish Date and Time -->
-            <div>
-                <div class="flex items-center gap-1">
-                    <label for="category" class="block text-sm font-[Poppins] font-medium">Publish Date & Time</label>
-                    <button 
-                        data-tooltip-target="tooltip-info-publish"
-                        type="button"
-                        class="text-blue-500 hover:text-blue-700"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="blue" viewBox="0 0 256 256"><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path></svg>
-                    </button>
-
-                    <div 
-                        id="tooltip-info-publish"
-                        role="tooltip"
-                        class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
-                    >
-                        When the announcement becomes visible to residents
-                        <div class="tooltip-arrow" data-popper-arrow></div>
-                    </div>
-                </div>
-                <input
-                    v-model="form.publish_at"
-                    :min="today"
-                    type="datetime-local"
-                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c] "
-                    required
-                    
-                >
-            </div>
-
             <!-- Event Date -->
             <div>
                 <div class="flex items-center gap-1">
@@ -566,35 +531,6 @@ onMounted(() => {
                 </div>
                 <input 
                     v-model="form.event_date"
-                    type="datetime-local"
-                    class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
-                    required
-                >
-            </div>
-
-            <!-- Expiry Date -->
-            <div>
-                <div class="flex items-center gap-1">
-                    <label for="category" class="block text-sm font-[Poppins] font-medium">Expiry Date</label>
-                    <button 
-                        data-tooltip-target="tooltip-info-expiry"
-                        type="button"
-                        class="text-blue-500 hover:text-blue-700"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="blue" viewBox="0 0 256 256"><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path></svg>
-                    </button>
-
-                    <div 
-                        id="tooltip-info-expiry"
-                        role="tooltip"
-                        class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
-                    >
-                        When the announcement automatically archives (optional)
-                        <div class="tooltip-arrow" data-popper-arrow></div>
-                    </div>
-                </div>
-                <input 
-                    v-model="form.expiry_date"
                     type="datetime-local"
                     class="w-full p-3 bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline focus:ring-1 focus:border-blue-200 peer dark:bg-[#2c2c2c]"
                     required
@@ -634,69 +570,6 @@ onMounted(() => {
                 />
             </div>
 
-            <!--- Specific Areas/Purok (Optional)-->
-            <!-- <div>
-                <div class="flex items-center gap-1">
-                    <label for="category" class="block text-sm font-[Poppins] font-medium">Specific Areas/Purok</label>
-                    <button 
-                        data-tooltip-target="tooltip-info-areas"
-                        type="button"
-                        class="text-blue-500 hover:text-blue-700"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="blue" viewBox="0 0 256 256"><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path></svg>
-                    </button>
-
-                    <div 
-                        id="tooltip-info-areas"
-                        role="tooltip"
-                        class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
-                    >
-                        Target specific puroks or select 'All Purok' for everyone
-                        <div class="tooltip-arrow" data-popper-arrow></div>
-                    </div>
-                </div>
-                <Listbox
-                    v-model="form.purok"
-                    as="div"
-                    class="relative"
-                >
-                    <ListboxButton
-                        class="flex justify-between items-center text-left p-3 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
-                        required
-                    >
-                        {{ form.purok ? (form.purok === 'all' ? 'All Purok' : purokOptions.find(p => p.id === form.purok)?.name) : 'Select purok area' }}
-
-
-                        <svg
-                            class="w-5 h-5 text-gray-400"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            >
-                            <path
-                                fill-rule="evenodd"
-                                d="M5.23 7.21a.75.75 0 011.06.02L10 11.292l3.71-4.06a.75.75 0 111.08 1.04l-4.25 4.65a.75.75 0 01-1.08 0l-4.25-4.65a.75.75 0 01.02-1.06z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
-                    </ListboxButton>
-
-                    <ListboxOptions
-                        class="absolute z-50 w-full bg-white rounded-lg shadow-lg border border-gray-300 dark:bg-[#2c2c2c] max-h-56 overflow-y-auto"
-                    >
-                        <ListboxOption
-                            v-for="purok in purokOptions"
-                            :key="purok.id"
-                            :value="purok.id"
-                            class="dark:bg-[#2c2c2c] px-4 py-2 hover:bg-blue-100 transition-all duration-100"
-                        >
-                            {{ purok.name}}
-
-                            
-                        </ListboxOption>
-                    </ListboxOptions>
-                </Listbox>
-            </div> -->
             <div>
                 <div class="flex items-center gap-1">
                     <label class="block text-sm font-[Poppins] font-medium">Target Area Scope</label>

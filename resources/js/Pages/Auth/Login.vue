@@ -10,6 +10,9 @@ const form = useForm({
 })
 
 const countdown = ref(null)
+const emailFocused = ref(false)
+const passwordFocused = ref(false)
+const isLoading = ref(false)
 let timer = null
 
 function setCountdown(seconds) {
@@ -58,8 +61,12 @@ onMounted(() => {
 })
 
 function submit() {
+    isLoading.value = true
     form.post('/admin/login', {
-        onFinish: () => form.reset('password'),
+        onFinish: () => {
+            form.reset('password')
+            isLoading.value = false
+        },
         onSuccess: () => {
             router.visit('/admin/dashboard')
         },
@@ -68,106 +75,164 @@ function submit() {
 </script>
 
 <template>
-    <main class=" flex justify-center items-center h-screen w-screen main-container" style="background-image: url('/Images/stacked.svg');">
-        <div class="h-[70%] w-[70%] flex z-[9999] rounded-md shadow-lg">
-            <section class="w-3/5 left-section rounded hidden md:block" style="background-image: url('/Images/stacked.svg');" >
-                <Link href="/">
-                    <font-awesome-icon icon="circle-arrow-left" class="text-[#FAF9F6] p-5 text-2xl" />
-                </Link>
-                <div class="flex justify-center items-center h-[70%]">
-                    <img :src="'/Images/CivicWatch(1).png'" alt="CivicWatch">
-                </div>
-                <div class="text-[#FAF9F6] text-xs text-center">
-                    <p>&copy; {{ new Date().getFullYear() }} CivicWatch. All rights reserved.</p>
-                </div>
-            </section>
+    <main class="flex h-screen w-screen bg-white">
+        <!-- Left Section - Logo -->
+        <section class="hidden md:flex w-2/3 items-center justify-center bg-gray-50 relative">
+            <!-- Back Button -->
+            <Link href="/" class="absolute top-8 left-8 group">
+                <img 
+                    :src="'/Images/SVG/arrow-circle-left-fill (700).svg'" 
+                    alt="Back Icon"
+                    class="h-10 w-10 transition-transform duration-300 group-hover:scale-110"
+                >
+            </Link>
             
-            <section class="w-full md:w-2/5 bg-[#FAF9F6] rounded md:p-5 flex justify-center items-center">
-                <div class="px-5 flex flex-col gap-8">
-                    <div class="">
-                        <h1 class="font-semibold font-[Poppins] text-3xl">Welcome Back!</h1>
+            <div class="transform transition-transform duration-500 hover:scale-105">
+                <img 
+                    :src="'/Images/Cabulijan/erasebg-transformed.webp'" 
+                    alt="Barangay Seal" 
+                    class="w-full h-full max-w-xl object-contain opacity-90"
+                >
+            </div>
+        </section>
+    
+        <!-- Right Section - Login Form -->
+        <section class="w-full md:w-1/3 flex items-center justify-center p-8">
+            <div class="w-full max-w-sm space-y-8">
+                <!-- Header -->
+                <div class="space-y-2">
+                    <h1 class="text-3xl font-semibold text-gray-900 font-[Poppins]">
+                        Welcome Back
+                    </h1>
+                    <p class="text-sm text-gray-500">
                         <p class="text-sm text-gray-500">Your role matters. Let’s get things done for the community.</p>
-                    </div>
+                    </p>
+                </div>
 
-                    <div v-if="form.errors.credentials" class="bg-[#F2DEDE] border-red-400 text-[#A94442] text-center text-xs font-semibold py-4 rounded">{{ form.errors.credentials }}</div>
+                <!-- Error Messages -->
+                <div v-if="form.errors.credentials" class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-sm text-red-600">{{ form.errors.credentials }}</p>
+                </div>
 
-                    <div v-if="countdown !== null" class="bg-[#F2DEDE] border-red-400 text-[#A94442] text-center text-xs font-semibold py-4 rounded">
-                        Too many login attempts. Please try again in {{ countdown }} second<span v-if="countdown !== 1">s</span>.
-                    </div>
+                <div v-if="countdown !== null" class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-sm text-red-600">
+                        Too many attempts. Try again in {{ countdown }}s
+                    </p>
+                </div>
 
-                    <div>
-                        <form @submit.prevent="submit" class="flex flex-col md:gap-1 ">
-                            <!-- Email Address -->
-                            <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Email</label>
-                            <div class="flex border bg-gray-100 rounded-full mb-4">
-                                <div class="p-3 flex justify-center items-center ml-2">
-                                    <img 
-                                        :src="'/Images/SVG/envelope-simple.svg'" 
-                                        alt="Icon" 
-                                        class="h-6"
-                                    >
-                                </div>
-                
-                                <input 
-                                    v-model="form.email"
-                                    type="email" 
-                                    placeholder="Email"
-                                    class="w-full border-0 bg-gray-100 rounded-full focus:outline-none focus:ring-0 focus:border-blue-600 peer"
+                <!-- Form -->
+                <form @submit.prevent="submit" class="space-y-5">
+                    <!-- Email Field -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Email
+                        </label>
+                        <div class="relative">
+                            <div class="absolute left-3 top-1/2 -translate-y-1/2">
+                                <img 
+                                    :src="'/Images/SVG/envelope-simple.svg'" 
+                                    alt="Email" 
+                                    class="h-5 w-5 opacity-40"
                                 >
                             </div>
-
-                            <!-- Passowrd -->
-                            <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Password</label>
-                            <div class="flex border bg-gray-100 rounded-full mb-4">
-                                <div class="p-3 flex justify-center items-center ml-2">
-                                    <img 
-                                        :src="'/Images/SVG/lock.svg'" 
-                                        alt="Icon" 
-                                        class="h-6"
-                                    >
-                                </div>
-                
-                                <input 
-                                    v-model="form.password"
-                                    type="password" 
-                                    placeholder="Password"
-                                    class="w-full border-0 bg-gray-100 rounded-full focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-                                >
-                            </div>
-                    
-                            <button
-                                type="submit"
-                                :disabled="countdown !== null"
-                                class="p-3 w-full rounded text-[#FAF9F6] transition-all duration-200"
-                                :class="{
-                                    'bg-blue-600 hover:bg-blue-700 cursor-pointer': countdown === null,
-                                    'bg-gray-400 cursor-not-allowed': countdown !== null
-                                }"
-                                >
-                                    <span v-if="countdown === null">Login</span>
-                                    <span v-else>Locked ({{ countdown }}s)</span>
-                            </button>
-                        </form>
-                        <div class="text-center mt-5">
-                            <Link class="text-blue-600 text-xs md:hidden" href="/">Back to Home</Link>
+                            <input
+                                v-model="form.email"
+                                type="email"
+                                placeholder="admin@example.com"
+                                @focus="emailFocused = true"
+                                @blur="emailFocused = false"
+                                :class="[
+                                    'w-full pl-11 pr-4 py-3 bg-white border rounded-lg transition-all duration-200 focus:outline-none',
+                                    emailFocused 
+                                        ? 'border-gray-900 ring-1 ring-gray-900' 
+                                        : 'border-gray-300 hover:border-gray-400'
+                                ]"
+                            >
                         </div>
                     </div>
+
+                    <!-- Password Field -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Password
+                        </label>
+                        <div class="relative">
+                            <div class="absolute left-3 top-1/2 -translate-y-1/2">
+                                <img 
+                                    :src="'/Images/SVG/lock.svg'" 
+                                    alt="Password" 
+                                    class="h-5 w-5 opacity-40"
+                                >
+                            </div>
+                            <input
+                                v-model="form.password"
+                                type="password"
+                                placeholder="••••••••"
+                                @focus="passwordFocused = true"
+                                @blur="passwordFocused = false"
+                                :class="[
+                                    'w-full pl-11 pr-4 py-3 bg-white border rounded-lg transition-all duration-200 focus:outline-none',
+                                    passwordFocused 
+                                        ? 'border-gray-900 ring-1 ring-gray-900' 
+                                        : 'border-gray-300 hover:border-gray-400'
+                                ]"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button
+                        type="submit"
+                        :disabled="countdown !== null || isLoading"
+                        :class="[
+                            'w-full py-3 rounded-lg font-medium text-white transition-all duration-200',
+                            countdown === null && !isLoading
+                                ? 'bg-blue-500 hover:bg-blue-700 active:scale-[0.99]'
+                                : 'bg-blue-300 cursor-not-allowed'
+                        ]"
+                    >
+                        <span v-if="isLoading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Signing in...
+                        </span>
+                        <span v-else-if="countdown === null" class="flex items-center justify-center gap-2">
+                            <img :src="'/Images/SVG/sign-in.svg'" alt="Signin" class="h-5 w-5">
+                            Sign In
+                        </span>
+                        <span v-else>Locked ({{ countdown }}s)</span>
+                    </button>
+                </form>
+
+                <!-- Back to Home Link -->
+                <div class="text-center md:hidden">
+                    <Link 
+                        class="text-sm text-gray-600 hover:text-gray-900 transition-colors inline-flex items-center gap-1.5"
+                        href="/"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Home
+                    </Link>
                 </div>
-            </section>
-        </div>
+            </div>
+        </section>
 
         <ReminderModal />
     </main>
 </template>
 
 <style scoped>
-.main-container {
-    background-image: url('Images/stacked.svg');
+/* Smooth transitions */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
-.left-section {
-    background-image: url('Images/stacked.svg');
-    background-position: center;
-    background-repeat: no-repeat;
 
+/* Remove default focus rings and add custom ones */
+input:focus {
+    outline: none;
 }
 </style>

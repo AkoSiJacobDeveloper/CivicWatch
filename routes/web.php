@@ -16,6 +16,7 @@ use App\Models\Barangay;
 use App\Http\Controllers\TrackReportController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Api\LocationController;
+use App\Models\Announcement;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -25,6 +26,7 @@ Route::get('/track-reports', fn() => Inertia::render('TrackReports'));
 Route::get('faq', fn() => Inertia::render('FAQ'));
 Route::get('/about', fn() => Inertia::render('About'));
 Route::get('/review', fn() => Inertia::render('Review'));
+Route::get('/user-announcements', [AnnouncementController::class, 'showInClient'])->name('user.get.announcements');
 
 Route::prefix('report-issue')->name('report.')->group(function() {
     Route::get('/', fn() => Inertia::render('ReportIssue'));
@@ -102,6 +104,11 @@ Route::prefix('admin')->group(function () {
         Route::get('/announcements/create-announcement', [AnnouncementController::class, 'index'])->name('admin.announcement.index');
         Route::post('/announcements', [AnnouncementController::class, 'store'])->name('admin.announcement.store');
         Route::get('/announcements', [AnnouncementController::class, 'showData'])->name('admin.pinned.report');
+        Route::get('/announcements/edit/{id}', [AnnouncementController::class, 'editAnnouncement'])->name('admin.edit.announcement');
+        Route::match(['put', 'post'], '/announcements/edit/{id}', [AnnouncementController::class, 'updateAnnouncement'])->name('admin.update.announcement');
+        Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy'])->name('admin.deletes.announcement');
+        Route::post('/announcements/archive/{id}', [AnnouncementController::class, 'archive'])->name('admin.archive.announcement');
+        Route::post('/announcements/restore/{id}', [AnnouncementController::class, 'restore'])->name('admin.restore.announcement');
     });
 });
 

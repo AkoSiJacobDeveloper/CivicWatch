@@ -210,11 +210,11 @@ const finalizeRejection = () => {
                         <!-- Reason for Rejection -->
                         <div
                             v-if="report.status === 'Rejected'"
-                            class="flex items-center border-l-4 border-red-800 bg-gradient-to-r from-red-200 to-red-100 w-[30%] p-2 rounded-lg"
+                            class="flex items-center border-l-4 border-red-800 bg-gradient-to-r from-red-200 to-red-100 w-[40%] p-2 rounded-lg"
                         >
+                            <img :src="'/Images/SVG/warning.svg'" alt="Warning" class="h-10 w-10">
                             <div class="flex flex-col ml-1">
-                                <p>This report was rejected for the following reason:</p>
-                                <p class="font-semibold">{{ report.rejection_reason }}</p>
+                                <p>This report was rejected for the following reason: <span class="font-semibold">{{ report.rejection_reason }}</span></p>
                             </div>
                             
                         </div>

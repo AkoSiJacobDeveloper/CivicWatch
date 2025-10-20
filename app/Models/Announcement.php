@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Announcement extends Model
 {
@@ -36,6 +37,7 @@ class Announcement extends Model
         'expiry_date' => 'datetime',
         'reg_deadline' => 'date',
         'is_pinned' => 'boolean',
+        'archived_at' => 'datetime',
     ];
 
     public function category(): BelongsTo
@@ -80,5 +82,37 @@ class Announcement extends Model
     public function getEventTimeAttribute($value)
     {
         return $value ? $this->asDateTime($value)->format('H:i') : null;
+    }
+
+    public function scopeActive(Builder $query): void
+    {
+        $query->whereNull('archived_at');
+    }
+
+    public function scopeArchived(Builder $query): void
+    {
+        $query->whereNotNull('archived_at');
+    }
+
+    public function archive(): void
+    {
+        $this->update(['archived_at' => now()]);
+        $this->save();
+    }
+
+    public function restoreFromArchive(): void
+    {
+        $this->update(['archived_at' => null]);
+        $this->save();
+    }
+
+    public function isArchived(): bool
+    {
+        return !is_null($this->archived_at);
+    }
+
+    public function isActive(): bool
+    {
+        return is_null($this->archived_at);
     }
 }

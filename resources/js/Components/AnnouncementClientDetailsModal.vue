@@ -1,17 +1,13 @@
 <script setup>
-import { Link, router } from '@inertiajs/vue3'
-import { onMounted, onUnmounted } from 'vue'
-import Swal from 'sweetalert2'
-import { useToast } from 'vue-toastification'
-
-const toast = useToast();
+import { Link } from '@inertiajs/vue3'
+import { onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps({
     show: {
         type: Boolean,
         required: true
     },
-    announcement: {
+    announcements: {
         type: Object,
         default: null
     },
@@ -21,7 +17,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['close', 'deleted', 'archived', 'restored'])
+const emit = defineEmits(['close'])
 
 const close = () => {
     emit('close')
@@ -61,122 +57,30 @@ const capitalizeFirstLetter = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-onMounted(() => {
-    document.addEventListener('keydown', handleEscape)
-    document.body.style.overflow = 'hidden'
+// Watch for show prop changes to handle scroll properly
+watch(() => props.show, (newValue) => {
+    if (newValue) {
+        // Modal opened - lock scroll
+        document.body.style.overflow = 'hidden'
+        document.addEventListener('keydown', handleEscape)
+    } else {
+        // Modal closed - restore scroll
+        document.body.style.overflow = ''
+        document.removeEventListener('keydown', handleEscape)
+    }
 })
 
+// Fallback cleanup
 onUnmounted(() => {
-    document.removeEventListener('keydown', handleEscape)
     document.body.style.overflow = ''
+    document.removeEventListener('keydown', handleEscape)
 })
-
-const editAnnouncement = (id) => {
-    router.get(`/admin/announcements/edit/${id}`)
-}
-
-const deleteAnnouncement = (id) => {
-    Swal.fire({
-        title: 'You are about to delete a report',
-        text: 'Are you sure you want to delete this report? This action cannot be undone.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel',
-        reverseButtons: true,
-        customClass: {
-            confirmButton: 'swal2-confirm',
-            cancelButton: 'swal2-cancel'
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            close()
-            
-            // Then delete the announcement
-            router.delete(route('admin.deletes.announcement', { id: id }), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    emit('deleted', id)
-                    toast.success('Announcement deleted successfully')
-                },
-                onError: () => {
-                    toast.error('Announcement failed to delete')
-                }
-            })
-        }
-    })
-}
-
-const archiveAnnouncement = (id) => {
-    Swal.fire({
-        title: 'Archive Announcement?',
-        text: 'This announcement will be moved to the archive.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Yes, archive it!',
-        cancelButtonText: 'Cancel',
-    }).then((result) => {
-        if (result.isConfirmed) {
-            close()
-            
-            router.post(route('admin.archive.announcement', { id: id }), {}, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    emit('archived', id)
-                    toast.success('Announcement successfully archived');
-                },
-                onError: () => {
-                    toast.error('Announcement failed to archived');
-                }
-            })
-        }
-    })
-}
-
-// Restore announcement from modal
-const restoreAnnouncement = (id) => {
-    Swal.fire({
-        title: 'Restore Announcement?',
-        text: 'This announcement will be moved back to active announcements.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#10b981',
-        cancelButtonColor: '#6b7280',
-        confirmButtonText: 'Yes, restore it!',
-        cancelButtonText: 'Cancel',
-    }).then((result) => {
-        if (result.isConfirmed) {
-            close()
-            
-            router.post(route('admin.restore.announcement', { id: id }), {}, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    emit('restored', id)
-                    toast.success('Announcement successfully restored');
-                },
-                onError: () => {
-                    toast.error('Announcement failed to restore');
-                }
-            })
-        }
-    })
-}
-
-
-onMounted(() => {
-    initTooltips();
-});
-
 </script>
 
 <template>
     <div 
         v-if="show" 
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]"
         @click.self="handleBackdropClick"
     >
         <div 
@@ -188,13 +92,13 @@ onMounted(() => {
             <!-- Modal Header -->
             <div class="flex justify-between items-start bg-blue-700 p-6">
                 <div>
-                    <h2 id="modal-title" class="text-3xl font-bold text-white mb-3">{{ announcement?.title }}</h2>
+                    <h2 id="modal-title" class="text-3xl font-bold text-white mb-3">{{ announcements?.title }}</h2>
                     <div class="flex gap-5">
                         <div class="flex gap-1">
                             <div class="flex justify-center items-center">
                                 <img :src="'/Images/SVG/calendar (white).svg'" alt="Icon" class="h-4 w-4 flex">
                             </div>
-                            <span class="text-white text-xs">{{ formatDate(announcement?.event_date) }}</span>
+                            <span class="text-white text-xs">{{ formatDate(announcements?.event_date) }}</span>
                         </div>
                         <div>
                             <div class="flex gap-1">
@@ -209,15 +113,9 @@ onMounted(() => {
                                 <div class="flex justify-center items-center">
                                     <img :src="'/Images/SVG/map-pin-area.svg'" alt="Icon" class="h-4 w-4 flex">
                                 </div>
-                                <span class="text-white text-xs">{{ announcement.venue || 'Location not specified' }}</span>
+                                <span class="text-white text-xs">{{ announcements.venue || 'Not Specified' }}</span>
                             </div>
                         </div>
-                    </div>
-                    <div v-if="announcement?.archived_at" class="mt-2">
-                        <span class="bg-gray-600 text-white text-xs font-semibold px-2 py-1 rounded inline-flex items-center gap-1">
-                            <img :src="'/Images/SVG/archive.svg'" alt="Archive" class="h-3 w-3">
-                            Archived on {{ formatDate(announcement.archived_at) }}
-                        </span>
                     </div>
                 </div>
                 <button 
@@ -234,7 +132,7 @@ onMounted(() => {
                 <div class="px-6 ">
                     <!-- Announcement -->
                     <div class="py-5">
-                        <p class="text-gray-600 whitespace-pre-line">{{ announcement?.content }}</p>
+                        <p class="text-gray-600 whitespace-pre-line">{{ announcements?.content }}</p>
                     </div>
 
                     <!-- Priority Level -->
@@ -242,48 +140,46 @@ onMounted(() => {
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">PRIORITY</span>
                         <p 
                             class="text-lg font-semibold"
-                            :class="announcement?.level === 'urgent'
-                                ? 'text-red-700' : announcement?.level === 'important'
+                            :class="announcements?.level === 'urgent'
+                                ? 'text-red-700' : announcements?.level === 'important'
                                 ? 'text-amber-500' : 'text-green-700'"
                         >
-                            {{ capitalizeFirstLetter(announcement?.level) }}
+                            {{ capitalizeFirstLetter(announcements?.level) }}
                         </p>
                     </div>
 
                     <!-- Category -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">CATEGORY</span>
-                        <p class="text-lg font-semibold text-blue-500">{{ announcement?.category.name }}</p>
+                        <p class="text-lg font-semibold text-blue-500">{{ announcements?.category.name }}</p>
                     </div>
 
                     <!-- Contact Person -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">CONTACT PERSON</span>
-                        <p class="text-lg font-semibold text-blue-500">{{ announcement?.contact_person || 'Not Specified' }}</p>
+                        <p class="text-lg font-semibold text-blue-500">{{ announcements?.contact_person }}</p>
                     </div>
 
                     <!-- Contact Number -->
-                    <div  class="border px-3 py-2 rounded-md mb-3">
+                    <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">CONTACT NUMBER</span>
-                        <p class="text-lg font-semibold text-blue-500">{{ announcement?.contact_number || 'Not Specified' }}</p>
+                        <p class="text-lg font-semibold text-blue-500">{{ announcements?.contact_number }}</p>
                     </div>
 
                     <!-- LOCATIONS -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">LOCATION</span>
                         <p class="text-lg font-semibold text-blue-500">
-                            {{ announcement?.purok === 'all' ? 'All Purok/Sitio' : announcement?.specific_area }}
+                            {{ announcements?.purok === 'all' ? 'All Purok/Sitio' : announcements?.specific_area }}
                         </p>
                     </div>
 
-                    
-
                     <!-- Image -->
-                    <div v-if="announcement.image" class="border px-3 py-2 rounded-md mb-3">
+                    <div v-if="announcements.image" class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">IMAGE</span>
                         <img 
-                            :src="`/storage/${announcement.image}`" 
-                            :alt="announcement.title"
+                            :src="`/storage/${announcements.image}`" 
+                            :alt="announcements.title"
                             class="w-full rounded-lg"
                         >
                     </div>
@@ -291,10 +187,10 @@ onMounted(() => {
                     <!-- Audiences -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">TARGET AUDIENCES</span>
-                        <div v-if="announcement?.audiences?.length" class="">
+                        <div v-if="announcements?.audiences?.length" class="">
                             <div class="space-y-2">
                                 <div 
-                                    v-for="audience in announcement.audiences" 
+                                    v-for="audience in announcements.audiences" 
                                     :key="audience.id"
                                     class="flex items-center gap-3 hover:bg-gray-50 transition-colors"
                                 >
@@ -310,10 +206,10 @@ onMounted(() => {
                     <!-- DEPARTMENTs -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">RESPONSIBLE DEPARTMENTS</span>
-                        <div v-if="announcement?.departments?.length" class="">
+                        <div v-if="announcements?.departments?.length" class="">
                             <div class="space-y-2">
                                 <div 
-                                    v-for="department in announcement.departments" 
+                                    v-for="department in announcements.departments" 
                                     :key="department.id"
                                     class="flex items-center gap-3 hover:bg-gray-50 transition-colors"
                                 >
@@ -325,18 +221,18 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div v-if="!announcement?.departments?.length" class="text-gray-500">
+                        <div v-if="!announcements?.departments?.length" class="text-gray-500">
                             <span class="font-medium">No departments specified for this announcement</span>
                         </div>
                     </div>
 
                     <!-- DOCUMENTS -->
-                    <div class="border px-3 py-2 rounded-md mb-3" v-if="announcement.documents.length">
+                    <div class="border px-3 py-2 rounded-md mb-3" v-if="announcements.documents.length">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">REQUIRED DOCUMENTS</span>
-                        <div v-if="announcement?.documents?.length" class="">
+                        <div v-if="announcements?.documents?.length" class="">
                             <div class="space-y-2">
                                 <div 
-                                    v-for="document in announcement.documents" 
+                                    v-for="document in announcements.documents" 
                                     :key="document.id"
                                     class="flex items-center gap-3 hover:bg-gray-50 transition-colors"
                                 >
@@ -350,15 +246,15 @@ onMounted(() => {
                         </div>
 
                         <!-- Custom "Other" Document -->
-                        <div v-if="announcement?.other_document" class="mt-3">
+                        <div v-if="announcements?.other_document" class="mt-3">
                             <p class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">ADDITIONAL REQUIREMENTS</p>
                             <div class="p-3 border rounded-lg bg-blue-50 border-blue-200">
-                                <span class="text-blue-500 font-medium">{{ announcement.other_document }}</span>
+                                <span class="text-blue-500 font-medium">{{ announcements.other_document }}</span>
                             </div>
                         </div>
 
                         <!-- No Documents Message -->
-                        <div v-if="!announcement?.documents?.length && !announcement?.other_document" class="text-gray-500">
+                        <div v-if="!announcements?.documents?.length && !announcements?.other_document" class="text-gray-500">
                             <span class="font-medium">No documents required for this announcement</span>
                         </div>
                     </div>
@@ -366,20 +262,20 @@ onMounted(() => {
                     <!-- INSTRUCTIONS -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">INSTRUCTIONS</span>
-                        <p class="text-lg font-semibold text-blue-500">{{ announcement?.instructions }}</p>
+                        <p class="text-lg font-semibold text-blue-500">{{ announcements?.instructions }}</p>
 
-                        <div v-if="!announcement?.instructions?.length" class="text-gray-500">
+                        <div v-if="!announcements?.instructions?.length" class="text-gray-500">
                             <span class="font-medium">No special instructions</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Attachments - SIMPLIFIED VERSION -->
-                <div class="px-6 mb-3" v-if="announcement.attachments.length">
-                    <div v-if="announcement?.attachments?.length" class=" border rounded-md px-3 py-2">
+                <div class="px-6" v-if="announcements.attachments.length">
+                    <div v-if="announcements?.attachments?.length" class=" border rounded-md px-3 py-2">
                         <p class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">ATTACHMENTS</p>
                         <div 
-                            v-for="file in announcement.attachments" 
+                            v-for="file in announcements.attachments" 
                             :key="file.id"
                             class="flex items-center gap-3 bg-blue-50 px-3 py-1 rounded-md border border-blue-200 hover:bg-gray-50 transition-colors mb-2"
                         >
@@ -408,73 +304,16 @@ onMounted(() => {
                         <span class="font-medium">No attachments available</span>
                     </div>
                 </div>
-
-                
             </div>
 
             <!-- Modal Footer -->
-            <div class="flex justify-between gap-3 mt-6 pt-4 border-t border-gray-200 p-6">
+            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 p-6">
                 <button 
                     @click="close"
                     class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
                     Close
                 </button>
-                <div>
-                    <template 
-                        v-if="!announcement?.archived_at"
-                        
-                    >
-                        <div class="flex gap-1">
-                            <!-- Archive -->
-                            <button
-                                @click="archiveAnnouncement(announcement.id)"
-                                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center justify-center gap-1 flex-1"
-                            >
-                                <img :src="'/Images/SVG/archive.svg'" alt="Icon" class="h-4 w-4">
-                                Archive
-                            </button>
-
-                            <!-- Edit-->
-                            <button
-                                @click="editAnnouncement(announcement.id)"
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex gap-1 items-center justify-center flex-1"
-                            >
-                                <img :src="'/Images/SVG/pencil-simple-line.svg'" alt="Icon" class="h-4 w-4">
-                                Edit
-                            </button>
-
-                            <!-- Delete -->
-                            <button
-                                @click="deleteAnnouncement(announcement.id)"
-                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-1 flex-1"
-                            >
-                                <img :src="'/Images/SVG/trash.svg'" alt="Icon" class="h-4 w-4">
-                                Delete
-                            </button>
-                        </div>
-                    </template>
-
-                    <template v-else>
-                        <div class="flex gap-2 justify-end">
-                            <!-- Archived Announcement Buttons -->
-                            <button
-                                @click="restoreAnnouncement(announcement.id)"
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-1"
-                            >
-                                <img :src="'/Images/SVG/arrows-counter-clockwise.svg'" alt="Icon" class="h-4 w-4">
-                                Restore
-                            </button>
-                            <button
-                                @click="deleteAnnouncement(announcement.id)"
-                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 flex items-center gap-1"
-                            >
-                                <img :src="'/Images/SVG/trash.svg'" alt="Icon" class="h-4 w-4">
-                                Delete
-                            </button>
-                        </div>
-                    </template>
-                </div>  
             </div>
         </div>
     </div>

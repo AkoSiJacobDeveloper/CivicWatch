@@ -1,6 +1,6 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 import ApplicationLogo from './ApplicationLogo.vue';
 
@@ -13,7 +13,8 @@ const links = [
     { name: 'Review', url: '/review' }, 
     { name: 'FAQ', url: '/faq' },
     { name: 'About', url: '/about' },
-    { name: 'Contact Us', url: '/contact-us' }
+    { name: 'Contact Us', url: '/contact-us' },
+    { name: 'Announcements', url: '/user-announcements'}
 ];
 
 const mblinks = [...links];
@@ -22,6 +23,15 @@ const isOpen = ref(false);
 function toggleMenu() {
     isOpen.value = !isOpen.value;
 }
+
+const isActiveLink = (linkUrl) => {
+    const currentUrl = page.url;
+
+    if (linkUrl === '/') {
+        return currentUrl === '/';
+    }
+    return currentUrl.startsWith(linkUrl);
+};
 
 const savedTheme = localStorage.getItem('theme');
 const isDark = ref(savedTheme === 'dark');
@@ -53,7 +63,7 @@ const toggleDarkMode = () => {
                 <!-- Desktop Navigation Bar -->
                 <ul class="hidden md:flex space-x-4 text-white">
                     <li v-for="(link, index) in links" :key="index">
-                        <div :class="[ page.url === link.url ? 'border-b-2 border-[#faf9f6] dark:border-[#1d4ed8]' : 'text-[#FAF9F6]' ]">
+                        <div :class="[ isActiveLink(link.url) ? 'border-b-2 border-[#faf9f6] dark:border-[#1d4ed8]' : 'text-[#FAF9F6]' ]">
                             <Link :href="link.url" >{{ link.name }}</Link>
                         </div>
                     </li>

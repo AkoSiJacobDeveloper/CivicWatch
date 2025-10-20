@@ -19,14 +19,12 @@ class AnnouncementController extends Controller
     public function index() {
         $announcementCategories = AnnouncementCategory::all();
         $audiences = Audience::all();
-        // $activePuroks = Sitio::where('is_available', 1)->get();
         $offices = Department::all();
         $documents = Document::all();
 
         return Inertia::render('Admin/CreateAnnouncements', [
             'announcementCategories' => $announcementCategories,
             'audiences' => $audiences,
-            // 'activePuroks' => $activePuroks,
             'offices' => $offices,
             'documents' => $documents
         ]);
@@ -42,14 +40,14 @@ class AnnouncementController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'type' => 'required|exists:announcement_categories,id',
-            'level' => 'required|in:high,medium,low',
+            'level' => 'required|in:urgent,important,general',
             'is_pinned' => 'required|in:yes,no',
             'content' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'publish_at' => 'required|date',
+            'publish_at' => 'nullable|date',
             'event_date' => 'required|date',
             'venue' => 'required|string|max:255',
-            'expiry_date' => 'required|date|after:publish_at',
+            'expiry_date' => 'nullable|date|',
             'contact_person' => 'required|string|max:255',
             'contact_number' => 'required|string|max:20',
             'purok' => 'required|in:all,specific',
@@ -85,10 +83,10 @@ class AnnouncementController extends Controller
                 'is_pinned' => $validated['is_pinned'],
                 'content' => $validated['content'],
                 'image' => $validated['image'] ?? null,
-                'publish_at' => $validated['publish_at'],
+                'publish_at' => $validated['publish_at'] ?? null,
                 'event_date' => $validated['event_date'],
                 'venue' => $validated['venue'],
-                'expiry_date' => $validated['expiry_date'],
+                'expiry_date' => $validated['expiry_date'] ?? null,
                 'contact_person' => $validated['contact_person'],
                 'contact_number' => $validated['contact_number'],
                 'purok' => $validated['purok'],
@@ -141,16 +139,241 @@ class AnnouncementController extends Controller
     }
     
     public function showData() {
-        $announcements = Announcement::with(['attachments', 'category', 'documents', 'departments', 'audiences'])->get();
-
-        // Separate the pinned reports with non-pinned reports
         $grouped = [
-            'pinned' => $announcements->where('is_pinned', 1)->values(),
-            'regular' => $announcements->where('is_pinned', 0)->values(),
+            'pinned' => Announcement::with(['attachments', 'category', 'documents', 'departments', 'audiences'])
+                ->where('is_pinned', 1)
+                ->where(function($query) {
+                    $query->whereNull('archived_at')
+                        ->orWhere('archived_at', '');
+                })
+                ->latest()
+                ->get(),
+                
+            'regular' => Announcement::with(['attachments', 'category', 'documents', 'departments', 'audiences'])
+                ->where('is_pinned', 0)
+                ->where(function($query) {
+                    $query->whereNull('archived_at')
+                        ->orWhere('archived_at', '');
+                })
+                ->latest()
+                ->get(),
+                
+            'archived' => Announcement::with(['attachments', 'category', 'documents', 'departments', 'audiences'])
+                ->whereNotNull('archived_at')
+                ->where('archived_at', '!=', '')
+                ->latest('archived_at')
+                ->get(),
         ];
 
         return Inertia::render('Admin/Announcements', [
             'announcements' => $grouped,
         ]);
+    }
+
+    public function editAnnouncement($id) {
+        $announcement = Announcement::with(['category', 'attachments', 'documents', 'departments', 'audiences'])->findOrFail($id);
+
+        // Get dropdown data
+        $announcementCategories = AnnouncementCategory::all();
+        $audiences = Audience::all();
+        $offices = Department::all();
+        $documents = Document::all();
+
+        return Inertia::render('Admin/EditPage/EditAnnouncement', [
+            'announcement' => [
+                'id' => $announcement->id, 
+                'title' => $announcement->title, 
+                'type' => $announcement->category_id,
+                'level' => $announcement->level, 
+                'is_pinned' => $announcement->is_pinned ? 'yes' : 'no', // Convert boolean to string
+                'content' => $announcement->content, 
+                'image' => $announcement->image, // ADD THIS LINE - This was missing!
+                'publish_at' => $announcement->publish_at, 
+                'event_date' => $announcement->event_date, 
+                'venue' => $announcement->venue, 
+                'expiry_date' => $announcement->expiry_date, 
+                'contact_person' => $announcement->contact_person, 
+                'contact_number' => $announcement->contact_number, 
+                'purok' => $announcement->purok, 
+                'specific_area' => $announcement->specific_area, 
+                'requirements' => $announcement->documents->pluck('id')->toArray(), // Get IDs for multiselect
+                'instructions' => $announcement->instructions, 
+                'counts' => $announcement->counts, 
+                'reg_deadline' => $announcement->reg_deadline, 
+                'other_document' => $announcement->other_document, 
+                'attachments' => $announcement->attachments,
+                'category' => $announcement->category,
+                'documents' => $announcement->documents,
+                'departments' => $announcement->departments->pluck('id')->toArray(), // Get IDs for multiselect
+                'audiences' => $announcement->audiences->pluck('id')->toArray(), // Get IDs for multiselect
+            ],
+            // Dropdown data
+            'announcementCategories' => $announcementCategories,
+            'audiences' => $audiences,
+            'offices' => $offices,
+            'documents' => $documents
+        ]);
+    }
+
+    public function updateAnnouncement(Request $request, $id)
+    {
+        Log::info('Updating announcement: ' . $id);
+        Log::info('Request data:', $request->all());
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'type' => 'required|exists:announcement_categories,id',
+            'level' => 'required|in:urgent,important,general',
+            'is_pinned' => 'required|in:yes,no',
+            'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'publish_at' => 'nullable|date',
+            'event_date' => 'required|date',
+            'venue' => 'required|string|max:255',
+            'expiry_date' => 'nullable|date|',
+            'contact_person' => 'required|string|max:255',
+            'contact_number' => 'required|string|max:20',
+            'purok' => 'required|in:all,specific',
+            'audiences' => 'required|array',
+            'audiences.*' => 'exists:audiences,id',
+            'departments' => 'required|array',
+            'departments.*' => 'exists:departments,id',
+            'instructions' => 'nullable|string',
+            'counts' => 'nullable|integer',
+            'reg_deadline' => 'nullable|date',
+            'requirements' => 'nullable|array',
+            'requirements.*' => 'exists:documents,id',
+            'other_document' => 'nullable|string|max:100',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,txt|max:10240',
+            'existing_attachments' => 'nullable|string',
+            'existing_attachments.*.id' => 'exists:attachments,id',
+            'specific_area' => 'nullable|string|max:255|required_if:purok,specific',
+        ]);
+
+        try {
+            $announcement = Announcement::findOrFail($id);
+
+            // Handle removed existing attachments
+            $existingAttachments = json_decode($request->input('existing_attachments', '[]'), true);
+            $keepAttachmentIds = collect($existingAttachments)
+                ->pluck('id')
+                ->filter()
+                ->toArray();
+
+            $announcement->attachments()
+                ->whereNotIn('id', $keepAttachmentIds)
+                ->each(function($attachment) {
+                    Storage::disk('public')->delete($attachment->file_path);
+                    $attachment->delete();
+                });
+
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                if ($announcement->image) {
+                    Storage::disk('public')->delete($announcement->image);
+                }
+                $validated['image'] = $request->file('image')->store('announcements/images', 'public');
+            } else {
+                $validated['image'] = $announcement->image;
+            }
+
+            // Convert is_pinned to boolean
+            $validated['is_pinned'] = $validated['is_pinned'] === 'yes';
+
+            // Update announcement
+            $announcementData = [
+                'title' => $validated['title'],
+                'category_id' => $validated['type'],
+                'level' => $validated['level'],
+                'is_pinned' => $validated['is_pinned'],
+                'content' => $validated['content'],
+                'image' => $validated['image'],
+                'publish_at' => $validated['publish_at'] ?? null,
+                'event_date' => $validated['event_date'],
+                'venue' => $validated['venue'],
+                'expiry_date' => $validated['expiry_date'] ?? null,
+                'contact_person' => $validated['contact_person'],
+                'contact_number' => $validated['contact_number'],
+                'purok' => $validated['purok'],
+                'instructions' => $validated['instructions'] ?? null,
+                'counts' => $validated['counts'] ?? 0,
+                'reg_deadline' => $validated['reg_deadline'] ?? null,
+                'other_document' => $validated['other_document'] ?? null,
+                'specific_area' => $validated['specific_area'] ?? null,
+            ];
+
+            $announcement->update($announcementData);
+
+            // Handle new attachments
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $filePath = $file->store('announcements/attachments', 'public');
+                    
+                    Attachment::create([
+                        'announcement_id' => $announcement->id,
+                        'file_path' => $filePath,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_size' => $file->getSize(),
+                        'mime_type' => $file->getMimeType(),
+                    ]);
+                }
+            }
+
+            // Sync relationships
+            if (isset($validated['audiences'])) {
+                $announcement->audiences()->sync($validated['audiences']);
+            }
+
+            if (isset($validated['departments'])) {
+                $announcement->departments()->sync($validated['departments']);
+            }
+
+            if (isset($validated['requirements'])) {
+                $announcement->documents()->sync($validated['requirements']);
+            }
+
+            return redirect()->route('admin.pinned.report')
+                ->with('success', 'Announcement updated successfully!');
+
+        } catch (\Exception $e) {
+            Log::error('Error updating announcement: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return back()->withErrors(['error' => 'Failed to update announcement: ' . $e->getMessage()]);
+        }
+    }
+
+    public function showInClient(Request $request) {
+        $sort = $request->input('sort', 'desc');
+
+        $announcements = Announcement::with(['attachments', 'category', 'documents', 'departments', 'audiences'])->orderBy('created_at', $sort)->paginate(5);
+
+        return Inertia::render('Announcement', [
+            'announcements' => $announcements,
+            'sort' => $sort,
+        ]);
+    }
+
+    public function destroy($id) {  
+        $announcement = Announcement::findOrFail($id);
+        $announcement->delete();
+
+        return redirect()->back()->with('success', 'Announcement deleted successfully!');
+    }
+
+    public function archive($id) {
+        $announcement = Announcement::findOrFail($id);
+        $announcement->archived_at = now();
+        $announcement->save();
+        
+        return redirect()->back()->with('success', 'Announcement archived successfully!');
+    }
+
+    public function restore($id) {
+        $announcement = Announcement::findOrFail($id);
+        $announcement->archived_at = null;
+        $announcement->save();
+        
+        return redirect()->back()->with('success', 'Announcement restored successfully!');
     }
 }

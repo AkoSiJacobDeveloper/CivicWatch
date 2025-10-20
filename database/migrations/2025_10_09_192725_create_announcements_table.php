@@ -16,7 +16,7 @@ return new class extends Migration
             $table->timestamps();
             $table->string('title');
             $table->foreignId('category_id')->constrained('announcement_categories')->onDelete('cascade');
-            $table->enum('level', ['high', 'medium', 'low']);
+            $table->enum('level', ['urgent', 'important', 'general']);
             $table->boolean('is_pinned')->default(false);
             $table->text('content');
             $table->string('image')->nullable();
