@@ -40,6 +40,58 @@ const getFileUrl = (filePath) => {
     return `/storage/${filePath}`
 }
 
+const getFileIcon = (filePath) => {
+    if (!filePath) return '/Images/SVG/file-text (500).svg';
+    
+    try {
+        const fileName = filePath.split('/').pop() || '';
+        const extension = fileName.split('.').pop()?.toLowerCase() || '';
+        
+        const iconMap = {
+            'pdf': '/Images/SVG/file-pdf.svg',
+            'doc': '/Images/SVG/file-doc.svg',
+            'docx': '/Images/SVG/file-doc.svg',
+            'xls': '/Images/SVG/file-xls.svg',
+            'xlsx': '/Images/SVG/file-xls.svg',
+            'ppt': '/Images/SVG/file-ppt.svg',
+            'pptx': '/Images/SVG/file-ppt.svg',
+            'txt': '/Images/SVG/file-text (500).svg',
+            'zip': '/Images/SVG/file-archive.svg',
+            'rar': '/Images/SVG/file-archive.svg',
+            '7z': '/Images/SVG/file-archive.svg',
+            'jpg': '/Images/SVG/file-image.svg',
+            'jpeg': '/Images/SVG/file-image.svg',
+            'png': '/Images/SVG/file-image.svg',
+            'gif': '/Images/SVG/file-image.svg',
+            'bmp': '/Images/SVG/file-image.svg',
+            'svg': '/Images/SVG/file-image.svg',
+        };
+        
+        return iconMap[extension] || '/Images/SVG/file-text (500).svg';
+    } catch (error) {
+        console.error('Error getting file icon:', error);
+        return '/Images/SVG/file-text (500).svg';
+    }
+}
+
+const getFileType = (filePath) => {
+    if (!filePath) return 'File';
+    
+    try {
+        const fileName = filePath.split('/').pop() || '';
+        const extension = fileName.split('.').pop()?.toUpperCase();
+        return extension || 'File';
+    } catch (error) {
+        console.error('Error getting file type:', error);
+        return 'File';
+    }
+}
+
+const getFileSize = (filePath) => {
+    // Since we don't have file size stored, show placeholder
+    return 'Unknown size';
+}
+
 const formatDate = (dateString) => {
     if (!dateString) return ''
     const date = new Date(dateString)
@@ -70,6 +122,8 @@ watch(() => props.show, (newValue) => {
     }
 })
 
+
+
 // Fallback cleanup
 onUnmounted(() => {
     document.body.style.overflow = ''
@@ -84,7 +138,7 @@ onUnmounted(() => {
         @click.self="handleBackdropClick"
     >
         <div 
-            class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto"
             role="dialog"
             aria-labelledby="modal-title"
             aria-modal="true"
@@ -131,7 +185,8 @@ onUnmounted(() => {
                 <!-- Modal Content -->
                 <div class="px-6 ">
                     <!-- Announcement -->
-                    <div class="py-5">
+                    <div class="my-3">
+                        <!-- <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">CONTENT</span> -->
                         <p class="text-gray-600 whitespace-pre-line">{{ announcements?.content }}</p>
                     </div>
 
@@ -180,7 +235,7 @@ onUnmounted(() => {
                         <img 
                             :src="`/storage/${announcements.image}`" 
                             :alt="announcements.title"
-                            class="w-full rounded-lg"
+                            class="w-full rounded-lg mt-2"
                         >
                     </div>
 
@@ -272,31 +327,59 @@ onUnmounted(() => {
 
                 <!-- Attachments - SIMPLIFIED VERSION -->
                 <div class="px-6" v-if="announcements.attachments.length">
-                    <div v-if="announcements?.attachments?.length" class=" border rounded-md px-3 py-2">
-                        <p class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">ATTACHMENTS</p>
-                        <div 
-                            v-for="file in announcements.attachments" 
-                            :key="file.id"
-                            class="flex items-center gap-3 bg-blue-50 px-3 py-1 rounded-md border border-blue-200 hover:bg-gray-50 transition-colors mb-2"
-                        >
-                            <div class="flex-1 min-w-0">
+                    <div v-if="announcements?.attachments?.length" class="border rounded-md px-3 py-2">
+                        <div class="flex items-center">
+                            <p class="font-medium text-gray-500 font-[Poppins] text-xs">ATTACHMENTS</p>
+                            <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 ml-2">
+                                {{ announcements.attachments.length }} files
+                            </span>
+                        </div>
+
+                        <div class="mt-3 space-y-2">
+                            <div 
+                                v-for="file in announcements.attachments" 
+                                :key="file.id"
+                                class="flex items-center justify-between p-3 rounded-lg transition-colors border border-blue-200 bg-blue-50"
+                            >
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                                            <!-- DYNAMIC FILE ICON -->
+                                            <img 
+                                                :src="getFileIcon(file.file_path)" 
+                                                :alt="getFileType(file.file_path) + ' icon'" 
+                                                class="h-6 w-6"
+                                            >
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="">
+                                        <a 
+                                            :href="getFileUrl(file.file_path)"
+                                            target="_blank"
+                                            class="text-sm font-medium text-blue-500 hover:text-blue-700 hover:underline block"
+                                            @click.stop
+                                        >
+                                            {{ file.file_name || file.file_path.split('/').pop() }}
+                                        </a>
+                                        <p class="text-xs text-gray-500">
+                                            {{ file.file_path.split('.').pop()?.toUpperCase() }} • {{ getFileSize(file.file_path) }}
+                                        </p>
+                                    </div>
+                                </div>
+                                
                                 <a 
                                     :href="getFileUrl(file.file_path)"
-                                    target="_blank"
-                                    class="text-blue-500 hover:text-blue-700 hover:underline truncate block"
-                                    @click.stop
+                                    target="_blank" 
+                                    class="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                                    :download="file.file_name || file.file_path.split('/').pop()"
                                 >
-                                    {{ file.file_name || file.file_path.split('/').pop() }}
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span>Download</span>
                                 </a>
                             </div>
-                            <a 
-                                :href="getFileUrl(file.file_path)"
-                                :download="file.file_name || file.file_path.split('/').pop()"
-                                class="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-                                @click.stop
-                            >
-                                <img :src="'/Images/SVG/file-arrow-down-fill.svg'" alt="Download" class="h-8 w-8">
-                            </a>
                         </div>
                     </div>
                     <div v-else class="border rounded-md px-3 py-2 text-gray-500">

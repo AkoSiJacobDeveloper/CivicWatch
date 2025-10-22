@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             DocumentsSeeder::class,
             AnnouncementCategorySeeder::class,
             TargetAudiencesSeeder::class,
+            LocationSeeder::class,
         ]);
     }
 }

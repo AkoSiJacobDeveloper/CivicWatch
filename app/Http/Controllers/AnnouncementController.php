@@ -13,6 +13,7 @@ use App\Models\Document;
 use App\Models\Attachment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class AnnouncementController extends Controller
 {
@@ -187,7 +188,7 @@ class AnnouncementController extends Controller
                 'level' => $announcement->level, 
                 'is_pinned' => $announcement->is_pinned ? 'yes' : 'no', // Convert boolean to string
                 'content' => $announcement->content, 
-                'image' => $announcement->image, // ADD THIS LINE - This was missing!
+                'image' => $announcement->image, 
                 'publish_at' => $announcement->publish_at, 
                 'event_date' => $announcement->event_date, 
                 'venue' => $announcement->venue, 
@@ -346,7 +347,14 @@ class AnnouncementController extends Controller
     public function showInClient(Request $request) {
         $sort = $request->input('sort', 'desc');
 
-        $announcements = Announcement::with(['attachments', 'category', 'documents', 'departments', 'audiences'])->orderBy('created_at', $sort)->paginate(5);
+        $announcements = Announcement::with(['attachments', 'category', 'documents', 'departments', 'audiences'])
+            // ADD THIS FILTER - Only show non-archived announcements
+            ->where(function($query) {
+                $query->whereNull('archived_at')
+                    ->orWhere('archived_at', '');
+            })
+            ->orderBy('created_at', $sort)
+            ->paginate(5);
 
         return Inertia::render('Announcement', [
             'announcements' => $announcements,
@@ -375,5 +383,94 @@ class AnnouncementController extends Controller
         $announcement->save();
         
         return redirect()->back()->with('success', 'Announcement restored successfully!');
+    }
+
+    public function bulkArchive(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:announcements,id'
+        ]);
+
+        try {
+            $count = Announcement::whereIn('id', $request->ids)
+                ->update(['archived_at' => now()]);
+
+            return redirect()->back()->with('success', "{$count} announcement(s) archived successfully!");
+
+        } catch (\Exception $e) {
+            Log::error('Bulk archive error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to archive announcements');
+        }
+    }
+
+    /**
+     * Bulk restore announcements (Inertia version)
+     */
+    public function bulkRestore(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:announcements,id'
+        ]);
+
+        try {
+            $count = Announcement::whereIn('id', $request->ids)
+                ->update(['archived_at' => null]);
+
+            return redirect()->back()->with('success', "{$count} announcement(s) restored successfully!");
+
+        } catch (\Exception $e) {
+            Log::error('Bulk restore error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to restore announcements');
+        }
+    }
+
+    /**
+     * Bulk delete announcements (Inertia version)
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:announcements,id'
+        ]);
+
+        try {
+            DB::transaction(function () use ($request) {
+                // Get announcements with their attachments
+                $announcements = Announcement::with('attachments')
+                    ->whereIn('id', $request->ids)
+                    ->get();
+
+                foreach ($announcements as $announcement) {
+                    // Delete image if exists
+                    if ($announcement->image) {
+                        Storage::disk('public')->delete($announcement->image);
+                    }
+
+                    // Delete attachments
+                    foreach ($announcement->attachments as $attachment) {
+                        Storage::disk('public')->delete($attachment->file_path);
+                        $attachment->delete();
+                    }
+
+                    // Detach relationships
+                    $announcement->audiences()->detach();
+                    $announcement->departments()->detach();
+                    $announcement->documents()->detach();
+
+                    // Delete the announcement
+                    $announcement->delete();
+                }
+            });
+
+            $count = count($request->ids);
+            return redirect()->back()->with('success', "{$count} announcement(s) permanently deleted!");
+
+        } catch (\Exception $e) {
+            Log::error('Bulk delete error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to delete announcements');
+        }
     }
 }

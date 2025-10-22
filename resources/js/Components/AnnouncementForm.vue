@@ -154,6 +154,7 @@ const hasOtherDocument = computed(() => {
     console.log('hasOtherDocument final result:', hasOther);
     return hasOther;
 });
+
 onMounted(() => {
     initTooltips();
 });
@@ -161,7 +162,6 @@ onMounted(() => {
 
 <template>
     <form @submit.prevent="submitForm">
-        <h1 class="font-bold text-2xl mb-2 text-blue-500">Basic Information</h1>
         <div class="grid grid-cols-2 gap-4 mb-5">
             <!-- Title -->
             <div>
@@ -386,7 +386,6 @@ onMounted(() => {
             </div>
         </div>
 
-        <h1 class="font-bold text-2xl mb-2 text-blue-500">Content & Media</h1>
         <div class="grid grid-cols-2 gap-4 mb-5">
             <!-- Content -->
             <div class="col-span-2">
@@ -506,7 +505,6 @@ onMounted(() => {
             </div>
         </div>
         
-        <h1 class="font-bold text-2xl mb-2 text-blue-500">Schedule & Dates</h1>
         <div class="grid grid-cols-2 gap-4 mb-5">
             <!-- Event Date -->
             <div>
@@ -538,7 +536,6 @@ onMounted(() => {
             </div>
         </div>
 
-        <h1 class="font-bold text-2xl mb-2 text-blue-500">Target Audience</h1>
         <div class="grid grid-cols-2 gap-4 mb-5">
             <!-- Target Audience -->
             <div>
@@ -570,6 +567,7 @@ onMounted(() => {
                 />
             </div>
 
+            <!-- Location -->
             <div>
                 <div class="flex items-center gap-1">
                     <label class="block text-sm font-[Poppins] font-medium">Target Area Scope</label>
@@ -640,7 +638,6 @@ onMounted(() => {
             </div>
         </div>
 
-        <h1 class="font-bold text-2xl mb-2 text-blue-500">Contact Information</h1>
         <div class="grid grid-cols-2 gap-4 mb-5">
             <!-- Contact Person -->
             <div>

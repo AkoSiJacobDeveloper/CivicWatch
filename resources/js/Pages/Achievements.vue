@@ -1,15 +1,15 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
+import { initTooltips } from 'flowbite';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import AnnouncementClientDetailsModal from '@/Components/AnnouncementClientDetailsModal.vue';
+import AchievementsClientDetailsModal from '@/Components/AchievementsClientDetailsModal.vue';
 
 const props = defineProps({
-    announcements: Object,
+    achievements: Object,
     sort: String
 })
 
-// Use ref for sortOrder and watch for prop changes
 const sortOrder = ref(props.sort || 'desc')
 
 // Watch for changes in props.sort and update sortOrder
@@ -30,13 +30,13 @@ const formatDate = (dateString) => {
 }
 
 const openModal = ref(false)
-const selectedAnnouncement = ref(null)
+const selectedAchievements = ref(null)
 
 // Single toggleSort function
 function toggleSort() {
     const newSort = sortOrder.value === 'desc' ? 'asc' : 'desc';
     sortOrder.value = newSort;
-    router.get('/user-announcements', { sort: newSort }, {
+    router.get('/brgy-achievements', { sort: newSort }, {
         preserveState: true,
         preserveScroll: true,
         replace: true
@@ -44,34 +44,39 @@ function toggleSort() {
 }
 
 const openDetailsModal = (id) => {
-    const announcement = props.announcements.data.find(item => item.id === id)
-    if (announcement) {
-        selectedAnnouncement.value = announcement
+    const achievement = props.achievements.data.find(item => item.id === id)
+
+    if (achievement) {
+        selectedAchievements.value = achievement
         openModal.value = true
     }
 }
 
 const closeModal = () => {
     openModal.value = false
-    selectedAnnouncement.value = null
+    selectedAchievements.value = null
 }
+
+onMounted(() => {
+    initTooltips();
+})
 </script>
 
 <template>
-    <Head title="Announcement" />
+    <Head title="Achievements" />
 
     <GuestLayout>
         <main class=" dark:text-[#FAF9F6] ">
             <section class="hero-section h-screen text-[#000] md:px-10 lg:px-32 flex ">
                 <div class="w-full h-full md:w-1/2 md:flex justify-center items-center">
                     <div class="">
-                        <h1 class="text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Announcements</h1>
-                        <p class="text-justify dark:text-white">Stay informed with the latest news, updates, and important announcements from your community. This page serves as your reliable source for events, reminders, and public information. Check back regularly to stay connected and never miss an important update or opportunity to get involved.</p>
+                        <h1 class="text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Achievements</h1>
+                        <p class="text-justify dark:text-white">Celebrate the milestones and accomplishments of our Barangay. This page highlights community achievements, successful projects, and the people who make a difference. Explore how our collective efforts continue to build a stronger and better community for everyone.</p>
                     </div>
                 </div>
                 <div class="hidden md:w-1/2 h-full md:flex justify-center items-center">
                     <div class="hidden md:flex justify-end">
-                        <img :src="'/Images/online_information.svg'" alt="Announcement" class="w-[30rem]">
+                        <img :src="'/Images/achievements.svg'" alt="Announcement" class="w-[30rem]">
                     </div>
                 </div>
             </section>
@@ -79,8 +84,8 @@ const closeModal = () => {
             <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
                 <div class="flex justify-between items-center">
                     <div class="">
-                        <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Announcements</h2>
-                        <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Here's what's happening around you today.</p>
+                        <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Achievements</h2>
+                        <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Here's a look at the latest achievements in your community today.</p>
                     </div>
 
                     <!-- Sort Button -->
@@ -104,43 +109,33 @@ const closeModal = () => {
                         </button>
                     </div>
                 </div>
-                
-                <div v-if="!announcements.data || announcements.data.length === 0"  class="text-center text-gray-500">
-                    <p class="text-xl mb-4 py-20">No announcement yet. </p>
+
+                <div v-if="!achievements.data || achievements.data.length === 0" class="text-center text-gray-500">
+                    <p class="text-xl mb-4 py-20">No achievements yet. </p>
                 </div>
 
-                <div 
-                    v-else class="grid grid-rows-1">
-                    <div
-                        v-for="announcement in props.announcements.data" :key="announcement.id" 
-                        class="shadow-lg mb-3 rounded-lg border-b-1 border-[#000] p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] "
-                    >
-                        <div 
-                            class="flex flex-col gap-3"
-                        >
+                <div v-else class="grid grid-rows-1">
+                    <div v-for="achievement in props.achievements.data" :key="achievement.id" class="shadow-lg mb-3 rounded-lg border-b-1 border-[#000] p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c]">
+                        <div class="flex flex-col gap-3">
                             <div class="flex justify-between mb-2">
-                                <h1 class="font-[Poppins] font-semibold text-lg">{{ announcement.title }}</h1>
-                                <p class="text-gray-500 text-sm">{{ formatDate(announcement.event_date) }}</p>
+                                <h1 class="font-[Poppins] font-semibold text-lg">{{ achievement.title }}</h1>
+                                <p class="text-gray-500 text-sm">{{ formatDate(achievement.date_of_achievement) }}</p>
                             </div>
                             <div class="mb-2">
-                                <p class="font-light">{{ announcement.content }}</p>
+                                <p class="font-light">{{ achievement.summary }}</p>
                             </div>
                             <div class="flex justify-between">
                                 <div class="flex items-center gap-5">
                                     <p
-                                        class="p-2 uppercase rounded text-xs"
-                                        :class="announcement?.level === 'urgent'
-                                        ? 'text-red-700 border-2 border-red-700 font-semibold' : announcement?.level === 'important'
-                                        ? 'text-amber-500 border-2 border-amber-500' : 'text-green-700 border-2 border-green-700'
-                                        "
+                                        class="p-2 uppercase rounded text-xs border-2 border-blue-500 text-blue-500 font-semibold"
                                     >
-                                        {{ announcement.level }}
+                                        {{ achievement.status }}
                                     </p>
                                     <p class="text-xs text-gray-500">System Admin</p>
                                 </div>
                                 <button
                                     type="button"
-                                    @click="openDetailsModal(announcement.id)"
+                                    @click="openDetailsModal(achievement.id)"
                                     class="group flex gap-1 items-center text-gray-500 transition-all duration-300"
                                 >
                                     <p class="text-xs group-hover:text-blue-500">More Details</p>
@@ -152,9 +147,9 @@ const closeModal = () => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="announcements.data && announcements.data.length > 0" class="flex justify-end mt-10">
+                <div v-if="achievements.data && achievements.data.length > 0" class="flex justify-end mt-10">
                     <div class="flex items-center gap-3 rounded">
-                        <template v-for="link in (props.announcements.links || [])" :key="link?.label || 'empty'">
+                        <template v-for="link in (props.achievements.links || [])" :key="link?.label || 'empty'">
                             <Link
                                 v-if="link.url"
                                 :href="link.url"
@@ -193,9 +188,9 @@ const closeModal = () => {
                 </div>
             </section>
         </main>
-        <AnnouncementClientDetailsModal
+        <AchievementsClientDetailsModal 
             :show="openModal"
-            :announcements="selectedAnnouncement"
+            :achievements="selectedAchievements"
             @close="closeModal"
         />
     </GuestLayout>

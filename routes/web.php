@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AchievementController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnouncementCategoriesController;
 use App\Http\Controllers\BarangayController;
@@ -27,6 +28,7 @@ Route::get('faq', fn() => Inertia::render('FAQ'));
 Route::get('/about', fn() => Inertia::render('About'));
 Route::get('/review', fn() => Inertia::render('Review'));
 Route::get('/user-announcements', [AnnouncementController::class, 'showInClient'])->name('user.get.announcements');
+Route::get('/brgy-achievements', [AchievementController::class, 'showInClient'])->name('user.get.achievements');
 
 Route::prefix('report-issue')->name('report.')->group(function() {
     Route::get('/', fn() => Inertia::render('ReportIssue'));
@@ -69,7 +71,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/reports', [ReportsController::class, 'index'])->name('admin.reports');
         Route::get('/pending-reports', [ReportsController::class, 'pendingReports'])->name('admin.pending-reports');
         Route::get('/in-progress', [ReportsController::class, 'inProgress'])->name('admin.in-progress');
-        Route::get('/projects', fn() => Inertia::render('Admin/Projects'))->name('admin.projects');
+        Route::get('/achievements', fn() => Inertia::render('Admin/Achievements'))->name('admin.projects');
         Route::get('/resolved-reports', [ReportsController::class, 'resolvedReports'])->name('admin.resolved-reports');
         Route::get('/rejected-reports', [ReportsController::class, 'rejectedReports'])->name('admin.rejected-reports');
         Route::get('/reports/{id}', [ReportsController::class, 'show'])->name('reports.show');
@@ -109,6 +111,15 @@ Route::prefix('admin')->group(function () {
         Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy'])->name('admin.deletes.announcement');
         Route::post('/announcements/archive/{id}', [AnnouncementController::class, 'archive'])->name('admin.archive.announcement');
         Route::post('/announcements/restore/{id}', [AnnouncementController::class, 'restore'])->name('admin.restore.announcement');
+
+        Route::get('/achievements/create-achievements', [AchievementController::class, 'create'])->name('admin.create.achievements');
+        Route::post('/achievements', [AchievementController::class, 'store'])->name('admin.store.achievements');
+        Route::post('achievements/archive/{achievement}', [AchievementController::class, 'archive'])->name('admin.achievements.archive');
+        Route::post('achievements/publish/{achievement}', [AchievementController::class, 'publish'])->name('admin.achievements.publish');
+
+        Route::post('/announcements/bulk-archive', [AnnouncementController::class, 'bulkArchive'])->name('admin.bulk.archive.announcement');
+        Route::post('/announcements/bulk-restore', [AnnouncementController::class, 'bulkRestore'])->name('admin.bulk.restore.announcement');
+        Route::post('/announcements/bulk-delete', [AnnouncementController::class, 'bulkDelete'])->name('admin.bulk.delete.announcement');
     });
 });
 

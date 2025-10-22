@@ -2,9 +2,13 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, computed, onMounted, reactive } from 'vue';
 import { initTooltips } from 'flowbite';
+import Swal from 'sweetalert2';
+import { useToast } from 'vue-toastification'
 
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import AnnouncementDetailsModal from '@/Components/AnnouncementDetailsModal.vue';
+
+const toast = useToast();
 
 const props = defineProps({
     announcements: Object,
@@ -17,47 +21,404 @@ const announcementsState = reactive({
     archived: [...props.announcements.archived || []]
 })
 
+const selectedAnnouncements = ref(new Set());
+const bulkAction = ref('');
+
+// Bulk action options
+const bulkActions = computed(() => {
+    if (activeStatus.value === 'archive') {
+        return [
+            { value: 'restore', label: 'Restore Selected', icon: 'arrows-counter-clockwise (green)' },
+            { value: 'delete', label: 'Delete Selected', icon: 'trash (red)' }
+        ];
+    } else {
+        return [
+            { value: 'archive', label: 'Archive Selected', icon: 'archive (blue)' }
+        ];
+    }
+});
+
+// Select/deselect all announcements in current view
+const toggleSelectAll = () => {
+    const currentAnnouncements = currentDisplayedAnnouncements.value;
+    
+    if (selectedAnnouncements.value.size === currentAnnouncements.length) {
+        // Deselect all
+        selectedAnnouncements.value.clear();
+    } else {
+        // Select all
+        currentAnnouncements.forEach(announcement => {
+            selectedAnnouncements.value.add(announcement.id);
+        });
+    }
+}
+
+// Toggle individual announcement selection
+const toggleAnnouncementSelection = (id) => {
+    if (selectedAnnouncements.value.has(id)) {
+        selectedAnnouncements.value.delete(id);
+    } else {
+        selectedAnnouncements.value.add(id);
+    }
+}
+
+// Check if all announcements are selected
+const isAllSelected = computed(() => {
+    const currentAnnouncements = currentDisplayedAnnouncements.value;
+    return currentAnnouncements.length > 0 && 
+            selectedAnnouncements.value.size === currentAnnouncements.length;
+});
+
+// Check if some announcements are selected
+const hasSelectedAnnouncements = computed(() => {
+    return selectedAnnouncements.value.size > 0;
+});
+
+// Execute bulk action
+const executeBulkAction = () => {
+    if (!bulkAction.value || !hasSelectedAnnouncements.value) return;
+
+    const selectedIds = Array.from(selectedAnnouncements.value);
+    
+    switch(bulkAction.value) {
+        case 'archive':
+            archiveBulkAnnouncements(selectedIds); // This will show SweetAlert2 directly
+            break;
+        case 'restore':
+            restoreBulkAnnouncements(selectedIds); // You'll need to update this too
+            break;
+        case 'delete':
+            deleteBulkAnnouncements(selectedIds); // And this one
+            break;
+    }
+    
+    // Reset bulk action dropdown
+    bulkAction.value = '';
+}
+
+// Bulk archive announcements
+const archiveBulkAnnouncements = (ids) => {
+    Swal.fire({
+        title: 'Archive Announcements?',
+        html: 
+            `
+            <div class="flex flex-col gap-2 text-left">
+                <p class="text-base">You are about to archive <b>${ids.length}</b> announcement(s).</p>
+                <div class="bg-blue-100 text-left p-2 border-l-4 border-l-blue-700 rounded-md">
+                    <span class="text-sm">This will hide them from public view. You can restore them anytime in the archive section.</span>
+                </div>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, archive them!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        customClass: {
+            confirmButton: 'bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-300',
+            cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Archiving...',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            router.post(route('admin.bulk.archive.announcement'), { ids }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Close the loading SweetAlert first
+                    Swal.close();
+                    
+                    // Your existing success logic...
+                    ids.forEach(id => {
+                        let archivedAnnouncement = null;
+                        const pinnedIndex = announcementsState.pinned.findIndex(a => a.id === id);
+                        if (pinnedIndex !== -1) {
+                            archivedAnnouncement = announcementsState.pinned.splice(pinnedIndex, 1)[0];
+                        }
+                        const regularIndex = announcementsState.regular.findIndex(a => a.id === id);
+                        if (regularIndex !== -1) {
+                            archivedAnnouncement = announcementsState.regular.splice(regularIndex, 1)[0];
+                        }
+                        if (archivedAnnouncement) {
+                            archivedAnnouncement.archived_at = new Date().toISOString();
+                            announcementsState.archived.unshift(archivedAnnouncement);
+                        }
+                    });
+                    
+                    selectedAnnouncements.value.clear();
+                    
+                    // Success notification (unchanged)
+                    toast.success('Announcement(s) succesfully archived!');
+                },
+                onError: (errors) => {
+                    Swal.close();
+                    
+                    // Error notification
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to archive announcements. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+    });
+}
+
+
+// Bulk restore announcements
+const restoreBulkAnnouncements = (ids) => {
+    Swal.fire({
+        title: 'Restore Announcements?',
+        html: 
+            `
+            <div class="flex flex-col gap-2 text-left">
+                <p class="text-base">You are about to restore <b>${ids.length}</b> announcement(s) from the archive.</p>
+                <div class="bg-green-100 text-left p-2 border-l-4 border-l-green-700 rounded-md">
+                    <span class="text-sm text-green-500">These announcements will be visible to the public again once restored.</span>
+                </div>
+            </div>
+        `,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, restore them!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        customClass: {
+            confirmButton: 'bg-green-500 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200',
+            cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Restoring...',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            router.post(route('admin.bulk.restore.announcement'), { ids }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    Swal.close();
+                    ids.forEach(id => {
+                        const archivedIndex = announcementsState.archived.findIndex(a => a.id === id);
+                        if (archivedIndex !== -1) {
+                            const restoredAnnouncement = announcementsState.archived.splice(archivedIndex, 1)[0];
+                            restoredAnnouncement.archived_at = null;
+                            
+                            // Add back to pinned or regular based on is_pinned status
+                            if (restoredAnnouncement.is_pinned) {
+                                announcementsState.pinned.unshift(restoredAnnouncement);
+                            } else {
+                                announcementsState.regular.unshift(restoredAnnouncement);
+                            }
+                        }
+                    });
+                    
+                    // Clear selection
+                    selectedAnnouncements.value.clear();
+                    
+                    // Success notification
+                    toast.success('Announcement(s) restored successfully!');
+                },
+                onError: (errors) => {
+                    Swal.close();
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to restore announcements. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+    });
+}
+
+// Bulk delete announcements
+const deleteBulkAnnouncements = (ids) => {
+    Swal.fire({
+        title: 'Delete Announcements?',
+        html: 
+            `
+            <div class="flex flex-col gap-2 text-left">
+                <p class="text-base">You are about to permanently delete ${ids.length} announcement(s).</p>
+                <div class="bg-red-100 text-left p-2 border-l-4 border-l-red-700 rounded-md">
+                    <span class="text-sm text-red-500">This action cannot be undone. The deleted announcements will be removed permanently from the system.</span>
+                </div>
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, delete permanently!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        customClass: {
+            confirmButton: 'bg-red-500 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200',
+            cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200'
+        }
+    }).then((result) => {
+        Swal.fire({
+                icon: 'info',
+                title: 'Deleting...',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        if (result.isConfirmed) {
+            router.post(route('admin.bulk.delete.announcements'), { ids }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    Swal.close();
+                    // Remove from all lists
+                    announcementsState.pinned = announcementsState.pinned.filter(a => !ids.includes(a.id));
+                    announcementsState.regular = announcementsState.regular.filter(a => !ids.includes(a.id));
+                    announcementsState.archived = announcementsState.archived.filter(a => !ids.includes(a.id));
+                    
+                    // Clear selection
+                    selectedAnnouncements.value.clear();
+                    
+                    // Success notification
+                    toast.success('Announcement(s) deleted successfully!');
+                },
+                onError: (errors) => {
+                    Swal.close();
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to delete announcements. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+    });
+}
+
+// Clear all selections
+const clearSelection = () => {
+    selectedAnnouncements.value.clear();
+}
+
 const selectedAnnouncement = ref(null)
 const showModal = ref(false)
 const activeStatus = ref('pinned')
 const searchQuery = ref('')
 
-// Computed properties for filtered announcements
+const sortStates = ref({
+    pinned: 'newest',
+    regular: 'newest', 
+    archived: 'newest'
+})
+
+// Sorting function
+const sortAnnouncements = (announcements, sortType) => {
+    const sorted = [...announcements];
+    
+    switch(sortType) {
+        case 'newest':
+            return sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        case 'oldest':
+            return sorted.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        case 'title_asc':
+            return sorted.sort((a, b) => a.title.localeCompare(b.title));
+        case 'title_desc':
+            return sorted.sort((a, b) => b.title.localeCompare(a.title));
+        default:
+            return sorted;
+    }
+}
+
+// FIXED: Correct computed properties
 const filteredPinnedAnnouncements = computed(() => {
-    if (!searchQuery.value.trim()) {
-        return announcementsState.pinned;
+    let announcements = announcementsState.pinned;
+    
+    if (searchQuery.value.trim()) {
+        const query = searchQuery.value.toLowerCase().trim();
+        announcements = announcements.filter(announcement => 
+            announcement.title.toLowerCase().includes(query) ||
+            announcement.content.toLowerCase().includes(query)
+        );
     }
     
-    const query = searchQuery.value.toLowerCase().trim();
-    return announcementsState.pinned.filter(announcement => 
-        announcement.title.toLowerCase().includes(query) ||
-        announcement.content.toLowerCase().includes(query)
-    );
+    return sortAnnouncements(announcements, sortStates.value.pinned);
 });
 
 const filteredRegularAnnouncements = computed(() => {
-    if (!searchQuery.value.trim()) {
-        return announcementsState.regular;
+    let announcements = announcementsState.regular;
+    
+    if (searchQuery.value.trim()) {
+        const query = searchQuery.value.toLowerCase().trim();
+        announcements = announcements.filter(announcement => 
+            announcement.title.toLowerCase().includes(query) ||
+            announcement.content.toLowerCase().includes(query)
+        );
     }
     
-    const query = searchQuery.value.toLowerCase().trim();
-    return announcementsState.regular.filter(announcement => 
-        announcement.title.toLowerCase().includes(query) ||
-        announcement.content.toLowerCase().includes(query)
-    );
+    return sortAnnouncements(announcements, sortStates.value.regular);
 });
 
 const filteredArchivedAnnouncements = computed(() => {
-    if (!searchQuery.value.trim()) {
-        return announcementsState.archived;
+    let announcements = announcementsState.archived;
+    
+    if (searchQuery.value.trim()) {
+        const query = searchQuery.value.toLowerCase().trim();
+        announcements = announcements.filter(announcement => 
+            announcement.title.toLowerCase().includes(query) ||
+            announcement.content.toLowerCase().includes(query)
+        );
     }
     
-    const query = searchQuery.value.toLowerCase().trim();
-    return announcementsState.archived.filter(announcement => 
-        announcement.title.toLowerCase().includes(query) ||
-        announcement.content.toLowerCase().includes(query)
-    );
+    return sortAnnouncements(announcements, sortStates.value.archived);
 });
+
+const currentDisplayedAnnouncements = computed(() => {
+    switch(activeStatus.value) {
+        case 'pinned': return filteredPinnedAnnouncements.value;
+        case 'regular': return filteredRegularAnnouncements.value;
+        case 'archive': return filteredArchivedAnnouncements.value;
+        default: return [];
+    }
+});
+
+const currentSortState = computed(() => {
+    return sortStates.value[activeStatus.value];
+});
+
+const handleSortChange = (sortType) => {
+    sortStates.value[activeStatus.value] = sortType;
+}
+
+const sortOptions = [
+    { value: 'newest', label: 'Newest First', icon: 'arrow-down' },
+    { value: 'oldest', label: 'Oldest First', icon: 'arrow-up' },
+    { value: 'title_asc', label: 'Title A-Z', icon: 'text-asc' },
+    { value: 'title_desc', label: 'Title Z-A', icon: 'text-desc' }
+];
 
 // Update tabs with dynamic counts based on search
 const tabs = computed(() => [
@@ -218,6 +579,16 @@ const handleAnnouncementRestored = (restoredId) => {
     closeModal();
 }
 
+const getSortLabel = (sortType) => {
+    const option = sortOptions.find(opt => opt.value === sortType);
+    return option ? option.label : 'Sort By';
+}
+
+const getSortIcon = (sortType) => {
+    const option = sortOptions.find(opt => opt.value === sortType);
+    return option ? option.icon : 'sort';
+}
+
 onMounted(() => {
     initTooltips();
 });
@@ -279,6 +650,7 @@ onMounted(() => {
                 </div>
             </section>
 
+            <!-- Tab Pill -->
             <div class="flex flex-col gap-7">
                 <div class="">
                     <ul class="flex justify-between">
@@ -312,23 +684,135 @@ onMounted(() => {
                             </li>
                         </div>
 
-                        <Link
-                            href="/admin/announcements/create-announcement"
-                            class="group flex gap-2 text-gray-600 font-medium p-3 rounded-lg hover:bg-blue-700 hover:text-white transition-all duration-300 border border-gray-300 shadow-sm w-auto"
-                        >
-                            <img 
-                                :src="'/Images/SVG/plus-circle.svg'" 
-                                alt="Icon" 
-                                class="h-5 block group-hover:hidden">
-                            <img 
-                                :src="'/Images/SVG/plus-circle (white).svg'" 
-                                alt="Icon White" 
-                                class="h-5 hidden group-hover:block">
-                            Create Announcement
-                        </Link>
+                        <div class="flex item-center gap-2">
+                            <!-- Bulk Actions Dropdown -->
+                            <div v-if="hasSelectedAnnouncements" class="relative group">
+                                <button
+                                    class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-white bg-blue-700 border border-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                                    type="button"
+                                >
+                                    <img :src="`/Images/SVG/check-circle.svg`" alt="Bulk Actions" class="h-4 w-4">
+                                    <span class="min-w-[120px] text-left">{{ selectedAnnouncements.size }} selected</span>
+                                    <svg class="w-4 h-4 text-blue-200 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                
+                                <!-- Bulk Actions Dropdown Menu -->
+                                <div class="absolute right-0 z-50 mt-1 w-56 origin-top-right bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
+                                    <div class="py-2">
+                                        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
+                                            Bulk Actions
+                                        </div>
+                                        <div class="py-1">
+                                            <button
+                                                v-for="action in bulkActions"
+                                                :key="action.value"
+                                                @click="bulkAction = action.value; executeBulkAction()"
+                                                class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left text-gray-700 hover:bg-blue-50 transition-colors"
+                                            >
+                                                <img :src="`/Images/SVG/${action.icon}.svg`" alt="" class="h-4 w-4">
+                                                <span class="flex-1">{{ action.label }}</span>
+                                            </button>
+                                        </div>
+                                        <div class="border-t border-gray-100 pt-1">
+                                            <button
+                                                @click="clearSelection"
+                                                class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left text-gray-500 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <img :src="`/Images/SVG/x-circle.svg`" alt="Clear" class="h-4 w-4">
+                                                <span class="flex-1">Clear Selection</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sorting -->
+                            <div v-if="activeStatus !== 'archive'" class="relative group">
+                                <div class="relative group">
+                                    <button
+                                        class="flex items-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
+                                        type="button"
+                                    >
+                                        <span class="min-w-[100px] text-left">{{ getSortLabel(currentSortState) }}</span>
+                                        <svg class="w-4 h-4 text-gray-400 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </button>
+                                    
+                                    <!-- Dropdown Menu -->
+                                    <div class="absolute right-0 z-50 mt-1 w-56 origin-top-right bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100">
+                                        <div class="py-2">
+                                            <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
+                                                Sort Announcements
+                                            </div>
+                                            <div class="py-1">
+                                                <button
+                                                    v-for="option in sortOptions"
+                                                    :key="option.value"
+                                                    @click="handleSortChange(option.value)"
+                                                    :class="[
+                                                        'flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left transition-colors',
+                                                        currentSortState === option.value 
+                                                            ? 'text-blue-600 bg-blue-50 border-r-2 border-blue-600' 
+                                                            : 'text-gray-700 hover:bg-gray-50'
+                                                    ]"
+                                                >
+                                                    
+                                                    <span class="flex-1">{{ option.label }}</span>
+                                                    <svg 
+                                                        v-if="currentSortState === option.value" 
+                                                        class="w-4 h-4 text-blue-600" 
+                                                        fill="currentColor" 
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Link
+                                href="/admin/announcements/create-announcement"
+                                class="group bg-white flex items-center gap-2 text-gray-600 font-medium p-2 rounded-lg hover:bg-blue-700 hover:text-white transition-all duration-300  border-gray-300 shadow-sm w-auto"
+                            >
+                                <img 
+                                    :src="'/Images/SVG/plus-circle.svg'" 
+                                    alt="Icon" 
+                                    class="h-5 block group-hover:hidden">
+                                <img 
+                                    :src="'/Images/SVG/plus-circle (white).svg'" 
+                                    alt="Icon White" 
+                                    class="h-5 hidden group-hover:block">
+                                Create Announcement
+                            </Link>
+                        </div>
                     </ul>
+
+                    <!-- Select All Checkbox -->
+                    <div v-if="currentDisplayedAnnouncements.length > 0" class="mt-4 flex items-center gap-3">
+                        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                :checked="isAllSelected"
+                                @change="toggleSelectAll"
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                            >
+                            <span v-if="isAllSelected">Deselect All</span>
+                            <span v-else>Select All {{ currentDisplayedAnnouncements.length }} announcements</span>
+                        </label>
+                        
+                        <span v-if="hasSelectedAnnouncements" class="text-sm text-blue-600 font-medium">
+                            {{ selectedAnnouncements.size }} announcement(s) selected
+                        </span>
+                    </div>
                 </div>
             </div>
+
 
             <section class="flex flex-col gap-5">
                 <!-- Pinned Announcements -->
@@ -368,8 +852,10 @@ onMounted(() => {
                                 @click="openAnnouncement(pinned)"
                             >
                                 <div class="flex justify-between">
-                                    <div class="flex justify-center items-center">
-                                        <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ pinned.id }}</span>
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex justify-center items-center">
+                                            <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ pinned.id }}</span>
+                                        </div>
                                     </div>
 
                                     <span class="bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 group-hover:bg-blue-500 transition-all duration-300">
@@ -383,20 +869,17 @@ onMounted(() => {
                                         <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300">{{ pinned.content }}</p>
                                     </div>
                                 </div>
-                                <div class="flex justify-start mt-6">
+                                <div class="flex justify-between mt-6">
                                     <div>
                                         <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">{{ formatDate( pinned.created_at) }}</span>
                                     </div>
-                                </div>
-
-                                <!-- <div class="flex justify-end mt-4">
-                                    <button
-                                        @click.stop="archiveAnnouncement(pinned.id)"
-                                        class="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                                    <input
+                                        type="checkbox"
+                                        :checked="selectedAnnouncements.has(pinned.id)"
+                                        @click.stop="toggleAnnouncementSelection(pinned.id)"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                                     >
-                                        Archive
-                                    </button>
-                                </div> -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -438,8 +921,10 @@ onMounted(() => {
                                 @click="openAnnouncement(regular)"
                             >
                                 <div class="flex justify-between">
-                                    <div class="flex justify-center items-center">
-                                        <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ regular.id }}</span>
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex justify-center items-center">
+                                            <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ regular.id }}</span>
+                                        </div>
                                     </div>
 
                                     <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded flex items-center gap-1">
@@ -453,10 +938,16 @@ onMounted(() => {
                                         <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300">{{ regular.content }}</p>
                                     </div>
                                 </div>
-                                <div class="flex justify-start mt-6">
+                                <div class="flex justify-between mt-6">
                                     <div>
                                         <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">{{ formatDate( regular.created_at) }}</span>
                                     </div>
+                                    <input
+                                        type="checkbox"
+                                        :checked="selectedAnnouncements.has(regular.id)"
+                                        @click.stop="toggleAnnouncementSelection(regular.id)"
+                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                                    >
                                 </div>
                             </div>
                         </div>

@@ -14,7 +14,8 @@ const links = [
     { name: 'FAQ', url: '/faq' },
     { name: 'About', url: '/about' },
     { name: 'Contact Us', url: '/contact-us' },
-    { name: 'Announcements', url: '/user-announcements'}
+    { name: 'Announcements', url: '/user-announcements' },
+    { name: 'Achievements', url: '/brgy-achievements' }
 ];
 
 const mblinks = [...links];
