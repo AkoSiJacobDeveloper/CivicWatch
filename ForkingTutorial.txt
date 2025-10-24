@@ -1,0 +1,152 @@
+1. Fork the Repository
+
+Go to the GitHub page of the repository you want to contribute to.
+In the upper right corner, click “Fork” → it will create a copy of the repo under your account.
+Choose where to fork it (your personal account is fine for now).
+
+Your fork will look like:
+
+https://github.com/<your-username>/<repo-name>
+
+
+
+2. Clone Your Fork Locally
+
+In your terminal:
+
+git clone https://github.com/<your-username>/<repo-name>.git
+cd <repo-name>
+
+
+
+3. Add the Original Repository as a Remote
+
+This helps you keep your fork up to date with the main (upstream) repo.
+
+git remote add upstream https://github.com/<original-owner>/<repo-name>.git
+
+
+Check that it worked:
+
+git remote -v
+
+
+You should see:
+
+origin    https://github.com/<your-username>/<repo-name>.git (fetch)
+upstream  https://github.com/<original-owner>/<repo-name>.git (fetch)
+
+
+
+
+4. Sync Your Fork (Before Working)
+
+Always start fresh to make sure your fork is up to date with the original repo.
+
+git fetch upstream
+git checkout main
+git merge upstream/main
+
+
+Or, if you prefer rebase (cleaner history):
+
+git fetch upstream
+git checkout main
+git rebase upstream/main
+
+
+Then push the updated main to your fork:
+
+git push origin main
+
+
+
+5. Create a New Branch for Your Work
+
+Never work directly on main.
+Create a feature or bugfix branch instead:
+
+git checkout -b feature/add-cool-feature
+
+
+Why use that branch name format?
+It’s just a naming convention used in most projects:
+
+feature/ → prefix for new features.
+fix/ → prefix for bug fixes.
+hotfix/ → for urgent fixes.
+docs/ → for documentation changes.
+
+
+
+6. Make Your Changes
+
+Edit, add, or remove code as needed.
+
+Then commit:
+
+git add .
+git commit -m "Add cool feature that improves performance"
+
+
+
+
+7. Push Your Branch to Your Fork
+
+git push origin feature/add-cool-feature
+
+
+
+
+8. Create a Pull Request (PR)
+
+Go to your fork on GitHub.
+
+GitHub will usually show a “Compare & pull request” button — click it.
+
+Make sure the base repository is the original repo (not your fork).
+
+Add a clear title and description:
+
+What your change does
+
+Why it’s useful
+
+Any relevant issues it fixes (e.g., Fixes #42)
+
+Then submit the pull request 🎉
+
+
+
+
+9. Keep Your Branch Updated (if changes happen upstream)
+
+If the upstream repo changes while your PR is open:
+
+git fetch upstream
+git rebase upstream/main
+git push --force origin feature/add-cool-feature
+
+
+
+
+10. After Your PR Is Merged
+
+Clean up your local repo:
+
+git checkout main
+git pull upstream main
+git branch -d feature/add-cool-feature
+git push origin --delete feature/add-cool-feature
+
+
+
+Bonus Tips
+
+Use descriptive branch names (e.g., fix/login-error).
+
+Write clean commit messages.
+
+Respect contribution guidelines (check for CONTRIBUTING.md in the repo).
+
+Run any tests or linters before committing.
