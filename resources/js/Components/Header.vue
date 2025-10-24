@@ -58,8 +58,11 @@ const toggleDarkMode = () => {
 
 <template>
     <header class="bg-blue-700 flex md:justify-between p-3 md:py-5 md:px-10 lg:px-32 fixed w-full z-[9999] dark:bg-[#1e1e1e] dark:text-[#FAF9F6]">
-        <div class="flex justfify-between w-full">
-            <ApplicationLogo />
+        <div class="flex justify-between  w-full">
+            <div class="flex items-center gap-1">
+                <ApplicationLogo />
+            </div>
+            
             <nav class="flex text-center items-center">
                 <!-- Desktop Navigation Bar -->
                 <ul class="hidden md:flex space-x-4 text-white">
@@ -90,13 +93,15 @@ const toggleDarkMode = () => {
                     </ul>
                 </div>
             </nav>
+
+            <div class="flex items-center">
+                <!-- <font-awesome-icon v-if="isDark" icon="moon" class="text-white" />
+                <font-awesome-icon v-else icon="sun" class="text-white" /> -->
+                <button @click="toggleDarkMode" class="ml-4">
+                    <font-awesome-icon :icon="isDark ? 'sun' : 'moon'" class="text-white hover:text-blue-600 transition-colors duration-200" />
+                </button>
+            </div>
         </div>
-        <div class="flex items-center">
-            <!-- <font-awesome-icon v-if="isDark" icon="moon" class="text-white" />
-            <font-awesome-icon v-else icon="sun" class="text-white" /> -->
-            <button @click="toggleDarkMode" class="ml-4">
-                <font-awesome-icon :icon="isDark ? 'sun' : 'moon'" class="text-white hover:text-blue-600 transition-colors duration-200" />
-            </button>
-        </div>
+        
     </header>
 </template>
