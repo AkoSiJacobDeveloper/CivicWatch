@@ -35,7 +35,35 @@ function openReviewModal() {
             </section>
 
             <!-- Review Section -->
-            <section class="md:px-10 lg:px-32 py-20">
+            <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
+                <div class="flex justify-between items-center">
+                    <div class="">
+                        <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Reviews</h2>
+                        <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">See what people are saying and share your own experience.</p>
+                    </div>
+
+                    <!-- Sort Button -->
+                    <div>
+                        <button
+                            @click="toggleSort"
+                            class="border p-3 rounded flex items-center gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300"
+                        >
+                            <span>{{ sortOrder === 'desc' ? 'Newest' : 'Oldest' }}</span>
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                width="16" 
+                                height="16" 
+                                fill="currentColor" 
+                                viewBox="0 0 256 256"
+                                :class="sortOrder === 'desc' ? 'rotate-0' : 'rotate-180'"
+                                class="transition-transform duration-300 group-hover:scale-110"
+                            >
+                                <path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
                 <div v-if="!reviews.data || reviews.data.length === 0"  class="text-center text-gray-500">
                     <p class="text-xl mb-4 py-20">No reviews yet. Be the first to write one!</p>
                 </div>

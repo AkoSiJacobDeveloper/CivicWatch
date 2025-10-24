@@ -78,7 +78,7 @@ function submit() {
     <main class="flex items-center justify-center parent-container">
         <div class="flex w-[70%] gap-1">
             <!-- Left Section - Logo -->
-            <section class="hidden md:flex w-3/5  h-auto items-center justify-center relative border bg-white p-5 rounded">
+            <section class="hidden md:flex w-3/5 items-center justify-center relative p-10 rounded left-container">
                 <!-- Back Button -->
                 <Link href="/" class="absolute top-8 left-8 group">
                     <img 
@@ -91,27 +91,27 @@ function submit() {
                 
                 <div class="transform transition-transform duration-500 hover:scale-105">
                     <img 
-                        :src="'/Images/Cabulijan/erasebg-transformed.webp'" 
+                        :src="'/Images/Cabulijan/Official Cabulijan Logo.png'" 
                         alt="Barangay Seal" 
-                        class="w-full h-full max-w-xs object-contain opacity-90 relative"
+                        class="w-full h-96 max-w-xs object-contain opacity-90"
                     >
-                    <div class="absolute top-96 w-full flex gap-2 items-center justify-center">
+                    <div class=" w-full flex gap-2 items-center justify-center">
                         <img :src="'/Images/SVG/map-pin-fill.svg'" alt="Location" class="h-4 w-4">
-                        <span class="text-xs text-gray-500">Cabulijan, Tubigon, Bohol</span>
+                        <span class="text-xs text-gray-300">Cabulijan, Tubigon, Bohol</span>
                     </div>
                 </div>
             </section>
         
             <!-- Right Section - Login Form -->
-            <section class="w-2/5 flex items-center justify-center p-8 border bg-white rounded">
+            <section class="w-2/5 flex items-center justify-center p-8 rounded right-container">
                 <div class="w-full max-w-sm space-y-8">
                     <!-- Header -->
                     <div class="space-y-2">
-                        <h1 class="text-2xl font-semibold text-gray-900 font-[Poppins]">
+                        <h1 class="text-2xl font-semibold text-white font-[Poppins]">
                             Welcome Back
                         </h1>
                         <p class="text-sm text-gray-500">
-                            <p class="text-xs text-gray-500">Your role matters. Let’s get things done for the community.</p>
+                            <p class="text-xs text-gray-300">Your role matters. Let’s get things done for the community.</p>
                         </p>
                     </div>
 
@@ -130,7 +130,7 @@ function submit() {
                     <form @submit.prevent="submit" class="space-y-5">
                         <!-- Email Field -->
                         <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">
+                            <label class="block text-sm font-medium text-gray-300">
                                 Email
                             </label>
                             <div class="relative">
@@ -159,7 +159,7 @@ function submit() {
 
                         <!-- Password Field -->
                         <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">
+                            <label class="block text-sm font-medium text-gray-300">
                                 Password
                             </label>
                             <div class="relative">
@@ -240,7 +240,15 @@ function submit() {
     background-size: cover; /* ✅ this makes it fill the screen properly */
     height: 100vh;
     width: 100vw;
+}
 
+.left-container , .right-container {
+/* From https://css.glass */
+background: rgba(255, 255, 255, 0.14);
+border-radius: 16px;
+box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+backdrop-filter: blur(5.2px);
+-webkit-backdrop-filter: blur(5.2px);
 }
 /* Smooth transitions */
 * {

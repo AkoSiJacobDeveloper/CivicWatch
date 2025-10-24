@@ -75,7 +75,7 @@ const closeModal = () => {
                     </div>
                 </div>
             </section>
-
+            
             <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
                 <div class="flex justify-between items-center">
                     <div class="">

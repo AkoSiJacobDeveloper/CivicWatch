@@ -160,16 +160,22 @@ const scrollRightIssues = () => {
     <GuestLayout>
         <main class="pt-[50px]">
             <!-- Hero Section -->
-            <section class="flex justify-center items-center w-full h-screen bg-cover bg-center bg-no-repeat relative hero-section">
-                <div class="absolute inset-0 bg-black/50"></div>
-                <div class="flex items-center h-screen md:px-10 lg:px-32 w-[100%] md:w-[85%] z-[10]">
-                    <div ref="heroContent" class="flex items-center flex-col px-3 observe-me animate-on-scroll text-center">
-                        <!-- <h1 class="text-[#FAF9F6] text-4xl lg:text-6xl/snug font-bold tracking-wide font-[Poppins]">Helping <span class="text-blue-700">Communities</span> <span class="text-blue-700">Report</span> and Resolve Local Issues in <span class="text-blue-700">Realtime</span></h1>
-                        <p class="text-[#FAF9F6] mb-5 text-xs md:text-base">Bridge the gap between residents and local authorities</p> -->
-                        <h1 class="text-[#FAF9F6] text-4xl lg:text-6xl/snug font-bold tracking-wide font-[Poppins]">Your <span class="text-blue-400">Voice</span>. Your <span class="text-blue-400">Neighborhood</span>. Real-Time <span class="text-blue-400">Action</span>.</h1>
-                        <p class="text-[#FAF9F6] mb-5 text-xs md:text-base">Your reports help <span class="text-blue-400 font-semibold">Brgy. Cabulijan</span> grow safer, cleaner, and better for everyone.</p>
-                        <CallToActionBtn />
-                    </div>
+            <!-- <section class="flex justify-center items-center w-full h-screen bg-cover bg-center bg-no-repeat relative hero-section"> -->
+            <section class="md:px-10 lg:px-32 py-20 flex">
+                <div class="w-1/2 pt-10">
+                    <h2 class="font-bold text-7xl font-[Poppins] leading-none text-blue-950">
+                        Strengthening <span class="text-blue-600">Communication</span> Between the 
+                        <span class="text-blue-700">Barangay</span> and Its <span class="text-blue-500">People</span>
+                    </h2>
+                    <p class="my-4 font-light">Stay informed about local projects, announcements, and reports. Together, let’s build a safer and more connected barangay.</p>
+                    <CallToActionBtn />
+                </div>
+                <div class="w-1/2 flex justify-end pt-10">
+                    <img 
+                        :src="'/Images/Cabulijan/Official Cabulijan Logo.png'" 
+                        alt="Cabulijan Logo"
+                        class="flex h-[75%]"
+                    >
                 </div>
             </section>
 
@@ -375,9 +381,9 @@ const scrollRightIssues = () => {
 </template>
 
 <style scoped>
-.hero-section {
+/* .hero-section {
     background-image: url('/Images/herobg3.jpg');
-}
+} */
 /* Animation classes for scroll-driven animations */
 .observe-me {
     opacity: 0;

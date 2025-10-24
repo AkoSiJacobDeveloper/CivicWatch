@@ -11,11 +11,11 @@ const links = [
     { name: 'Report Issue', url: '/report-issue' },
     { name: 'Track Report', url: '/track-reports' },
     { name: 'Review', url: '/review' }, 
+    { name: 'Announcements', url: '/user-announcements' },
+    { name: 'Achievements', url: '/brgy-achievements' },
     { name: 'FAQ', url: '/faq' },
     { name: 'About', url: '/about' },
-    { name: 'Contact Us', url: '/contact-us' },
-    { name: 'Announcements', url: '/user-announcements' },
-    { name: 'Achievements', url: '/brgy-achievements' }
+    { name: 'Contact Us', url: '/contact-us' }
 ];
 
 const mblinks = [...links];
@@ -62,7 +62,6 @@ const toggleDarkMode = () => {
             <div class="flex items-center gap-1">
                 <ApplicationLogo />
             </div>
-            
             <nav class="flex text-center items-center">
                 <!-- Desktop Navigation Bar -->
                 <ul class="hidden md:flex space-x-4 text-white">

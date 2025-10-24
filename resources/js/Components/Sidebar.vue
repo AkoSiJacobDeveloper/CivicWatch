@@ -3,6 +3,7 @@ import { Link, usePage, router } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 
 import LogoutModal from './LogoutModal.vue';
+import ApplicationImage from './ApplicationImage.vue';
 
 const page = usePage();
 const isCollapsed = ref(
@@ -110,17 +111,30 @@ function confirmLogout() {
             <div class="flex justify-between mb-9">
                 <!-- Logo -->
                 <Link 
+                    v-show="!isCollapsed"
                     href="/admin/dashboard" 
-                    class="transition-all duration-300 flex"
-                    :class="isCollapsed ? ' items-center' : ''"
+                    class="transition-all duration-300 flex items-center"
                 >
-                    <img
-                        v-if="!isCollapsed"
-                        :src="'/Images/CivicWatch(1).png'"
-                        alt="CivicWatch"
-                        class="h-11 transition-all  duration-300"
+                    <div class="flex items-center gap-1">
+                        <img :src="'/Images/Cabulijan/Official Cabulijan Logo.png'" alt="Cabulijan Logo" class="h-10 md:h-14 lg:h-14 w-auto">
                         
-                    >
+                        <div class="flex flex-col">
+                            <div class="flex flex-col leading-none">
+                                <div class="border-b-2 border-white">
+                                    <p class="text-sm font-bold font-[Poppins] text-white">CivicWatch</p>
+                                </div>
+                                <p class="text-[0.6em] mt-1 font-semibold text-blue-900">REPORT.ACT.RESOLVE</p>
+                            </div>
+                        </div>
+                    </div>
+                </Link>
+
+                <Link 
+                    v-show="isCollapsed"
+                    href="/admin/dashboard" 
+                    class="flex items-center justify-center"
+                >
+                    <img :src="'/Images/Cabulijan/Official Cabulijan Logo.png'" alt="Cabulijan Logo" class="h-8 w-auto">
                 </Link>
 
                 <!-- Toggle Button -->

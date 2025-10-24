@@ -3,6 +3,8 @@ import { Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
+import ApplicationImage from '@/Components/ApplicationImage.vue';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import AboutCTA from '@/Components/AboutCTA.vue';
 import { text } from '@fortawesome/fontawesome-svg-core';
 
@@ -178,9 +180,20 @@ const teams = [
             </section>
 
             <section class="md:px-10 lg:px-32 py-20">
-                <div class="mb-10 px-3 flex gap-2 py-5 rounded ">
+                <div class="mb-10 px-3 flex gap-4 py-5 rounded ">
                     <div class="w-1/2 flex justify-center items-center ">
-                        <img :src="'/Images/CivicWatch(2).png'" alt="Logo">
+                        <div class="flex items-center gap-2">
+                            <img :src="'/Images/Cabulijan/Official Cabulijan Logo.png'" alt="Cabulijan Logo" class="h-60">
+                            <div class="flex flex-col">
+                                <div class="flex flex-col leading-none">
+                                    <div class="border-b-2 border-black">
+                                        <p class="text-5xl font-bold font-[Poppins] text-blue-950">CivicWatch</p>
+                                    </div>
+                                    <p class="text-2xl mt-1 font-semibold text-blue-900">REPORT.ACT.RESOLVE</p>
+                                </div>
+                                
+                            </div>
+                        </div>
                     </div>
 
                     <div class="w-1/2 h-auto">
