@@ -2,6 +2,7 @@
 import { Head, router, usePage, useForm } from '@inertiajs/vue3';
 import { ref, nextTick, onMounted, computed } from 'vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
+import Swal from 'sweetalert2';
 import axios from 'axios';
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
@@ -177,6 +178,26 @@ onMounted(async () => {
             sitekey: '6Ldq2nwrAAAAAHXbI9NLQEKa34n9VAWOkBOhY9dN'
         });
     }
+
+    Swal.fire ({
+        title: '<strong>Important Notice</strong>',
+        icon: 'warning',
+        html: `
+        <div class="text-left">
+            <p class="font-[Poppins] text-base font-medium">Please note that this system is designed only for non-urgent concerns, such as: </p>
+            <ul class="list-disc ml-4 my-2">
+            <li class="text-sm">Minor road or streetlight damage</li>
+            <li class="text-sm">Garbage collection issues</li>
+            <li class="text-sm">Public facility maintenance</li>
+            <li class="text-sm">Community disturbances (non-emergency)</li>
+            </ul>
+            <p class="text-sm">If an emergency report is detected such as fire, or crime a hotline will appear to guide you in reporting to the correct agency. </p>
+        </div>
+        `,
+        showCloseButton: true,
+        confirmButtonText: 'I Understand',
+        confirmButtonColor: '#3085d6',
+    });
 });
 </script>
 
@@ -194,7 +215,8 @@ onMounted(async () => {
                 <!-- NOTICE -->
                 <div v-if="barangays.filter(b => !b.is_available).length > 0" class="mt-5 p-3 bg-yellow-50 border border-yellow-200 rounded-md dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-100">
                     <p class="text-xs md:text-sm">
-                        <strong>Notice:</strong> We're currently piloting in select barangays only. Other locations coming soon!
+                        <strong>Notice:</strong> Our system only accepts <span class="font-bold">non-urgent</span> reports, such as minor maintenance issues, community concerns, or local observations that do not require immediate response.
+                        If an <span class="font-bold">emergency</span> report is detected, a hotline will automatically appear to help you redirect your report to the appropriate agency for faster assistance.
                     </p>
                 </div>
                 
