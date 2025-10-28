@@ -146,7 +146,7 @@ const deleteAnnouncement = (id) => {
         if (result.isConfirmed) {
             Swal.fire({
                 icon: 'info',
-                title: 'Restoring...',
+                title: 'Deleting...',
                 text: 'Please wait...',
                 allowOutsideClick: false,
                 didOpen: () => {
@@ -155,7 +155,7 @@ const deleteAnnouncement = (id) => {
             });
             
             // Then delete the announcement
-            router.delete(route('admin.deletes.announcement', { id: id }), {
+            router.delete(route('admin.delete.announcement', { id: id }), {
                 preserveScroll: true,
                 onSuccess: () => {
                     Swal.close();

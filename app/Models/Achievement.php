@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\AchievementGallery;
+use App\Models\Location;
 
 class Achievement extends Model
 {
@@ -24,11 +25,13 @@ class Achievement extends Model
         'status',
         // 'author_id',
         'category_id',
+        'archived_at'
     ];
 
     protected $casts = [
         'date_of_achievement' => 'date',
         'document_attachments' => 'array',
+        'archived_at' => 'datetime',
     ];
 
     public function category(): BelongsTo
@@ -50,4 +53,30 @@ class Achievement extends Model
     {
         return $this->belongsTo(Location::class);
     }
+
+    public function scopeActive($query)
+    {
+        return $query->whereNull('archived_at');
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->whereNotNull('archived_at');
+    }
+
+    public function isArchived(): bool
+    {
+        return !is_null($this->archived_at);
+    }
+
+    public function archive()
+    {
+        $this->update(['archived_at' => now()]);
+    }
+
+    public function unarchive()
+    {
+        $this->update(['archived_at' => null]);
+    }
+
 }

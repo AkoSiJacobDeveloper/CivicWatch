@@ -289,7 +289,7 @@ const deleteBulkAnnouncements = (ids) => {
                 }
             });
         if (result.isConfirmed) {
-            router.post(route('admin.bulk.delete.announcements'), { ids }, {
+            router.post(route('admin.bulk.delete.announcement'), { ids }, {
                 preserveScroll: true,
                 onSuccess: () => {
                     Swal.close();
@@ -651,7 +651,7 @@ onMounted(() => {
             </section>
 
             <!-- Tab Pill -->
-            <div class="flex flex-col gap-7">
+            <div class="flex flex-col gap-2">
                 <div class="">
                     <ul class="flex justify-between">
                         <div class="font-[Poppins] flex flex-wrap text-sm font-medium text-center border-b border-gray-200 dark:border-gray-700">
@@ -778,7 +778,7 @@ onMounted(() => {
 
                             <Link
                                 href="/admin/announcements/create-announcement"
-                                class="group bg-white flex items-center gap-2 text-gray-600 font-medium p-2 rounded-lg hover:bg-blue-700 hover:text-white transition-all duration-300  border-gray-300 shadow-sm w-auto"
+                                class="group bg-white flex items-center gap-2 text-gray-600 font-medium p-3 rounded-lg hover:bg-blue-700 hover:text-white transition-all duration-300  border-gray-300 shadow-sm w-auto"
                             >
                                 <img 
                                     :src="'/Images/SVG/plus-circle.svg'" 
@@ -794,7 +794,7 @@ onMounted(() => {
                     </ul>
 
                     <!-- Select All Checkbox -->
-                    <div v-if="currentDisplayedAnnouncements.length > 0" class="mt-4 flex items-center gap-3">
+                    <div v-if="currentDisplayedAnnouncements.length > 0" class="mt-2 flex items-center gap-3">
                         <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                             <input
                                 type="checkbox"
@@ -864,8 +864,8 @@ onMounted(() => {
                                     </span>
                                 </div>
                                 <div class="mt-6 flex justify-between items-center ">
-                                    <div class="">
-                                        <h1 class="truncate overflow-hidden whitespace-nowrap text-blue-500 font-semibold text-lg font-[Poppins] group-hover:text-gray-200 transition-colors duration-300">{{ pinned.title }}</h1>
+                                    <div class="min-w-0 flex-1">
+                                        <h1 class="truncate text-blue-500 font-semibold text-lg font-[Poppins] group-hover:text-gray-200 transition-colors duration-300">{{ pinned.title }}</h1>
                                         <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300">{{ pinned.content }}</p>
                                     </div>
                                 </div>
@@ -932,8 +932,8 @@ onMounted(() => {
                                         Regular
                                     </span>
                                 </div>
-                                <div class="mt-6 flex justify-between">
-                                    <div>
+                                <div class="mt-6 flex justify-between items-start">
+                                    <div class="min-w-0 flex-1">
                                         <h1 class="truncate font-semibold text-lg font-[Poppins] text-blue-500 group-hover:text-gray-200 transition-colors duration-300">{{ regular.title }}</h1>
                                         <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300">{{ regular.content }}</p>
                                     </div>

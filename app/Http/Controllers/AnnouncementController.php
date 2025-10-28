@@ -348,7 +348,6 @@ class AnnouncementController extends Controller
         $sort = $request->input('sort', 'desc');
 
         $announcements = Announcement::with(['attachments', 'category', 'documents', 'departments', 'audiences'])
-            // ADD THIS FILTER - Only show non-archived announcements
             ->where(function($query) {
                 $query->whereNull('archived_at')
                     ->orWhere('archived_at', '');
@@ -438,29 +437,24 @@ class AnnouncementController extends Controller
 
         try {
             DB::transaction(function () use ($request) {
-                // Get announcements with their attachments
                 $announcements = Announcement::with('attachments')
                     ->whereIn('id', $request->ids)
                     ->get();
 
                 foreach ($announcements as $announcement) {
-                    // Delete image if exists
                     if ($announcement->image) {
                         Storage::disk('public')->delete($announcement->image);
                     }
 
-                    // Delete attachments
                     foreach ($announcement->attachments as $attachment) {
                         Storage::disk('public')->delete($attachment->file_path);
                         $attachment->delete();
                     }
 
-                    // Detach relationships
                     $announcement->audiences()->detach();
                     $announcement->departments()->detach();
                     $announcement->documents()->detach();
 
-                    // Delete the announcement
                     $announcement->delete();
                 }
             });

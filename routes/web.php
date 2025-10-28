@@ -111,8 +111,11 @@ Route::prefix('admin')->group(function () {
         Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy'])->name('admin.deletes.announcement');
         Route::post('/announcements/archive/{id}', [AnnouncementController::class, 'archive'])->name('admin.archive.announcement');
         Route::post('/announcements/restore/{id}', [AnnouncementController::class, 'restore'])->name('admin.restore.announcement');
+        Route::delete('/announcements/destroy/{id}', [AnnouncementController::class, 'destroy'])->name('admin.delete.announcement');
+
 
         Route::get('/achievements/create-achievements', [AchievementController::class, 'create'])->name('admin.create.achievements');
+        Route::get('/achievements', [AchievementController::class, 'index'])->name('admin.get.achievements');
         Route::post('/achievements', [AchievementController::class, 'store'])->name('admin.store.achievements');
         Route::post('achievements/archive/{achievement}', [AchievementController::class, 'archive'])->name('admin.achievements.archive');
         Route::post('achievements/publish/{achievement}', [AchievementController::class, 'publish'])->name('admin.achievements.publish');
@@ -120,7 +123,17 @@ Route::prefix('admin')->group(function () {
         Route::post('/announcements/bulk-archive', [AnnouncementController::class, 'bulkArchive'])->name('admin.bulk.archive.announcement');
         Route::post('/announcements/bulk-restore', [AnnouncementController::class, 'bulkRestore'])->name('admin.bulk.restore.announcement');
         Route::post('/announcements/bulk-delete', [AnnouncementController::class, 'bulkDelete'])->name('admin.bulk.delete.announcement');
-    });
+
+        Route::post('/achievements/{id}/archive', [AchievementController::class, 'archive'])->name('admin.archived.achievement');
+        Route::post('/achievements/restore/{achievement}', [AchievementController::class, 'restore'])->name('admin.restore.achievement');
+        Route::get('/achievements/{achievement}/edit', [AchievementController::class, 'edit'])->name('admin.edit.achievement');
+        Route::put('/achievements/{achievement}', [AchievementController::class, 'update'])->name('admin.update.achievement');
+        Route::delete('/achievements/{achievement}/destroy', [AchievementController::class, 'destroy'])->name('admin.delete.achievement');
+
+        Route::post('/achievements/bulk-archive', [AchievementController::class, 'bulkArchive'])->name('admin.bulk-archived.achievement');
+        Route::post('/achievements/bulk-restore', [AchievementController::class, 'bulkRestore'])->name('admin.bulk-restore.achievement');
+        Route::delete('/achievements/bulk-delete', [AchievementController::class, 'bulkDelete'])->name('admin.bulk-deletes.achievement');
+    }); 
 });
 
 // Users Review
