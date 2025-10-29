@@ -250,10 +250,35 @@ class AnnouncementController extends Controller
             'existing_attachments' => 'nullable|string',
             'existing_attachments.*.id' => 'exists:attachments,id',
             'specific_area' => 'nullable|string|max:255|required_if:purok,specific',
+            'removed_featured_image' => 'nullable|boolean', // Add this validation
         ]);
 
         try {
             $announcement = Announcement::findOrFail($id);
+
+            // Handle image removal FIRST
+            if ($request->boolean('removed_featured_image')) {
+                Log::info('Removing featured image for announcement: ' . $id);
+                if ($announcement->image) {
+                    Storage::disk('public')->delete($announcement->image);
+                    Log::info('Deleted image from storage: ' . $announcement->image);
+                }
+                $validated['image'] = null; // Set image to null when removed
+            }
+            // Handle new image upload (only if image wasn't removed)
+            else if ($request->hasFile('image')) {
+                Log::info('Uploading new image for announcement: ' . $id);
+                // Delete old image if exists
+                if ($announcement->image) {
+                    Storage::disk('public')->delete($announcement->image);
+                }
+                $validated['image'] = $request->file('image')->store('announcements/images', 'public');
+                Log::info('New image stored at: ' . $validated['image']);
+            }
+            // Keep existing image if no new upload and not removed
+            else {
+                $validated['image'] = $announcement->image;
+            }
 
             // Handle removed existing attachments
             $existingAttachments = json_decode($request->input('existing_attachments', '[]'), true);
@@ -269,16 +294,6 @@ class AnnouncementController extends Controller
                     $attachment->delete();
                 });
 
-            // Handle image upload
-            if ($request->hasFile('image')) {
-                if ($announcement->image) {
-                    Storage::disk('public')->delete($announcement->image);
-                }
-                $validated['image'] = $request->file('image')->store('announcements/images', 'public');
-            } else {
-                $validated['image'] = $announcement->image;
-            }
-
             // Convert is_pinned to boolean
             $validated['is_pinned'] = $validated['is_pinned'] === 'yes';
 
@@ -289,7 +304,7 @@ class AnnouncementController extends Controller
                 'level' => $validated['level'],
                 'is_pinned' => $validated['is_pinned'],
                 'content' => $validated['content'],
-                'image' => $validated['image'],
+                'image' => $validated['image'], // This will be null if image was removed
                 'publish_at' => $validated['publish_at'] ?? null,
                 'event_date' => $validated['event_date'],
                 'venue' => $validated['venue'],
@@ -333,6 +348,9 @@ class AnnouncementController extends Controller
             if (isset($validated['requirements'])) {
                 $announcement->documents()->sync($validated['requirements']);
             }
+
+            Log::info('Announcement updated successfully: ' . $id);
+            Log::info('Final image value: ' . $announcement->fresh()->image);
 
             return redirect()->route('admin.pinned.report')
                 ->with('success', 'Announcement updated successfully!');

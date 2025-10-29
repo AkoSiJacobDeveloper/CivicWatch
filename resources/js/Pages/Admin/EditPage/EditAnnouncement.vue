@@ -67,7 +67,8 @@ const submitForm = () => {
     form.transform((data) => ({
         ...data,
         _method: 'PUT',
-        existing_attachments: JSON.stringify(data.existing_attachments || [])
+        existing_attachments: JSON.stringify(data.existing_attachments || []),
+        removed_featured_image: removedFeaturedImage.value
     }))
     .post(route('admin.update.announcement', props.announcement.id), {
         preserveScroll: true,
@@ -85,11 +86,13 @@ const submitForm = () => {
 }
 
 // Basic variables
-const levels = ['high', 'medium', 'low'];
+const levels = ['urgent', 'important', 'general'];
 const isFeatureds = ['yes', 'no'];
-const today = ref(new Date().toISOString().slice(0, 16)); // This is correct for datetime-local
+const today = ref(new Date().toISOString().slice(0, 16)); 
 const imageInputRef = ref(null);
 const attachmentsInputRef = ref(null);
+const removedFeaturedImage = ref(false);
+const showImagePreview = ref(!!(props.announcement?.image));
 
 const purokOptions = [
     { id: 'all', name: 'All Purok' },
@@ -98,7 +101,11 @@ const purokOptions = [
 
 // Simple handlers
 const handleImageChange = (e) => {
-    form.image = e.target.files[0];
+    if (e.target.files[0]) {
+        form.image = e.target.files[0];
+        showImagePreview.value = true;
+        removedFeaturedImage.value = false; // Reset removal flag if new image is selected
+    }
 }
 
 const handleAttachmentsChange = (e) => {
@@ -188,20 +195,36 @@ const getImagePreview = (file) => {
     return '';
 }
 
+const removeFeaturedImage = () => {
+    removedFeaturedImage.value = true;
+    form.image = null;
+    form.existing_image = null;
+    showImagePreview.value = false; // Explicitly hide the preview
+    if (imageInputRef.value) imageInputRef.value.value = '';
+}
+
+
 // Handle image load errors
 const onImageLoad = (event) => {
     console.log('Image loaded successfully');
 }
 
-const showImageSection = computed(() => form.image || form.existing_image);
+const showImageSection = computed(() => {
+    if (removedFeaturedImage.value) return false;
+    return form.image || form.existing_image;
+});
+
 const hasNewImage = computed(() => form.image && typeof form.image === 'object');
-const hasExistingImage = computed(() => form.existing_image);
+
+const hasExistingImage = computed(() => form.existing_image && !removedFeaturedImage.value);
+
 const newImagePreview = computed(() => {
     if (hasNewImage.value) {
         return URL.createObjectURL(form.image);
     }
     return '';
 });
+
 const existingImageUrl = computed(() => {
     return `/storage/${form.existing_image}`;
 });
@@ -525,30 +548,57 @@ const handleExistingImageError = (event) => {
                                     accept="image/*"
                                 >
                             </div>
+                            
+                            <!-- Image Preview Section with Remove Button -->
                             <div v-if="showImageSection" class="mt-3">
                                 <h4 class="text-sm font-medium text-gray-700 mb-2">Current Image:</h4>
                                 
                                 <!-- New image preview -->
-                                <img 
-                                    v-if="hasNewImage"
-                                    :src="newImagePreview" 
-                                    :alt="form.title"
-                                    class="w-64 h-48 object-cover rounded-lg border"
-                                    @error="handlePreviewError"
-                                />
+                                <div v-if="hasNewImage" class="relative">
+                                    <img 
+                                        :src="newImagePreview" 
+                                        :alt="form.title"
+                                        class="w-full h-96 object-cover rounded-lg border"
+                                        @error="handlePreviewError"
+                                    />
+                                    <button 
+                                        type="button"
+                                        @click="removeFeaturedImage"
+                                        class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm hover:bg-red-600"
+                                        title="Remove image"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
                                 
                                 <!-- Existing image display -->
-                                <img 
-                                    v-else-if="hasExistingImage"
-                                    :src="existingImageUrl" 
-                                    :alt="props.announcement?.title"
-                                    class="w-64 h-48 object-cover rounded-lg border"
-                                    @error="handleExistingImageError"
-                                />
-                                
+                                <div v-else-if="hasExistingImage" class="relative">
+                                    <img 
+                                        :src="existingImageUrl" 
+                                        :alt="props.announcement?.title"
+                                        class="w-full h-96 object-cover rounded-lg border"
+                                        @error="handleExistingImageError"
+                                    />
+
+                                    <button 
+                                        type="button"
+                                        @click="removeFeaturedImage"
+                                        class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm hover:bg-red-600"
+                                        title="Remove image"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
                                 <p class="text-xs text-gray-500 mt-1">
                                     <span v-if="hasNewImage">New image preview - will replace current image</span>
                                     <span v-else-if="hasExistingImage">Current image - upload new one to replace</span>
+                                </p>
+                            </div>
+
+                            <div v-else-if="removedFeaturedImage" class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p class="text-sm text-yellow-700">
+                                    Image has been removed. Upload a new image if needed.
                                 </p>
                             </div>
                         </div>

@@ -88,19 +88,12 @@ const submitForm = () => {
 }
 
 const removeAttachment = (index) => {
-    // Remove the file from the attachments array
     form.attachments.splice(index, 1)
-    
-    // If you want to also update the file input to reflect the changes
-    // This is optional but provides better UX
     updateFileInput()
 }
 
 const updateFileInput = () => {
-    // This creates a new FileList (read-only, so we can't modify directly)
-    // But the form.attachments array is what gets sent to the server
     if (attachmentsInputRef.value) {
-        // Reset the input to clear visual state
         attachmentsInputRef.value.value = ''
     }
 }

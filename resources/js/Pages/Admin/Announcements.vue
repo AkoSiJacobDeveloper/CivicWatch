@@ -847,39 +847,59 @@ onMounted(() => {
                             :key="pinned.id"
                             class="w-full max-w-[500px]"
                         >   
+                            
                             <div 
-                                class="group h-64 shadow-container-announcement p-10 mb-2 bg-white hover:cursor-pointer hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between"
+                                class="group h-auto shadow-container-announcement mb-2 bg-white hover:cursor-pointer hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex flex-col"
                                 @click="openAnnouncement(pinned)"
+                                
                             >
-                                <div class="flex justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex justify-center items-center">
-                                            <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ pinned.id }}</span>
-                                        </div>
-                                    </div>
+                                <div class="w-full h-72 object-cover p-1">
+                                    <img 
+                                        v-if="pinned.image === null"
+                                        :src="'/Images/image_placeholder.png'" 
+                                        alt="img" 
+                                        class="h-full w-full rounded-2xl"
+                                    >
 
-                                    <span class="bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 group-hover:bg-blue-500 transition-all duration-300">
-                                        <img :src="'/Images/SVG/push-pin.svg'" alt="Pin" class="h-4 w-4">
-                                        Pinned
-                                    </span>
+                                    <img 
+                                        v-else
+                                        :src="`/storage/${pinned.image}`"
+                                        alt="pinned.title"
+                                        class="h-full w-full rounded-2xl"
+                                    >
+                                    <!-- <img :src="'/Images/image_placeholder_gpt.png'" alt="img" class="h-full w-full rounded-2xl"> -->
                                 </div>
-                                <div class="mt-6 flex justify-between items-center ">
+                                <div class="mt-1 flex flex-col p-5">
+                                    <div class="flex justify-between mb-2">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex justify-center items-center">
+                                                <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ pinned.id }}</span>
+                                            </div>
+                                        </div>
+
+                                        <span class="bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 group-hover:bg-blue-500 transition-all duration-300">
+                                            <img :src="'/Images/SVG/push-pin.svg'" alt="Pin" class="h-4 w-4">
+                                            Pinned
+                                        </span>
+                                    </div>
+                                    
                                     <div class="min-w-0 flex-1">
                                         <h1 class="truncate text-blue-500 font-semibold text-lg font-[Poppins] group-hover:text-gray-200 transition-colors duration-300">{{ pinned.title }}</h1>
                                         <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300">{{ pinned.content }}</p>
                                     </div>
-                                </div>
-                                <div class="flex justify-between mt-6">
-                                    <div>
-                                        <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">{{ formatDate( pinned.created_at) }}</span>
+                                    <div class="flex justify-between py-3 mt-2">
+                                        <div>
+                                            <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">{{ formatDate( pinned.created_at) }}</span>
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            :checked="selectedAnnouncements.has(pinned.id)"
+                                            @click.stop="toggleAnnouncementSelection(pinned.id)"
+                                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                                        >
                                     </div>
-                                    <input
-                                        type="checkbox"
-                                        :checked="selectedAnnouncements.has(pinned.id)"
-                                        @click.stop="toggleAnnouncementSelection(pinned.id)"
-                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                                    >
                                 </div>
+                                
                             </div>
                         </div>
                     </div>
@@ -915,39 +935,59 @@ onMounted(() => {
                         <div 
                             v-for="regular in filteredRegularAnnouncements"
                             :key="regular.id"
-                        >
+                            class="w-full max-w-[500px]"
+                        >   
+                            
                             <div 
-                                class="group h-64 shadow-container-announcement p-10 mb-2 bg-white hover:cursor-pointer hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between"
+                                class="group h-auto shadow-container-announcement mb-2 bg-white hover:cursor-pointer hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex flex-col"
                                 @click="openAnnouncement(regular)"
+                                
                             >
-                                <div class="flex justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex justify-center items-center">
-                                            <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ regular.id }}</span>
-                                        </div>
-                                    </div>
+                                <div class="w-full h-72 object-cover p-1">
+                                    <img 
+                                        v-if="regular.image === null"
+                                        :src="'/Images/image_placeholder.png'" 
+                                        alt="img" 
+                                        class="h-full w-full rounded-2xl"
+                                    >
 
-                                    <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded flex items-center gap-1">
-                                        <img :src="'/Images/SVG/megaphone (700).svg'" alt="Icon"  class="h-4 w-4">
-                                        Regular
-                                    </span>
+                                    <img 
+                                        v-else
+                                        :src="`/storage/${regular.image}`"
+                                        alt="pinned.title"
+                                        class="h-full w-full rounded-2xl"
+                                    >
+                                    <!-- <img :src="'/Images/image_placeholder_gpt.png'" alt="img" class="h-full w-full rounded-2xl"> -->
                                 </div>
-                                <div class="mt-6 flex justify-between items-start">
+                                <div class="mt-1 flex flex-col p-5">
+                                    <div class="flex justify-between mb-2">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex justify-center items-center">
+                                                <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ regular.id }}</span>
+                                            </div>
+                                        </div>
+
+                                        <span class="bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 group-hover:bg-blue-500 transition-all duration-300">
+                                            <img :src="'/Images/SVG/push-pin.svg'" alt="Pin" class="h-4 w-4">
+                                            Pinned
+                                        </span>
+                                    </div>
+                                    
                                     <div class="min-w-0 flex-1">
-                                        <h1 class="truncate font-semibold text-lg font-[Poppins] text-blue-500 group-hover:text-gray-200 transition-colors duration-300">{{ regular.title }}</h1>
+                                        <h1 class="truncate text-blue-500 font-semibold text-lg font-[Poppins] group-hover:text-gray-200 transition-colors duration-300">{{ regular.title }}</h1>
                                         <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300">{{ regular.content }}</p>
                                     </div>
-                                </div>
-                                <div class="flex justify-between mt-6">
-                                    <div>
-                                        <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">{{ formatDate( regular.created_at) }}</span>
+                                    <div class="flex justify-between py-3 mt-2">
+                                        <div>
+                                            <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">{{ formatDate( regular.created_at) }}</span>
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            :checked="selectedAnnouncements.has(regular.id)"
+                                            @click.stop="toggleAnnouncementSelection(regular.id)"
+                                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                                        >
                                     </div>
-                                    <input
-                                        type="checkbox"
-                                        :checked="selectedAnnouncements.has(regular.id)"
-                                        @click.stop="toggleAnnouncementSelection(regular.id)"
-                                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                                    >
                                 </div>
                             </div>
                         </div>
@@ -973,46 +1013,63 @@ onMounted(() => {
                         class="mt-3 grid grid-cols-3 gap-4"
                     >
                         <div 
-                            v-for="archived in filteredArchivedAnnouncements"
-                            :key="archived.id"
-                        >
+                            v-for="archive in filteredArchivedAnnouncements"
+                            :key="archive.id"
+                            class="w-full max-w-[500px]"
+                        >   
+                            
                             <div 
-                                class="group h-72 shadow-container-announcement p-10 mb-2 bg-gray-50 hover:cursor-pointer hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between border border-gray-200"
-                                @click="openAnnouncement(archived)"
+                                class="group h-auto shadow-container-announcement mb-2 bg-white hover:cursor-pointer hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex flex-col"
+                                @click="openAnnouncement(archive)"
+                                
                             >
-                                <div class="flex justify-between">
-                                    <div class="flex justify-center items-center">
-                                        <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ archived.id }}</span>
-                                    </div>
+                                <div class="w-full h-72 object-cover p-1">
+                                    <img 
+                                        v-if="archive.image === null"
+                                        :src="'/Images/image_placeholder.png'" 
+                                        alt="img" 
+                                        class="h-full w-full rounded-2xl"
+                                    >
 
-                                    <span class="bg-gray-500 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1">
-                                        <img :src="'/Images/SVG/archive.svg'" alt="Archive" class="h-4 w-4">
-                                        Archived
-                                    </span>
+                                    <img 
+                                        v-else
+                                        :src="`/storage/${archive.image}`"
+                                        alt="pinned.title"
+                                        class="h-full w-full rounded-2xl"
+                                    >
+                                    <!-- <img :src="'/Images/image_placeholder_gpt.png'" alt="img" class="h-full w-full rounded-2xl"> -->
                                 </div>
-                                
-                                <div class="mt-6 flex justify-between">
-                                    <div>
-                                        <h1 class="truncate font-semibold text-lg font-[Poppins] text-gray-600 group-hover:text-gray-200 transition-colors duration-300">{{ archived.title }}</h1>
-                                        <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300">{{ archived.content }}</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex justify-between items-center mt-6">
-                                    <div>
-                                        <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">
-                                            Archived: {{ formatDate(archived.archived_at) }}
+                                <div class="mt-1 flex flex-col p-5">
+                                    <div class="flex justify-between mb-2">
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex justify-center items-center">
+                                                <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ archive.id }}</span>
+                                            </div>
+                                        </div>
+
+                                        <span class="bg-gray-500 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1">
+                                            <img :src="'/Images/SVG/archive.svg'" alt="Archive" class="h-4 w-4">
+                                            Archived
                                         </span>
                                     </div>
                                     
-                                    <!-- Restore Button -->
-                                    <!-- <button
-                                        @click.stop="restoreAnnouncement(archived.id)"
-                                        class="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors"
-                                    >
-                                        Restore
-                                    </button> -->
+                                    <div class="min-w-0 flex-1">
+                                        <h1 class="truncate text-gray-600 font-semibold text-lg font-[Poppins] group-hover:text-gray-200 transition-colors duration-300">{{ archive.title }}</h1>
+                                        <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300">{{ archive.content }}</p>
+                                    </div>
+                                    <div class="flex justify-between py-3 mt-2">
+                                        <div>
+                                            <span class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">{{ formatDate( archive.created_at) }}</span>
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            :checked="selectedAnnouncements.has(archive.id)"
+                                            @click.stop="toggleAnnouncementSelection(archive.id)"
+                                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                                        >
+                                    </div>
                                 </div>
+                                
                             </div>
                         </div>
                     </div>
