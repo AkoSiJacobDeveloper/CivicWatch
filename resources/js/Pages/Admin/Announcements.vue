@@ -1039,6 +1039,7 @@ onMounted(() => {
                                     >
                                     <!-- <img :src="'/Images/image_placeholder_gpt.png'" alt="img" class="h-full w-full rounded-2xl"> -->
                                 </div>
+                                
                                 <div class="mt-1 flex flex-col p-5">
                                     <div class="flex justify-between mb-2">
                                         <div class="flex items-center gap-3">
@@ -1069,7 +1070,6 @@ onMounted(() => {
                                         >
                                     </div>
                                 </div>
-                                
                             </div>
                         </div>
                     </div>

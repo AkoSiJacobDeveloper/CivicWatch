@@ -678,51 +678,72 @@ const clearSelection = () => {
                     v-for="achievement in sortedAchievements"
                     :key="achievement.id"
                     @click="openAchievement(achievement)"
-                    class="group h-64 shadow-container-announcement p-10 mb-2 bg-white hover:cursor-pointer hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between"
+                    class="group h-auto shadow-container-announcement mb-2 bg-white hover:cursor-pointer hover:bg-blue-700 transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between"
                 >   
-                    <div class="flex justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="flex justify-center items-center">
-                                <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ achievement.id }}</span>
+                    <div class="w-full h-72 object-cover p-1">
+                        <img 
+                            v-if="achievement.featured_image === null"
+                            :src="'/Images/image_placeholder.png'" 
+                            alt="img" 
+                            class="h-full w-full rounded-2xl"
+                        >
+
+                        <img 
+                            v-else
+                            :src="`/storage/${achievement.featured_image}`"
+                            alt="img"
+                            class="h-full w-full rounded-2xl"
+                        >
+                        <!-- <img :src="'/Images/image_placeholder_gpt.png'" alt="img" class="h-full w-full rounded-2xl"> -->
+                    </div>
+
+                    <div class="mt-1 flex flex-col p-5">
+                        <div class="flex justify-between mb-2">
+                            <div class="flex items-center gap-3">
+                                <div class="flex justify-center items-center">
+                                    <span class="text-gray-500 text-xs group-hover:text-gray-200 transition-colors duration-300">ID: {{ achievement.id }}</span>
+                                </div>
                             </div>
-                        </div>
 
-                        <span v-if="achievement.archived_at === null" class="bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 group-hover:bg-blue-500 transition-all duration-300 capitalize">
-                            <img :src="'/Images/SVG/check-circle.svg'" alt="Icon" class="h-4 w-4">
-                            {{ achievement.status }}
-                        </span>
+                            <span v-if="achievement.archived_at === null" class="bg-blue-700 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 group-hover:bg-blue-500 transition-all duration-300 capitalize">
+                                <img :src="'/Images/SVG/check-circle.svg'" alt="Icon" class="h-4 w-4">
+                                {{ achievement.status }}
+                            </span>
 
-                        <span v-else class="bg-gray-500 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 group-hover:bg-blue-500 transition-all duration-300 capitalize">
-                            <img :src="'/Images/SVG/archive.svg'" alt="Icon" class="h-4 w-4">
-                            Archived
-                        </span>
-                    </div>
-                    <div class="mt-6 flex justify-between items-start">
-                        <div class="min-w-0 flex-1">
-                            <h1 class="truncate text-blue-500 font-semibold text-lg font-[Poppins] group-hover:text-gray-200 transition-colors duration-300">
-                                {{ achievement.title }}
-                            </h1>
-                            <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300 mt-1">
-                                {{ achievement.content }}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex justify-between mt-6">
-                        <div>
-                            <span v-if="achievement.archived_at === null" class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">{{ formatDate( achievement.created_at) }}</span>
-
-                            <span v-else class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300" >
-                                Archived: {{ formatDate( achievement.archived_at) }}
+                            <span v-else class="bg-gray-500 text-white text-xs font-semibold px-2 py-1 rounded flex items-center gap-1 group-hover:bg-blue-500 transition-all duration-300 capitalize">
+                                <img :src="'/Images/SVG/archive.svg'" alt="Icon" class="h-4 w-4">
+                                Archived
                             </span>
                         </div>
-                        <input
-                            v-if="achievement.archived_at === null"
-                            type="checkbox"
-                            :checked="selectedAchievements.has(achievement.id)"
-                            @click.stop="toggleAchievementSelection(achievement.id, $event)"
-                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                        >
+
+                        <div class="flex justify-between items-start">
+                            <div class="min-w-0 flex-1">
+                                <h1 class="truncate text-blue-500 font-semibold text-lg font-[Poppins] group-hover:text-gray-200 transition-colors duration-300">
+                                    {{ achievement.title }}
+                                </h1>
+                                <p class="line-clamp-2 text-gray-400 text-sm group-hover:text-gray-200 transition-colors duration-300 mt-1">
+                                    {{ achievement.content }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between py-3 mt-2">
+                            <div>
+                                <span v-if="achievement.archived_at === null" class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300">{{ formatDate( achievement.created_at) }}</span>
+
+                                <span v-else class="text-xs text-gray-400 group-hover:text-gray-200 transition-colors duration-300" >
+                                    Archived: {{ formatDate( achievement.archived_at) }}
+                                </span>
+                            </div>
+                            <input
+                                v-if="achievement.archived_at === null"
+                                type="checkbox"
+                                :checked="selectedAchievements.has(achievement.id)"
+                                @click.stop="toggleAchievementSelection(achievement.id, $event)"
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                            >
+                        </div>
                     </div>
+                    
                 </div>
             </div> 
         </main>
