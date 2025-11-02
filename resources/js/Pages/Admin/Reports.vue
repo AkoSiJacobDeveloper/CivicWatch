@@ -1334,9 +1334,9 @@ onUnmounted(() => {
                                                     'w-1.5 h-1.5 rounded-full mr-2',
                                                     report.status === 'Pending' ? 'bg-amber-500 animate-pulse' :
                                                     report.status === 'In Progress' ? 'bg-blue-500 animate-pulse' :
-                                                    report.status === 'Resolved' ? 'bg-green-500' :
-                                                    report.status === 'Rejected' ? 'bg-red-500' : 
-                                                    report.status === 'Duplicate' ? 'bg-purple-500' : ''
+                                                    report.status === 'Resolved' ? 'bg-green-500 animate-pulse' :
+                                                    report.status === 'Rejected' ? 'bg-red-500 animate-pulse' : 
+                                                    report.status === 'Duplicate' ? 'bg-purple-500 animate-pulse' : ''
                                                 ]"></div>
                                                 {{ report.status }}
                                             </span>

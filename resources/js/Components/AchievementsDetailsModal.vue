@@ -331,6 +331,12 @@ const deleteAchievement = (id) => {
                             </div>
                         </div>
                     </div>
+                    <div v-if="achievements?.archived_at" class="mt-2">
+                        <span class="bg-gray-600 text-white text-xs font-semibold px-2 py-1 rounded inline-flex items-center gap-1">
+                            <img :src="'/Images/SVG/archive.svg'" alt="Archive" class="h-3 w-3">
+                            Archived on {{ formatDate(achievements.archived_at) }}
+                        </span>
+                    </div>
                 </div>
                 <button 
                     @click="close"

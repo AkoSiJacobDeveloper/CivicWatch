@@ -32,27 +32,30 @@ class IssueController extends Controller
     // Create new type of issue
     public function store(Request $request) {
         $request->validate([
-            'name' => 'required|string|max:255|unique:issue_type,name',
+            'name' => 'required|string|max:255|unique:issue_types,name',
+            'priority_level' => 'required|in:high,medium,low',
         ]);
 
         IssueType::create([
             'name' => $request->name,
             'active' => true,
+            'priority_level' => $request->priority_level,
         ]);
 
         return back()->with('success', 'Type of Issue created successfully!');
     }
 
-    // Update the type of issue
     public function update(Request $request, IssueType $issueType) {
         $request->validate([
-            'name' => 'required|string|max:255|unique:issue_type,name,' . $issueType->id,
+            'name' => 'required|string|max:255|unique:issue_types,name,' . $issueType->id,
+            'priority_level' => 'required|in:high,medium,low',
             'active' => 'boolean',
         ]);
 
-        $issueType->update($request->only(['name', 'active']));
+        $issueType->update($request->only(['name', 'priority_level', 'active']));
         return back()->with('success', 'Type of Issue updated successfully!');
     }
+
 
     // Delete the type of issue (soft delete by setting it inactive)
     public function destroy(IssueType $issueType) {

@@ -10,5 +10,3 @@ import Sidebar from '@/Components/Sidebar.vue';
         </main>
     </div>
 </template>
-
-<!-- #FAF9F6 -->

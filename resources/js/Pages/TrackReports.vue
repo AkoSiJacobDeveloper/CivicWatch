@@ -184,192 +184,205 @@ const values = computed(() => {
                 </div>
             </section>
             
-            <!-- Result -->
-            <section class="" v-if="reports && reports.data && reports.data.length > 0">
-                <div class="md:px-10 lg:px-32">
-                    <!-- Header with Clear Button -->
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold font-[Poppins] dark:text-[#faf9f6]">Search Results</h2>
-                        <button 
-                            @click="clearResults"
-                            class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                        </button>
+            <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
+                <div class="flex justify-between items-center">
+                    <div class="">
+                        <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Track Your Report</h2>
+                        <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Check the status of your report</p>
                     </div>
-                    
-                    <!-- Show current search term -->
-                    <div class="mb-4 p-3 border border-l-4 border-l-blue-500 rounded-lg bg-white dark:bg-[#2c2c2c] dark:border-none">
-                        <p class="">
-                            <p class="text-sm dark:text-[#faf9f6] ">Showing results for: {{ searchTerm }}</p> 
-                        </p>
-                    </div>
-                    
-                    <!-- Results List -->
-                    <div
-                        v-for="report in reports.data"
-                        :key="report.id"
-                        class="p-5 border border-gray-200 rounded-lg shadow-sm mb-4 hover:shadow-md transition-shadow duration-200 flex flex-col gap-10 bg-white dark:bg-[#2c2c2c] dark:border-none" 
-                    >   
-                        <div class="flex justify-between">
-                            <h1 class="font-bold text-2xl font-[Poppins] my-3 dark:text-[#faf9f6]">Report Summary</h1>
+                </div>
 
-                            <!-- If the status of the report is duplicate -->
-                            <div
-                                v-if="report.status === 'Duplicate' && report.duplicate_of_report_id"
-                                class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[40%] p-2 rounded-lg"
+                <!-- Result -->
+                <section class="" v-if="reports && reports.data && reports.data.length > 0">
+                    <div class="">
+                        <!-- Header with Clear Button -->
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-bold font-[Poppins] dark:text-[#faf9f6]">Search Results</h2>
+                            <button 
+                                @click="clearResults"
+                                class="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200"
                             >
-                                <p 
-                                    class="ml-1 text-sm">
-                                    Your report has been consolidated with a similar submission to ensure efficient resolution. All updates will be reflected under the primary case.
-                                </p>
-                            </div>
-
-                            <!-- The primary report of the duplicate report -->
-                            <div
-                                v-if="report.duplicates && report.duplicates.length > 0"
-                                class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[40%] p-2 rounded-lg"
-                            >
-                                <p 
-                                    class="ml-1 text-sm">
-                                    Your report is serving as the primary case for this issue. We're addressing similar reports collectively for comprehensive resolution.
-                                </p>
-                            </div>  
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
                         </div>
                         
-                        <!--Upper Part-->
-                        <div class="flex gap-10 h-96">
-                            <div class="w-1/2">
-                                <img 
-                                    :src="`/storage/${report.image}`" 
-                                    :alt="report.title"
-                                    class="h-full w-full rounded-lg"
-                                >
-                            </div>
-                            
-                            <div class="w-1/2 ">
-                                <div class="mb-4">
-                                    <p class="font-bold text-2xl font-[Poppins] dark:text-[#faf9f6]">{{ report.title }}</p>
-                                    <span class="text-sm" :class="getStatusClass(report.status)">{{ report.status }}</span>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-4">
-                                    <template v-for="value in values" :key="value.label">
-                                        <!-- Location field with special handling -->
-                                        <div v-if="value.label === 'Map Pin'" class="flex flex-col gap-1 py-2">
-                                            <div class="flex items-center gap-2">
-                                                <img :src="value.img" alt="Icon" class="w-4 h-4">
-                                                <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">{{ value.headline }}</p>
-                                            </div>
-                                            <p class="text-gray-700 ml-6 text-sm dark:text-[#faf9f6]">
-                                                {{ value.data }}
-                                                <span v-if="value.sitio" class="dark:text-[#faf9f6]">, {{ value.sitio }}</span>
-                                                <span v-else class="text-gray-700 text-sm italic">Not Specified</span>
-                                            </p>
-                                        </div>
-
-                                        <!-- All other fields -->
-                                        <div v-else class="flex flex-col gap-1 py-2">
-                                            <div class="flex items-center gap-2">
-                                                <img :src="value.img" alt="Icon" class="w-4 h-4">
-                                                <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">{{ value.headline }}</p>
-                                            </div>
-                                            <p class="text-gray-700 ml-6 text-sm dark:text-[#faf9f6]">{{ value.data }}</p>
-                                        </div>
-                                    </template>
-
-                                    <!-- Rejection -->
-                                    <div  class="flex flex-col gap-1 py-2">
-                                        <div class="flex items-center gap-2">
-                                            <img :src="'/Images/SVG/warning-circle.svg'" alt="Icon" class="w-4 h-4">
-                                            <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">Rejection Reason</p>
-                                        </div>
-                                        <p v-if="report.status === 'Rejected' " class="text-gray-700 ml-6 text-sm dark:text-[#faf9f6]">
-                                            {{ report.rejection_reason }}
-                                        </p>
-
-                                        <p v-else class="text-gray-700 text-sm italic ml-6 dark:text-[#faf9f6]">
-                                            This report has not been rejected.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Show current search term -->
+                        <div class="mb-4 p-3 border border-l-4 border-l-blue-500 rounded-lg bg-white dark:bg-[#2c2c2c] dark:border-none">
+                            <p class="">
+                                <p class="text-sm dark:text-[#faf9f6] ">Showing results for: {{ searchTerm }}</p> 
+                            </p>
                         </div>
+                        
+                        <!-- Results List -->
+                        <div
+                            v-for="report in reports.data"
+                            :key="report.id"
+                            class="p-5 border border-gray-200 rounded-lg shadow-sm mb-4 hover:shadow-md transition-shadow duration-200 flex flex-col gap-10 bg-white dark:bg-[#2c2c2c] dark:border-none" 
+                        >   
+                            <div class="flex justify-between">
+                                <h1 class="font-bold text-2xl font-[Poppins] my-3 dark:text-[#faf9f6]">Report Summary</h1>
 
-                        <!--Lower Part-->
-                        <div class="flex gap-10">
-                            <div class="w-1/2">
-                                <div class="flex flex-col gap-2 ">
-                                    <div class="flex items-center gap-2">
-                                        <img :src="'/Images/SVG/file-text.svg'" alt="Icon" class="w-5 h-5">
-                                        <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">Description</p>
-                                    </div>
-                                    <div class="h-32 border p-2 rounded overflow-y-auto">
-                                        <p class="text-gray-700 text-sm dark:text-[#faf9f6]">{{ report.description }}</p>
-                                    </div>
+                                <!-- If the status of the report is duplicate -->
+                                <div
+                                    v-if="report.status === 'Duplicate' && report.duplicate_of_report_id"
+                                    class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[40%] p-2 rounded-lg"
+                                >
+                                    <p 
+                                        class="ml-1 text-sm">
+                                        Your report has been consolidated with a similar submission to ensure efficient resolution. All updates will be reflected under the primary case.
+                                    </p>
                                 </div>
-                            </div>
 
-                            <div class="w-1/2 ">
-                                <div class="flex flex-col gap-2">
-                                    <div class="flex items-center gap-2">
-                                        <img :src="'/Images/SVG/chat-circle-text.svg'" alt="Icon" class="w-5 h-5">
-                                        <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">Remarks</p>
-                                    </div>
-                                    <div class="border p-2 rounded h-32 overflow-y-auto">
-                                        <p v-if="report.remarks !== null" class="text-gray-700 text-sm dark:text-[#faf9f6]">
-                                            {{ report.remarks }}
-                                        </p>
-
-                                        <p v-else class="text-gray-700 text-sm italic dark:text-[#faf9f6]">
-                                            User didn't add any remarks.
-                                        </p>
-                                    </div>
+                                <!-- The primary report of the duplicate report -->
+                                <div
+                                    v-if="report.duplicates && report.duplicates.length > 0"
+                                    class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[40%] p-2 rounded-lg"
+                                >
+                                    <p 
+                                        class="ml-1 text-sm">
+                                        Your report is serving as the primary case for this issue. We're addressing similar reports collectively for comprehensive resolution.
+                                    </p>
                                 </div>  
                             </div>
+                            
+                            <!--Upper Part-->
+                            <div class="flex gap-10 h-96">
+                                <div class="w-1/2">
+                                    <img 
+                                        :src="`/storage/${report.image}`" 
+                                        :alt="report.title"
+                                        class="h-full w-full rounded-lg"
+                                    >
+                                </div>
+                                
+                                <div class="w-1/2 ">
+                                    <div class="mb-4">
+                                        <p class="font-bold text-2xl font-[Poppins] dark:text-[#faf9f6]">{{ report.title }}</p>
+                                        <span class="text-sm" :class="getStatusClass(report.status)">{{ report.status }}</span>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <template v-for="value in values" :key="value.label">
+                                            <!-- Location field with special handling -->
+                                            <div v-if="value.label === 'Map Pin'" class="flex flex-col gap-1 py-2">
+                                                <div class="flex items-center gap-2">
+                                                    <img :src="value.img" alt="Icon" class="w-4 h-4">
+                                                    <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">{{ value.headline }}</p>
+                                                </div>
+                                                <p class="text-gray-700 ml-6 text-sm dark:text-[#faf9f6]">
+                                                    {{ value.data }}
+                                                    <span v-if="value.sitio" class="dark:text-[#faf9f6]">, {{ value.sitio }}</span>
+                                                    <span v-else class="text-gray-700 text-sm italic">Not Specified</span>
+                                                </p>
+                                            </div>
+
+                                            <!-- All other fields -->
+                                            <div v-else class="flex flex-col gap-1 py-2">
+                                                <div class="flex items-center gap-2">
+                                                    <img :src="value.img" alt="Icon" class="w-4 h-4">
+                                                    <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">{{ value.headline }}</p>
+                                                </div>
+                                                <p class="text-gray-700 ml-6 text-sm dark:text-[#faf9f6]">{{ value.data }}</p>
+                                            </div>
+                                        </template>
+
+                                        <!-- Rejection -->
+                                        <div  class="flex flex-col gap-1 py-2">
+                                            <div class="flex items-center gap-2">
+                                                <img :src="'/Images/SVG/warning-circle.svg'" alt="Icon" class="w-4 h-4">
+                                                <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">Rejection Reason</p>
+                                            </div>
+                                            <p v-if="report.status === 'Rejected' " class="text-gray-700 ml-6 text-sm dark:text-[#faf9f6]">
+                                                {{ report.rejection_reason }}
+                                            </p>
+
+                                            <p v-else class="text-gray-700 text-sm italic ml-6 dark:text-[#faf9f6]">
+                                                This report has not been rejected.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--Lower Part-->
+                            <div class="flex gap-10">
+                                <div class="w-1/2">
+                                    <div class="flex flex-col gap-2 ">
+                                        <div class="flex items-center gap-2">
+                                            <img :src="'/Images/SVG/file-text.svg'" alt="Icon" class="w-5 h-5">
+                                            <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">Description</p>
+                                        </div>
+                                        <div class="h-32 border p-2 rounded overflow-y-auto">
+                                            <p class="text-gray-700 text-sm dark:text-[#faf9f6]">{{ report.description }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="w-1/2 ">
+                                    <div class="flex flex-col gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <img :src="'/Images/SVG/chat-circle-text.svg'" alt="Icon" class="w-5 h-5">
+                                            <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">Remarks</p>
+                                        </div>
+                                        <div class="border p-2 rounded h-32 overflow-y-auto">
+                                            <p v-if="report.remarks !== null" class="text-gray-700 text-sm dark:text-[#faf9f6]">
+                                                {{ report.remarks }}
+                                            </p>
+
+                                            <p v-else class="text-gray-700 text-sm italic dark:text-[#faf9f6]">
+                                                User didn't add any remarks.
+                                            </p>
+                                        </div>
+                                    </div>  
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Again Suggestion -->
+                        <div class="mt-10 rounded-lg text-center">
+                            <p class="text-gray-600 mb-2">Want to search for another report?</p>
+                            <button 
+                                @click="clearAndFocusSearch"
+                                class="text-blue-600 hover:text-blue-800 font-medium underline"
+                            >
+                                Clear and search again
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Search Again Suggestion -->
-                    <div class="mt-10 rounded-lg text-center">
-                        <p class="text-gray-600 mb-2">Want to search for another report?</p>
+                </section>
+                
+                <!-- No Results Message -->
+                <div v-else-if="searchTerm && (!reports || !reports.data || reports.data.length === 0)" class="flex justify-center items-center h-screen md:px-10 lg:px-32 text-center">
+                    <div class="max-w-md mx-auto">
+                        <div class="mb-4">
+                            <img :src="'/Images/SVG/not found.svg'" alt="Icon" class=" h-42 mx-auto">
+                        </div>
+                        <p class="text-gray-500 text-lg mb-2">No reports found for tracking code:</p>
+                        <p class="text-xl font-mono font-bold text-red-600 mb-4">"{{ searchTerm }}"</p>
+                        <p class="text-gray-400 mb-4">Please check your tracking code and try again.</p>
+                        
+                        <div class="space-y-2 text-sm text-gray-500">
+                            <p><strong>Tips:</strong></p>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Make sure the tracking code is correct (e.g., CW-20250906-001)</li>
+                                <li>Check for any typos or missing characters</li>
+                                <li>Tracking codes are case-insensitive</li>
+                            </ul>
+                        </div>
+                        
                         <button 
-                            @click="clearAndFocusSearch"
-                            class="text-blue-600 hover:text-blue-800 font-medium underline"
+                            @click="clearResults"
+                            class="mt-4 text-blue-600 hover:text-blue-800 font-medium underline"
                         >
-                            Clear and search again
+                            Try a different tracking code
                         </button>
                     </div>
                 </div>
-            </section>
-            
-            <!-- No Results Message -->
-            <section v-else-if="searchTerm && (!reports || !reports.data || reports.data.length === 0)" class="flex justify-center items-center h-screen md:px-10 lg:px-32 text-center">
-                <div class="max-w-md mx-auto">
-                    <div class="mb-4">
-                        <img :src="'/Images/SVG/not found.svg'" alt="Icon" class=" h-42 mx-auto">
-                    </div>
-                    <p class="text-gray-500 text-lg mb-2">No reports found for tracking code:</p>
-                    <p class="text-xl font-mono font-bold text-red-600 mb-4">"{{ searchTerm }}"</p>
-                    <p class="text-gray-400 mb-4">Please check your tracking code and try again.</p>
-                    
-                    <div class="space-y-2 text-sm text-gray-500">
-                        <p><strong>Tips:</strong></p>
-                        <ul class="list-disc list-inside space-y-1">
-                            <li>Make sure the tracking code is correct (e.g., CW-20250906-001)</li>
-                            <li>Check for any typos or missing characters</li>
-                            <li>Tracking codes are case-insensitive</li>
-                        </ul>
-                    </div>
-                    
-                    <button 
-                        @click="clearResults"
-                        class="mt-4 text-blue-600 hover:text-blue-800 font-medium underline"
-                    >
-                        Try a different tracking code
-                    </button>
+
+                <div v-else class="flex justify-center items-center">
+                    <p class="text-gray-500 text-xl mb-4 py-20">Track reports now!</p>
                 </div>
             </section>
         </main>

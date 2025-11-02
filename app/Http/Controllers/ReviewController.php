@@ -8,19 +8,28 @@ use Inertia\Inertia;
 
 class ReviewController extends Controller
 {
-    public function index() {
-        $reviews = Review::select(
+    public function index(Request $request) {
+        $query = Review::select(
             'id',
             'name',
             'location',
             'review_message',
-            'created_at'
-        )
-        ->latest()
-        ->paginate(6);
+            'is_anonymous',
+            'created_at',
+            'rating'
+        );
+
+        if ($request->sort === 'asc') {
+            $query->orderBy('created_at', 'asc'); 
+        } else {
+            $query->latest();
+        }
+
+        $reviews = $query->paginate(6);
 
         return Inertia::render('Review', [
-            'reviews' => $reviews
+            'reviews' => $reviews,
+            'filters' => $request->only(['sort'])
         ]);
     }
 
@@ -28,7 +37,9 @@ class ReviewController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'string',
-            'review_message' => 'required|string|max:500',
+            'review_message' => 'required|string|max:5000',
+            'is_anonymous' => 'boolean',
+            'rating' => 'nullable|integer|min:1|max:5'
         ]);
 
         Review::create($validated);
@@ -43,6 +54,7 @@ class ReviewController extends Controller
             'name',
             'location',
             'review_message',
+            'is_anonymous',
             'created_at'
         )
         ->inRandomOrder()
@@ -60,13 +72,13 @@ class ReviewController extends Controller
             'name',
             'location',
             'review_message',
-            'created_at'
+            'is_anonymous',
+            'created_at',
+            'rating'
         );
 
-        if($request->date === 'newest') {
-            $query->orderBy('created_at', 'desc');
-        } else if ($request->date === 'oldest') {
-            $query->orderBy('created_at', 'asc');
+        if ($request->sort === 'asc') {
+            $query->orderBy('created_at', 'asc'); 
         } else {
             $query->latest();
         }
@@ -75,7 +87,7 @@ class ReviewController extends Controller
 
         return Inertia::render('Admin/Reviews', [
             'reviews' => $reviews,
-            'filters' => $request->only('date'),
+            'filters' => $request->only('sort'),
         ]);
     }
 

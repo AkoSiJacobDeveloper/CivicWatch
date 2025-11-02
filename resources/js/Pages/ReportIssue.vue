@@ -1,6 +1,6 @@
 <script setup>
 import { Head, router, usePage, useForm } from '@inertiajs/vue3';
-import { ref, nextTick, onMounted, computed } from 'vue';
+import { ref, nextTick, onMounted, computed, onUnmounted } from 'vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import Swal from 'sweetalert2';
 import axios from 'axios';
@@ -31,6 +31,228 @@ const form = useForm({
     remarks: '',
     status: 'pending',
 });
+
+// ========== CAMERA CAPTURE VARIABLES ==========
+const isCameraActive = ref(false);
+const stream = ref(null);
+const videoElement = ref(null); // This will now work properly
+const useCamera = ref(false);
+const capturedImage = ref(null);
+const showFileUpload = ref(false); // Control file upload visibility
+
+// ========== CAMERA FUNCTIONS ==========
+async function startCamera() {
+    try {
+        useCamera.value = true;
+        isCameraActive.value = true;
+        showFileUpload.value = false;
+        
+        // Wait for Vue to render the video element
+        await nextTick();
+        
+        console.log('Looking for video element...');
+        
+        // Try multiple ways to get the video element
+        let videoEl = videoElement.value;
+        
+        if (!videoEl) {
+            // Try to find it in the DOM
+            videoEl = document.querySelector('video');
+            if (videoEl) {
+                videoElement.value = videoEl;
+                console.log('Found video element via DOM query');
+            }
+        }
+        
+        if (!videoEl) {
+            // Last attempt - wait a bit more and try again
+            await new Promise(resolve => setTimeout(resolve, 100));
+            videoEl = document.querySelector('video');
+            if (videoEl) {
+                videoElement.value = videoEl;
+                console.log('Found video element after delay');
+            }
+        }
+        
+        if (!videoEl) {
+            console.error('Video element not found after multiple attempts');
+            throw new Error('Video element not found in DOM');
+        }
+
+        console.log('Requesting camera access...');
+        
+        // Request camera access FIRST, before setting up the video element
+        stream.value = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
+        });
+        
+        console.log('Camera access granted, setting up video element');
+        
+        // Now set up the video element with the stream
+        videoEl.srcObject = stream.value;
+        
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+            videoEl.onloadedmetadata = () => {
+                videoEl.play().then(resolve).catch(console.error);
+            };
+        });
+        
+        // Clear any existing file upload
+        if (fileInput.value) {
+            fileInput.value.value = '';
+        }
+        imagePreview.value = null;
+        form.image = null;
+        
+        console.log('Camera started successfully');
+        
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        useCamera.value = false;
+        isCameraActive.value = false;
+        
+        // Reset the video element reference if it failed
+        videoElement.value = null;
+        
+        if (error.name === 'NotAllowedError') {
+            Swal.fire({
+                title: 'Camera Access Denied',
+                text: 'Please allow camera access to use live capture, or use file upload instead.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        } else if (error.name === 'NotFoundError') {
+            Swal.fire({
+                title: 'No Camera Found',
+                text: 'No camera device was found. Please use file upload instead.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        } else if (error.name === 'NotSupportedError') {
+            Swal.fire({
+                title: 'Browser Not Supported',
+                text: 'Your browser does not support camera access. Please use a modern browser or file upload.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        } else {
+            Swal.fire({
+                title: 'Camera Error',
+                text: 'Could not access camera. Please try again or use file upload.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+}
+
+function stopCamera() {
+    if (stream.value) {
+        stream.value.getTracks().forEach(track => {
+            track.stop();
+        });
+        stream.value = null;
+    }
+    isCameraActive.value = false;
+    useCamera.value = false;
+}
+
+function capturePhoto() {
+    if (!videoElement.value || !stream.value) {
+        console.error('Video element or stream not available');
+        return;
+    }
+    
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    
+    canvas.width = videoElement.value.videoWidth;
+    canvas.height = videoElement.value.videoHeight;
+    
+    context.drawImage(videoElement.value, 0, 0, canvas.width, canvas.height);
+    
+    const now = new Date();
+    const timestamp = now.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    
+    context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    context.fillRect(10, 10, 400, 30);
+    context.fillStyle = 'white';
+    context.font = '14px Arial';
+    context.fillText(`Verified: ${timestamp} - Barangay Report`, 20, 30);
+    
+    canvas.toBlob((blob) => {
+        if (!blob) {
+            console.error('Failed to create blob');
+            return;
+        }
+        
+        if (imagePreview.value) {
+            URL.revokeObjectURL(imagePreview.value);
+        }
+        imagePreview.value = URL.createObjectURL(blob);
+        
+        const file = new File([blob], `verified-report-${Date.now()}.jpg`, { 
+            type: 'image/jpeg' 
+        });
+        
+        form.image = file;
+        capturedImage.value = file;
+        
+        stopCamera();
+        
+        Swal.fire({
+            title: 'Photo Captured!',
+            text: 'Timestamp has been added to your photo.',
+            icon: 'success',
+            confirmButtonText: 'OK',
+            timer: 2000
+        });
+    }, 'image/jpeg', 0.8);
+}
+
+function removeImage() {
+    if (imagePreview.value) {
+        URL.revokeObjectURL(imagePreview.value);
+        imagePreview.value = null;
+    }
+    
+    form.image = null;
+    capturedImage.value = null;
+    
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+    
+    if (!isCameraActive.value) {
+        useCamera.value = false;
+    }
+    
+    Swal.fire({
+        title: 'Image Removed',
+        text: 'The image has been removed. You can capture a new one or upload another.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        timer: 2000
+    });
+}
+
+function checkCameraSupport() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
+
 
 // Computed property for available sitios
 const availableSitios = computed(() => {
@@ -74,14 +296,23 @@ function handleFileChange(event) {
         }
         imagePreview.value = URL.createObjectURL(file);
         form.image = file;
+        capturedImage.value = null;
+        useCamera.value = false;
+        
+        // Stop camera if active
+        if (isCameraActive.value) {
+            stopCamera();
+        }
     } else {
         if (imagePreview.value) {
             URL.revokeObjectURL(imagePreview.value);
         }
         imagePreview.value = null;
         form.image = null;
+        capturedImage.value = null;
     }
 }
+
 
 // Reset form
 async function resetForm() {
@@ -92,6 +323,14 @@ async function resetForm() {
         URL.revokeObjectURL(imagePreview.value);
         imagePreview.value = null;
     }
+    
+    // Stop camera if active
+    if (isCameraActive.value) {
+        stopCamera();
+    }
+    
+    capturedImage.value = null;
+    useCamera.value = false;
     
     await nextTick();
     
@@ -172,6 +411,8 @@ function submitForm() {
 onMounted(async () => {
     await fetchIssueType();
     await fetchBarangaysWithSitios();
+        console.log('Video element ref:', videoElement.value); // Should be null initially
+
 
     if (window.grecaptcha) {
         window.grecaptcha.render(document.querySelector('.g-recaptcha'), {
@@ -183,21 +424,33 @@ onMounted(async () => {
         title: '<strong>Important Notice</strong>',
         icon: 'warning',
         html: `
-        <div class="text-left">
-            <p class="font-[Poppins] text-base font-medium">Please note that this system is designed only for non-urgent concerns, such as: </p>
-            <ul class="list-disc ml-4 my-2">
-            <li class="text-sm">Minor road or streetlight damage</li>
-            <li class="text-sm">Garbage collection issues</li>
-            <li class="text-sm">Public facility maintenance</li>
-            <li class="text-sm">Community disturbances (non-emergency)</li>
-            </ul>
-            <p class="text-sm">If an emergency report is detected such as fire, or crime a hotline will appear to guide you in reporting to the correct agency. </p>
+        <div class="">
+            <p class="mb-3 text-center font-[Poppins] text-base font-medium">Please note that this system is designed only for non-urgent concerns, such as: </p>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                <p class="font-medium text-blue-800 text-left">Please make sure:</p>
+                <ul class="list-disc ml-4 my-2 text-left text-blue-700">
+                    <li class="text-sm">Minor road or streetlight damage</li>
+                    <li class="text-sm">Garbage collection issues</li>
+                    <li class="text-sm">Public facility maintenance</li>
+                    <li class="text-sm">Community disturbances (non-emergency)</li>
+                </ul>
+            </div>
+            <p class="text-sm text-left mt-3">If an emergency report is detected such as fire, or crime a hotline will appear to guide you in reporting to the correct agency. </p>
         </div>
         `,
         showCloseButton: true,
         confirmButtonText: 'I Understand',
         confirmButtonColor: '#3085d6',
     });
+});
+
+onUnmounted(() => {
+    if (stream.value) {
+        stopCamera();
+    }
+    if (imagePreview.value) {
+        URL.revokeObjectURL(imagePreview.value);
+    }
 });
 </script>
 
@@ -502,30 +755,136 @@ onMounted(async () => {
                         <div class="md:flex gap-3">
                             <!-- UPLOAD PHOTO -->
                             <div class="mb-4 md:w-1/2 md:mb-0">
-                                <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Upload Photo</label>
-                                <input
-                                    type="file"
-                                    id="image"
-                                    accept="image/*"
-                                    @change="handleFileChange"
-                                    key="file-input"
-                                    class="block w-full p-2 text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer 
-                                        bg-white dark:text-gray-300 focus:outline-none 
-                                        file:mr-4 file:py-2 file:px-4 
-                                        file:rounded-md file:border-0 
-                                        file:text-sm file:font-medium 
-                                        file:bg-blue-600 file:text-white 
-                                        hover:file:bg-blue-700 
-                                        dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400"
-                                />
+                                <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">
+                                    Upload Photo 
+                                </label>
+                                
+                                <!-- Camera Toggle Buttons -->
+                                <div class="flex flex-col gap-2 mb-3">
+                                    <div class="border-2 border-dashed border-green-500 bg-slate-100 w-full p-5 rounded-md">
+                                        <div class="flex items-center justify-center py-3 ">
+                                            <img :src="'/Images/SVG/camera.svg'" alt="Icon" class="h-7 w-7">
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            @click="startCamera"
+                                            :disabled="isCameraActive"
+                                            class="flex items-center justify-center gap-2 px-4 py-3 w-full bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                            </svg>
+                                            <p class="text-sm">Take Photo</p>
+                                        </button>
 
-                                <div v-if="imagePreview" class="mt-3">
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">Image Preview:</p>
-                                    <img :src="imagePreview" alt="Image Preview" class="max-w-[200px] mt-2 rounded shadow">
+                                        <button 
+                                            type="button"
+                                            @click="stopCamera"
+                                            v-if="isCameraActive"
+                                            class="flex items-center justify-center gap-2 w-full mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                            <p class="text-sm">Stop Camera</p>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div v-if="form.errors.image" class="text-red-500 text-sm mt-2">
-                                    {{ form.errors.image }}
+                                <!-- Camera Preview -->
+                                <div v-if="isCameraActive" class="mb-3">
+                                    <video 
+                                        ref="videoElement" 
+                                        autoplay 
+                                        playsinline
+                                        muted
+                                        class="w-full rounded-lg border-2 border-green-500"
+                                    ></video>
+                                    <button 
+                                        type="button"
+                                        @click="capturePhoto"
+                                        class="mt-2 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                        Capture Photo with Timestamp
+                                    </button>
+                                </div>
+
+                                <div class="inline-flex items-center px-2 gap-2">
+                                    <hr class=" w-72 h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
+                                    <p class="text-medium text-gray-500 text-xs">OR</p>
+                                    <hr class="w-72 h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
+                                </div>
+
+                                <!-- File Upload Section -->
+                                <div class="mb-3">
+                                    <div>
+                                        <!-- Show "Or upload file" option only when no image is previewed and camera is not active -->
+                                        <div v-if="!isCameraActive && !imagePreview && !showFileUpload" class="text-center mb-2 border">
+                                            <button 
+                                                type="button"
+                                                @click="showFileUpload = true"
+                                                class="text-xs border-2 border-dashed border-gray-400 bg-slate-100 w-full p-4 flex items-center justify-center rounded-md"
+                                            >
+                                                <img :src="'/Images/SVG/upload-simple (gray).svg'" alt="Icon" class="h-5 w-5">
+                                                <p class="text-sm text-medium text-gray-500">Upload File</p>
+                                            </button>
+                                        </div>
+
+                                        <!-- File Upload Input - Show when user explicitly clicks to upload or when image is already uploaded -->
+                                        <div v-if="(showFileUpload || imagePreview) && !isCameraActive" class="mb-3">
+                                            <span class="text-xs text-gray-500 block mb-1">Upload existing photo (not recommended for verification)</span>
+                                            <input
+                                                type="file"
+                                                id="image"
+                                                ref="fileInput"
+                                                accept="image/*"
+                                                @change="handleFileChange"
+                                                class="block w-full p-2 text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer 
+                                                    bg-white dark:text-gray-300 focus:outline-none 
+                                                    file:mr-4 file:py-2 file:px-4 
+                                                    file:rounded-md file:border-0 
+                                                    file:text-sm file:font-medium 
+                                                    file:bg-blue-600 file:text-white 
+                                                    hover:file:bg-blue-700 
+                                                    dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400"
+                                            />
+                                            <!-- Cancel upload button -->
+                                            <button 
+                                                v-if="showFileUpload && !imagePreview"
+                                                type="button"
+                                                @click="showFileUpload = false"
+                                                class="mt-1 text-xs text-red-500 hover:text-red-700 underline"
+                                            >
+                                                Cancel upload
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Image Preview -->
+                                <div v-if="imagePreview" class="mt-3">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        {{ capturedImage ? 'Verified Photo (with timestamp)' : 'Image Preview:' }}
+                                    </p>
+                                    <div class="relative inline-block">
+                                        <img :src="imagePreview" alt="Image Preview" class="max-w-[200px] mt-2 rounded shadow border-2" :class="capturedImage ? 'border-green-500' : 'border-gray-300'">
+                                        <!-- Floating Remove Button -->
+                                        <button 
+                                            type="button"
+                                            @click="removeImage"
+                                            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                                            title="Remove image"
+                                        >
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <p v-if="capturedImage" class="text-xs text-green-600 mt-1">✓ This photo includes verification timestamp</p>
                                 </div>
                             </div>
 

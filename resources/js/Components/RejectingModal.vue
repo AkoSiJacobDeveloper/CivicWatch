@@ -65,7 +65,7 @@ function confirmRejection() {
 </script>
 
 <template>
-    <div v-if="show"  class="fixed z-[9999] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
+    <div v-if="show" class="fixed z-[9999] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
         <div class="w-full max-w-xl mx-4 rounded-lg shadow-lg bg-white">
             <!-- Header -->
             <div class="flex justify-between items-center p-5 border-b bg-blue-700 rounded-t-lg">
@@ -84,7 +84,7 @@ function confirmRejection() {
 
             <div class="flex flex-col p-5">
                 <!-- Modal Content -->
-                <div class="flex flex-col max-h-60 overflow-y-auto">
+                <div class="flex flex-col h-60 overflow-y-auto">
                     <p class="text-sm text-gray-600 mb-4">Reason for rejecting the report</p>
 
                     <!-- Error Message -->
@@ -117,7 +117,7 @@ function confirmRejection() {
                             v-model="otherReason"
                             placeholder="Please specify..."
                             name="otherReason"
-                            class="mt-2 h-28 rounded border border-gray-400 transition-all duration-300"
+                            class="mt-2 rounded border border-gray-400 transition-all duration-300 w-full h-24 p-2 resize-none"
                             required
                         >
                         </textarea>

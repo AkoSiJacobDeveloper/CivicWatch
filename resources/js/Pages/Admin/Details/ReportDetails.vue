@@ -141,13 +141,13 @@ const finalizeRejection = () => {
 <template>
     <AdminLayout>
         <main class="flex flex-col gap-5 text-sm">
-            <section class="flex  items-center gap-2">
+            <section class="flex  items-center gap-2 mt-3">
                 <div>
                     <Link :href="backUrl">
                         <img :src="'/Images/SVG/arrow-circle-left-fill (700).svg'" alt="Back Icon">
                     </Link>
                 </div>
-                <h1 class="font-semibold text-2xl font-[Poppins] ">Report Details</h1>
+                <h1 class="font-semibold text-3xl font-[Poppins]">Report Details</h1>
             </section>
 
             <section class="bg-white shadow-lg rounded-lg">
@@ -173,8 +173,9 @@ const finalizeRejection = () => {
                         <!-- Notes for Duplicates Reports -->
                         <div
                             v-if="report.status === 'Duplicate' && report.duplicate_of_report_id"
-                            class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[30%] p-2 rounded-lg"
+                            class="flex items-center border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[30%] p-2 rounded-lg"
                         >
+                            <img :src="'/Images/SVG/info (blue).svg'" alt="Icon" class="h-10 w-10">
                             <p 
                                 class="ml-1">
                                 This report has been identified as a duplicate and consolidated with Report ID: 
@@ -189,21 +190,21 @@ const finalizeRejection = () => {
                         
                         <div
                             v-if="report.duplicates && report.duplicates.length > 0"
-                            class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[30%] p-2 rounded-lg"
+                            class="flex items-center border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[30%] p-2 rounded-lg"
                         >
-                            <p 
-                                class="ml-1">
-                                This is the primary report for this issue with a Report ID:
-                                <ul>
-                                    <li v-for="dup in report.duplicates" :key="dup.id">
-                                        <Link :href="`/admin/reports/${dup.id}`" class="font-semibold underline hover:text-blue-700 transition-all duration-300">
-                                            #{{ dup.id }} 
-                                        </Link>
-                                        duplicate reports have been consolidated here for efficient resolution.
-                                    </li>
-                                    
-                                </ul>
-                                
+                            <img :src="'/Images/SVG/info (blue).svg'" alt="Icon" class="h-10 w-10">
+                            <p class="ml-1">
+                                This is the primary report for this issue with a Report ID. 
+                                <span v-for="(dup, index) in report.duplicates" :key="dup.id">
+                                    <Link 
+                                        :href="`/admin/reports/${dup.id}`" 
+                                        class="font-semibold underline hover:text-blue-700 transition-all duration-300"
+                                    >
+                                        #{{ dup.id }}
+                                    </Link>
+                                    <span v-if="index < report.duplicates.length - 1">, </span>
+                                </span>
+                                duplicate reports have been consolidated here for efficient resolution.
                             </p>
                         </div>
 
@@ -311,54 +312,49 @@ const finalizeRejection = () => {
 
                 <!-- Footer -->
                 <footer 
-                    class="px-10 py-7 rounded-lg border-t border-gray-200 shadow flex justify-between"
+                    class="px-10 py-7 rounded-lg border-t border-gray-200 shadow flex justify-end"
                 >
-                    <div class="flex gap-1 w-[20%] text-[#FAF9F6]">
-                        <!-- Approve Button -->
-                        <button
-                            v-if="report.status === 'Pending'"
-                            @click="approveReport(report.id)"
-                            type="submit" 
-                            class="bg-emerald-500 hover:bg-emerald-600 transition-all duration-300 p-3 flex-1 rounded flex items-center justify-center gap-1"
-                        >
-                            <img :src="'/Images/SVG/check-circle.svg'" alt="Approve Icon" class="w-5 h-5">
-                            Approve
-                        </button>
+                    <div class="text-[#FAF9F6]">
+                        <div class="flex gap-1">
+                            <!-- Approve Button -->
+                            <button
+                                v-if="report.status === 'Pending'"
+                                @click="approveReport(report.id)"
+                                type="submit" 
+                                class="bg-emerald-500 hover:bg-emerald-600 transition-all duration-300 p-3 flex-1 rounded flex items-center justify-center gap-1"
+                            >
+                                <img :src="'/Images/SVG/check-circle.svg'" alt="Approve Icon" class="w-5 h-5">
+                                Approve
+                            </button>
 
-                        <!-- Reject Button -->
-                        <button 
-                            v-if="report.status === 'Pending'"
-                            @click="openRejectModal(report.id)"
-                            type="submit" 
-                            class="bg-red-500 hover:bg-red-600 transition-all duration-300 p-3 flex-1 rounded flex items-center justify-center gap-1"
-                        >
-                            <img :src="'/Images/SVG/x-circle.svg'" alt="Reject Icon" class="w-5 h-5">
-                            Reject
-                        </button>
+                            <!-- Reject Button -->
+                            <button 
+                                v-if="report.status === 'Pending'"
+                                @click="openRejectModal(report.id)"
+                                type="submit" 
+                                class="bg-red-500 hover:bg-red-600 transition-all duration-300 p-3 flex-1 rounded flex items-center justify-center gap-1"
+                            >
+                                <img :src="'/Images/SVG/x-circle.svg'" alt="Reject Icon" class="w-5 h-5">
+                                Reject
+                            </button>
+                        </div>
 
                         <!-- Resolved Button -->
-                        <button
-                            v-if="report.status === 'In Progress'"
-                            @click="resolveReport(report.id)"
-                            type="submit"
-                            class="bg-[#2cc08f] hover:bg-[#25a87b] transition-all duration-300 p-3 rounded flex items-center jusify-center gap-1"
-                        >
-                            <img :src="'/Images/SVG/check-circle.svg'" alt="Approved Icon" class="w-5 h-5">
-                            Resolved
-                        </button>
+                        <div class="flex justify-start">
+                            <button
+                                v-if="report.status === 'In Progress'"
+                                @click="resolveReport(report.id)"
+                                type="submit"
+                                class="bg-[#2cc08f] hover:bg-[#25a87b] transition-all duration-300 p-3 rounded flex items-center justify-end gap-1"
+                            >
+                                <img :src="'/Images/SVG/check-circle.svg'" alt="Approved Icon" class="w-5 h-5">
+                                Resolved
+                            </button>
+                        </div>
+                        
 
                     </div>
 
-                    <div class="flex gap-1 w-[10%] text-[#FAF9F6]">
-                        <!-- Delete Button -->
-                        <button 
-                            @click="openDeleteModal(report.id)" 
-                            class="bg-red-500 hover:bg-red-600 transition-all duration-300 p-3 flex-1 rounded flex items-center justify-center gap-1"
-                        >
-                            <img :src="'/Images/SVG/trash.svg'" alt="Delete Icon" class="w-5 h-5">
-                            Delete
-                        </button>
-                    </div>
                 </footer>
             </section>
 

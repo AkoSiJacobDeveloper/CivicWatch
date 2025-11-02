@@ -15,7 +15,7 @@ const links = [
     { name: 'Achievements', url: '/brgy-achievements' },
     { name: 'FAQ', url: '/faq' },
     { name: 'About', url: '/about' },
-    { name: 'Contact Us', url: '/contact-us' }
+    { name: 'Contact Us', url: '/contact-us' },
 ];
 
 const mblinks = [...links];
@@ -57,7 +57,7 @@ const toggleDarkMode = () => {
 </script>
 
 <template>
-    <header class="bg-blue-700 flex md:justify-between p-3 md:py-5 md:px-10 lg:px-32 fixed w-full z-[9999] dark:bg-[#1e1e1e] dark:text-[#FAF9F6]">
+    <header class="bg-blue-700 flex md:justify-between p-3 md:py-5 md:px-10 lg:px-32 fixed w-full z-[999] dark:bg-[#1e1e1e] dark:text-[#FAF9F6]">
         <div class="flex justify-between  w-full">
             <div class="flex items-center gap-1">
                 <ApplicationLogo />

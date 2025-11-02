@@ -46,67 +46,70 @@ class ReportIssueController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'issue_type' => 'required|string',
-            'custom_issue_description' => 'nullable|string|max:255',
-            'description' => 'required|string',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-            'barangay_id' => 'required|exists:barangays,id',
-            'sitio_id' => 'required|exists:sitios,id',
-            'sender_name' => 'required|string|max:255',
-            'contact_number' => 'required|string|max:20',
-            'remarks' => 'nullable|string',
-            'g-recaptcha-response' => 'required|string',
-        ]);
+{
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'issue_type' => 'required|string', // This is the issue type NAME
+        'custom_issue_description' => 'nullable|string|max:255',
+        'description' => 'required|string',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:10000',
+        'barangay_id' => 'required|exists:barangays,id',
+        'sitio_id' => 'required|exists:sitios,id',
+        'sender_name' => 'required|string|max:255',
+        'contact_number' => 'required|string|max:20',
+        'remarks' => 'nullable|string',
+        'g-recaptcha-response' => 'required|string',
+    ]);
 
-        $barangay = Barangay::find($request->barangay_id);
-        if (!$barangay->is_available) {
-            return back()->withErrors(['barangay_id' => 'Selected barangay is not yet available for reporting.']);
-        }
+    $barangay = Barangay::find($request->barangay_id);
+    if (!$barangay->is_available) {
+        return back()->withErrors(['barangay_id' => 'Selected barangay is not yet available for reporting.']);
+    }
 
-        $sitio = Sitio::find($request->sitio_id);
-        if ($sitio->barangay_id != $request->barangay_id) {
-            return back()->withErrors(['sitio_id' => 'Selected sitio does not belong to the selected barangay.']);
-        }
+    $sitio = Sitio::find($request->sitio_id);
+    if ($sitio->barangay_id != $request->barangay_id) {
+        return back()->withErrors(['sitio_id' => 'Selected sitio does not belong to the selected barangay.']);
+    }
 
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('report-images', 'public');
-        }
+    $imagePath = null;
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('report-images', 'public');
+    }
 
-        $recaptchaResponse = $request->input('g-recaptcha-response');
-        $googleResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => env('RECAPTCHA_SECRET_KEY'),
-            'response' => $recaptchaResponse
-        ]);
-        $result = $googleResponse->json();
+    $recaptchaResponse = $request->input('g-recaptcha-response');
+    $googleResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+        'secret' => env('RECAPTCHA_SECRET_KEY'),
+        'response' => $recaptchaResponse
+    ]);
+    $result = $googleResponse->json();
 
-        if (!isset($result['success']) || !$result['success']) {
-            return back()->withErrors(['captcha' => 'ReCAPTCHA verification failed. Try again.']);
-        }
+    if (!isset($result['success']) || !$result['success']) {
+        return back()->withErrors(['captcha' => 'ReCAPTCHA verification failed. Try again.']);
+    }
 
-        // Transaction for unique tracking code
-        $trackingCode = DB::transaction(function () {
-            $today = Carbon::today()->format('Ymd');
+    // Generate initial tracking code WITHOUT transaction
+    $today = Carbon::today()->format('Ymd');
+    
+    $lastReport = Report::whereDate('created_at', Carbon::today())
+        ->orderBy('created_at', 'desc')
+        ->first();
 
-            $lastReport = Report::whereDate('created_at', Carbon::today())
-                ->orderBy('created_at', 'desc')
-                ->lockForUpdate()
-                ->first();
+    if ($lastReport && preg_match('/CW-' . $today . '-(\d+)/', $lastReport->tracking_code, $matches)) {
+        $sequence = str_pad((int)$matches[1] + 1, 3, '0', STR_PAD_LEFT);
+    } else {
+        $sequence = '001';
+    }
 
-            if ($lastReport && preg_match('/CW-' . $today . '-(\d+)/', $lastReport->tracking_code, $matches)) {
-                $lastNumber = (int)$matches[1];
-                $sequence = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-            } else {
-                $sequence = '001';
-            }
+    $trackingCode = "CW-{$today}-{$sequence}";
 
-            return "CW-$today-$sequence";
-        });
-
-        // Priority assignment
+    // NEW: Get priority from issue_types table
+    $issueType = \App\Models\IssueType::where('name', $validated['issue_type'])->first();
+    
+    if ($issueType) {
+        // Use the priority from issue_types table
+        $priority = ucfirst($issueType->priority_level); // Convert 'medium' to 'Medium'
+    } else {
+        // Fallback to your existing logic if issue type not found
         $priority = 'Medium';
         $highPriorityTypes = ['fire', 'accident'];
         $lowPriorityTypes = [
@@ -119,25 +122,56 @@ class ReportIssueController extends Controller
         } elseif (in_array($validated['issue_type'], $lowPriorityTypes)) {
             $priority = 'Low';
         }
+    }
 
-        // Create the report in MySQL
-        $report = Report::create([
-            'tracking_code' => $trackingCode,
-            'title' => $validated['title'],
-            'issue_type' => $validated['issue_type'],
-            'custom_issue_description' => $validated['custom_issue_description'] ?? null,
-            'description' => $validated['description'],
-            'image' => $imagePath,
-            'barangay_name' => $barangay->name,
-            'sitio_name' => $sitio->name,
-            'sender_name' => $validated['sender_name'],
-            'contact_number' => $validated['contact_number'],
-            'remarks' => $validated['remarks'],
-            'priority_level' => $priority,
-            'status' => 'pending',
-        ]);
+    // Retry logic for duplicates
+    $maxRetries = 3;
+    $retryCount = 0;
+    $report = null;
+    
+    while ($retryCount < $maxRetries) {
+        try {
+            // Create the report
+            $report = Report::create([
+                'tracking_code' => $trackingCode,
+                'title' => $validated['title'],
+                'issue_type' => $validated['issue_type'],
+                'custom_issue_description' => $validated['custom_issue_description'] ?? null,
+                'description' => $validated['description'],
+                'image' => $imagePath,
+                'barangay_name' => $barangay->name,
+                'sitio_name' => $sitio->name,
+                'sender_name' => $validated['sender_name'],
+                'contact_number' => $validated['contact_number'],
+                'remarks' => $validated['remarks'],
+                'priority_level' => $priority,
+                'status' => 'pending',
+            ]);
 
-        // ========== ADD THIS FIREBASE SECTION ==========
+            break; // Success, exit loop
+
+            } catch (\Illuminate\Database\QueryException $e) {
+                if (str_contains($e->getMessage(), 'Duplicate entry') && str_contains($e->getMessage(), 'tracking_code_unique')) {
+                    $retryCount++;
+                    
+                    // Generate new tracking code
+                    $sequence = str_pad((int)$sequence + 1, 3, '0', STR_PAD_LEFT);
+                    $trackingCode = "CW-{$today}-{$sequence}";
+                    
+                    if ($retryCount === $maxRetries) {
+                        // Log the error and return a user-friendly message
+                        Log::error('Failed to generate unique tracking code after ' . $maxRetries . ' attempts. Last attempted code: ' . $trackingCode);
+                        return back()->withErrors(['error' => 'Unable to generate unique tracking code. Please try again.']);
+                    }
+                    
+                    continue; // Retry with new code
+                }
+                // Re-throw other database exceptions
+                throw $e;
+            }
+        }
+
+        // Firebase integration
         try {
             // Map your fields to what the alarm system expects
             $firebaseData = [
@@ -154,7 +188,6 @@ class ReportIssueController extends Controller
             // Log error but don't break the report submission
             Log::error('Failed to send report to Firebase: ' . $e->getMessage());
         }
-        // ========== END FIREBASE SECTION ==========
 
         return redirect()->back()->with([
             'tracking_code' => $trackingCode,

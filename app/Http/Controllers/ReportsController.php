@@ -577,7 +577,7 @@ class ReportsController extends Controller
         $reports = Report::whereIn('id', $validated['report_ids'])->get();
         
         foreach ($reports as $report) {
-            $currentStatus = $report->getRawOriginal('status'); // Get the raw database value
+            $currentStatus = $report->getRawOriginal('status');
             
             $newStatus = null;
             
@@ -607,5 +607,33 @@ class ReportsController extends Controller
         } else {
             return back()->with('info', 'No reports were eligible for reverting.');
         }
+    }
+
+    public function bulkRestore(Request $request)
+    {
+        $validated = $request->validate([
+            'report_ids' => 'required|array|min:1',
+            'report_ids.*' => 'exists:reports,id'
+        ]);
+
+        $restoredCount = Report::onlyTrashed()
+            ->whereIn('id', $validated['report_ids'])
+            ->restore();
+
+        return back()->with('success', $restoredCount . ' report(s) restored successfully!');
+    }
+
+    public function bulkForceDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'report_ids' => 'required|array|min:1',
+            'report_ids.*' => 'exists:reports,id'
+        ]);
+
+        $deletedCount = Report::onlyTrashed()
+            ->whereIn('id', $validated['report_ids'])
+            ->forceDelete();
+
+        return back()->with('success', $deletedCount . ' report(s) permanently deleted!');
     }
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
@@ -8,9 +8,20 @@ import ReviewModal from '@/Components/ReviewModal.vue';
 const props = defineProps({ reviews: Object })
 
 const showReviewModal = ref(false)
+const sortOrder = ref('desc') // Add this - default to newest first
 
 function openReviewModal() {
     showReviewModal.value = true;
+}
+
+function toggleSort() {
+    sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
+    
+    router.get('/review', { sort: sortOrder.value }, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true
+    })
 }
 </script>
 
@@ -67,7 +78,7 @@ function openReviewModal() {
                 <div v-if="!reviews.data || reviews.data.length === 0"  class="text-center text-gray-500">
                     <p class="text-xl mb-4 py-20">No reviews yet. Be the first to write one!</p>
                 </div>
-                <div v-else class="grid grid-cols-3 gap-5">
+                <div class="grid grid-cols-3 gap-5">
                     <div v-for="review in props.reviews.data" :key="review.id" class="shadow-lg rounded-lg p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] ">
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
@@ -79,9 +90,39 @@ function openReviewModal() {
                             </div>
                         </div>
                         
-                        <div class="">
-                            <h3 class="font-bold text-base font-[Poppins]">{{ review.name }}</h3>
-                            <p class="text-gray-600 text-sm mb-2 dark:text-[#faf9f6]">{{ review.location }}</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-1">
+                                <div>
+                                    <img 
+                                        :src="'/Images/SVG/user-circle-fill.svg'"
+                                        :alt="Icon"
+                                        :class="review.is_anonymous ? 'opacity-55': 'opacity-100'"
+                                        class="h-10 w-10"
+                                    />
+                                </div>
+                    
+                                <div>
+                                    <!-- Update these lines to use display names -->
+                                    <span class="font-bold text-base font-[Poppins]">
+                                        {{ review.is_anonymous ? 'Anonymous User' : review.name }}
+                                    </span>
+                                    <p class="text-gray-600 text-xs dark:text-[#faf9f6]">
+                                        {{ review.location }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-1">
+                                    <span v-for="star in 5" :key="star" 
+                                        :class="star <= review.rating ? 'text-yellow-400' : 'text-gray-300'">
+                                        ★
+                                    </span>
+                                    <span v-if="review.rating" class="ml-1 text-sm text-gray-600">
+                                        ({{ review.rating }}/5)
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

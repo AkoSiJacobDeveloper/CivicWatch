@@ -26,7 +26,11 @@ Route::get('/', fn() => Inertia::render('Welcome'));
 Route::get('/track-reports', fn() => Inertia::render('TrackReports'));
 Route::get('faq', fn() => Inertia::render('FAQ'));
 Route::get('/about', fn() => Inertia::render('About'));
-Route::get('/review', fn() => Inertia::render('Review'));
+// Users Review
+Route::get('/review', [ReviewController::class, 'index'])->name('review.index');
+Route::post('/review', [ReviewController::class, 'store'])->name('review.store');
+Route::get('/', [ReviewController::class, 'showInHome'])->name('review.showInHome');
+
 Route::get('/user-announcements', [AnnouncementController::class, 'showInClient'])->name('user.get.announcements');
 Route::get('/brgy-achievements', [AchievementController::class, 'showInClient'])->name('user.get.achievements');
 
@@ -90,7 +94,8 @@ Route::prefix('admin')->group(function () {
         // Soft delete routes
         Route::post('/reports/{report}/restore', [ReportsController::class, 'restore'])->name('admin.reports.restore');
         Route::delete('/reports/{report}/force-delete', [ReportsController::class, 'forceDelete'])->name('admin.reports.force-delete');
-
+        Route::post('/reports/bulk-restore', [ReportsController::class, 'bulkRestore'])->name('admin.reports.bulk-restore');
+        Route::post('/reports/bulk-force-delete', [ReportsController::class, 'bulkForceDelete'])->name('admin.reports.bulk-force-delete');
         // Review
         Route::get('/reviews', [ReviewController::class, 'showInAdmin'])->name('system.review');
         Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.delete');
@@ -136,10 +141,6 @@ Route::prefix('admin')->group(function () {
     }); 
 });
 
-// Users Review
-Route::get('/review', [ReviewController::class, 'index'])->name('review.index');
-Route::post('/review', [ReviewController::class, 'store'])->name('review.store');
-Route::get('/', [ReviewController::class, 'showInHome'])->name('review.showInHome');
 
 Route::get('/barangays-with-sitios', function () {
     return Barangay::with(['sitios'])->get();

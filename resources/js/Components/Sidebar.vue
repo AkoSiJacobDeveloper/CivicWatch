@@ -105,7 +105,8 @@ function confirmLogout() {
     <!-- Sidebar Component that pushes content -->
     <aside 
         class="transition-all duration-300 ease-in-out bg-blue-700 dark:bg-gray-800 min-h-screen flex flex-col relative"
-        :class="isCollapsed ? 'w-16' : 'w-64'">
+        :class="isCollapsed ? 'w-16' : 'w-64'"
+    >
     
         <div class="h-full px-3 py-4 overflow-y-auto flex flex-col">
             <div class="flex justify-between mb-9">

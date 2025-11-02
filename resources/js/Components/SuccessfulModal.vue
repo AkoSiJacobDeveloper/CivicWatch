@@ -22,46 +22,54 @@ defineEmits(['close']);
 
 
 <template>
-    <div v-if="show" class="fixed z-[9999] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
-        <div class="w-[35%] p-10 rounded shadow-lg border bg-white">
-            
-            <!-- Close Button -->
-            <div class="flex justify-end">
-                <img @click="$emit('close')" :src="'/Images/SVG/x.svg'" alt="Close Icon" class="w-5 h-5 hover:cursor-pointer">
+    <div v-if="show"  class="fixed z-[9999] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
+        <div class="w-[35%] shadow-lg border rounded-lg bg-white">
+            <div class="bg-green-600 p-5 rounded-lg">
+                <!-- Close Button -->
+                <div class="flex justify-end">
+                    <img @click="$emit('close')" :src="'/Images/SVG/x (white).svg'" alt="Close Icon" class="w-5 h-5 hover:cursor-pointer">
+                </div>
+                <div class="">
+                    <!-- Icon -->
+                    <div class="flex justify-center mb-5">
+                        <div class="w-16 h-16 rounded-full flex items-center justify-center bg-green-100">
+                            <img :src="'/Images/SVG/check-circle-green.svg'" alt="Warning Icon">
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="text-center text-white">
+                        <h5 class="font-bold text-2xl">Report Successfully Submitted</h5>
+                        <p class="text-sm font-light">Thank you for your report. It has been received and will be reviewed by barangay officials.</p>
+                    </div>
+                </div>
+                
             </div>
+            
 
             <!-- Card Content -->
             <div class="flex flex-col">
-                <div class="text-center text-black">
-                    <div class="mb-10">
-                        <!-- Icon -->
-                        <div class="flex justify-center mb-5">
-                            <div class="w-16 h-16 rounded-full flex items-center justify-center bg-green-100">
-                                <img :src="'/Images/SVG/check-circle-green.svg'" alt="Warning Icon">
-                            </div>
-                        </div>
-
-                        <!-- Content -->
-                        <div class="text-center">
-                            <h5 class="font-bold text-2xl">Report Successfully Submitted</h5>
-                            <p class="text-sm text-gray-600">Thank you for your report. It has been received and will be reviewed by barangay officials.</p>
-                        </div>
-                    </div>
-
+                <div class="text-center text-black p-5">
                     <!-- Tracking Code -->
-                    <div class="flex flex-col my-6 justify-start">
-                        <p class="text-xs text-start text-gray-600">Please save or copy this tracking code to check the status of your report later.</p>
+                    <div class="flex flex-col justify-start border-2 p-5 border-green-700 rounded-md">
+                        <p class="text-xs text-start text-green-700 font-medium mb-2">YOUR TRACKING CODE</p>
                         <!-- Tracking Card -->
-                        <div class="flex justify-between items-center border border-gray-400 p-2 rounded">
-                            <p class="font-bold text-xs text-gray-600">{{ trackingCode || 'Not available' }}</p>
-                            <button @click="copyToClipboard" title="Copy Tracking Code">
-                                <font-awesome-icon icon="copy" class="text-blue-500 cursor-pointer text-sm" />
-                            </button>   
+                        <div class="flex gap-2">
+                            <div class="flex justify-between items-center border-2 border-green-100 p-2 rounded w-full">
+                                <p class="font-bold text-xs text-gray-600">{{ trackingCode || 'Not available' }}</p>
+                            </div>
+                            <button @click="copyToClipboard" title="Copy Tracking Code" class="bg-green-700 px-3 rounded-md">
+                                <!-- <font-awesome-icon icon="copy" class="text-white cursor-pointer text-sm p-5" /> -->
+                                <img :src="'/Images/SVG/copy (white).svg'" alt="Icon" class="h-5 w-5 cursor-pointer">
+                            </button>  
                         </div>
+                        
+                        <hr class="my-2">
+                        <p class="text-start text-sm"><span class="font-bold">Save this code!</span> You can use it to track the status of your report and read updates on any actions taken.</p>
                     </div>
                 </div>
 
-                <div class="flex justify-between">
+                <div class="flex justify-between px-5 pb-5">
                     <div class="flex justify-center items-center">
                         <Link
                             href="/review" class="text-gray-800 text-base hover:text-blue-500 transition-all duration-300"

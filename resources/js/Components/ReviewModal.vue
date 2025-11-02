@@ -2,22 +2,123 @@
 import { Link, useForm } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { ref } from 'vue';
+import Swal from 'sweetalert2';
+import {
+    Listbox,
+    ListboxButton,
+    ListboxOptions,
+    ListboxOption,
+} from '@headlessui/vue'
 
-const emit = defineEmits(['close']); // Move this BEFORE using emit
+const emit = defineEmits(['close']); 
 const toast = useToast();
 const form = useForm({
     name: '',
     location: '',
     review_message: '',
+    is_anonymous: false,
+    rating: 0,
 })
 
+const locations = [
+    {
+        id: 1,
+        place: 'Purok 1 - Sitio Ligua'
+    },
+    {
+        id: 2,
+        place: 'Purok 2 - Sitio Centro'
+    },
+    {
+        id: 3,
+        place: 'Purok 3 - Sitio Red Land'
+    },
+    {
+        id: 4,
+        place: 'Purok 4 - Sitio Sto.Nino'
+    },
+    {
+        id: 5,
+        place: 'Purok 5 - Sitio Sambag 1'
+    },
+    {
+        id: 6,
+        place: 'Purok 6 - Sitio Sambag 2'
+    }
+]
+
+const selectedLocation = ref(null)
+
+const hoverRating = ref(0)
+
+const setRating = (stars) => {
+    form.rating = stars
+}
+
+const setHoverRating = (stars) => {
+    hoverRating.value = stars
+}
+
+const resetHoverRating = () => {
+    hoverRating.value = 0
+}
+
 const submitReview = () => {
-    form.post('/review', {
-        onSuccess: () => {
-            toast.success('Review Submitted Successfully!');
-            form.reset()
-            emit('close')
-        },
+    // Show confirmation dialog before submitting
+    Swal.fire({
+        title: 'Ready to submit your review?',
+        html: `
+            <div class="text-left">
+                <p class="mb-3 text-center font-[Poppins] text-base font-medium">Your review will be published and <strong>cannot be edited</strong> after submission.</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                    <p class="font-medium text-blue-800">Please make sure:</p>
+                    <ul class="list-disc list-inside mt-1 text-blue-700 space-y-1">
+                        <li>Your review is accurate and respectful</li>
+                        <li>You've selected the correct location</li>
+                        <li>You're satisfied with your rating</li>
+                    </ul>
+                </div>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, submit my review',
+        cancelButtonText: 'No, let me review it',
+        reverseButtons: true,
+        customClass: {
+            popup: 'rounded-lg shadow-xl',
+            htmlContainer: 'text-left'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Submitting...',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            form.post('/review', {
+                onSuccess: () => {
+                    Swal.close();
+                    toast.success('Review submitted successfully!');
+                    form.reset()
+                    form.is_anonymous = false;
+                    form.rating = 0;
+                    selectedLocation.value = null;
+                    emit('close')
+                },
+                onError: () => {
+                    Swal.close();
+                    toast.error('Failed to submit review. Please try again.');
+                }
+            })
+        }
     })
 }
 
@@ -26,28 +127,25 @@ defineProps({
 })
 </script>
 
-
 <template>
-    <div v-if="show" class="fixed z-[9999] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
-        <div class="w-[35%] p-10 shadow-lg border bg-white flex flex-col gap-5 rounded-lg">
-            <div class="">
+    <div v-if="show" class="fixed z-[1000] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
+        <div class="w-[35%] bg-white flex flex-col rounded-lg">
+            <div class="flex justify-between p-8 bg-blue-700 rounded-t-md">
+                <!-- Header -->
+                <div class="">
+                    <h1 class="text-3xl font-bold text-white">Tell Us What You Think</h1>
+                    <p class="text-white font-light">Every review helps us get better for you.</p>
+                </div>
                 <!-- Close Button -->
                 <div class="flex justify-end">
-                    <img @click="$emit('close')" :src="'/Images/SVG/x.svg'" alt="Close Icon" class="w-5 h-5 hover:cursor-pointer">
+                    <img @click="$emit('close')" :src="'/Images/SVG/x (white).svg'" alt="Close Icon" class="h-5 w-5 hover:cursor-pointer">
                 </div>
             </div>
             
             <!-- Card Content -->
-            <div class="flex flex-col gap-4">
-                <div class="text-center my-5">
-                    <h1 class="text-3xl font-bold text-blue-500">Tell Us What You Think</h1>
-                    <p class="text-gray-500">Every review helps us get better for you.</p>
-                </div>
+            <div class="flex flex-col px-8 pt-4 pb-8">
                 <form @submit.prevent="submitReview" class="flex flex-col gap-3">
-                    <!-- <div>
-                        <label class="block font-semibold font-[Poppins]" for="name">Name</label>
-                        <input v-model="form.name" class="p-3 rounded w-full border bg-white border-b-2 border-[#3B82F6] px-3 py-3 dark:bg-[#2c2c2c]" type="text" id="name" placeholder="John Doe">
-                    </div> -->
+                    <!-- Name -->
                     <div class="relative">
                         <input
                             v-model="form.name"
@@ -60,23 +158,71 @@ defineProps({
                             class="absolute text-base text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-gray-900 px-5 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">Full Name</label>
                     </div>
 
-                    <div class="mb-5">
-                        <!-- <label class="block font-semibold font-[Poppins]" for="location">Location</label> -->
-                        <select 
-                            v-model="form.location" 
-                            class="block p-4 w-full text-base bg-white text-gray-500 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer"
-                            name="location" 
-                            id="location">
-                            <option value="">Select Your Location</option>
-                            <option value="Purok 1 - Sitio Ligua">Purok 1 - Sitio Ligua</option>
-                            <option value="Purok 2 - Sitio Centro">Purok 2 - Sitio Centro</option>
-                            <option value="Purok 3 - Sitio Red Land">Purok 3 - Sitio Red Land</option>
-                            <option value="Purok 4 - Sitio Sto.Nino">Purok 4 - Sitio Sto.Nino</option>
-                            <option value="Purok 5 - Sitio Sambag 1">Purok 5 - Sitio Sambag 1</option>
-                            <option value="Purok 6 - Sitio Sambag 2">Purok 6 - Sitio Sambag 2</option>
-                        </select>
+                    <!-- Location -->
+                    <div class="relative">
+                        <Listbox v-model="form.location">
+                            <ListboxButton
+                                class="flex justify-between items-center text-left p-4 w-full text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:outline-none focus:ring-0 focus:border-blue-600"
+                            >
+                                <span class="block truncate" :class="{ 'text-gray-500': !form.location }">
+                                    {{ form.location || 'Select Location' }}
+                                </span>
+                                <span class="pointer-events-none flex items-center">
+                                    <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                            </ListboxButton>
+
+                            <ListboxOptions
+                                class="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-300 max-h-56 overflow-y-auto"
+                            >
+                                <ListboxOption
+                                    v-for="location in locations"
+                                    :key="location.id"
+                                    :value="location.place"
+                                    v-slot="{ active, selected }"
+                                    class="cursor-pointer select-none relative py-2 pl-3 pr-9"
+                                    :class="active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'"
+                                >
+                                    <span class="block truncate" :class="selected ? 'font-medium' : 'font-normal'">
+                                        {{ location.place }}
+                                    </span>
+                                    <span v-if="selected" class="absolute inset-y-0 right-0 flex items-center pr-4 text-blue-600">
+                                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        </svg>
+                                    </span>
+                                </ListboxOption>
+                            </ListboxOptions>
+                        </Listbox>
                     </div>
 
+                    <!-- Star Rating-->
+                    <div class="">
+                        <label class="block text-sm font-semibold font-[Poppins] mb-1">Rating <span class="text-blue-500 text-xs font-normal">(Optional)</span></label>
+                        <div class="border rounded-lg p-4 pt-4">
+                            <div class="flex items-center space-x-1">
+                                <button
+                                    v-for="star in 5"
+                                    :key="star"
+                                    type="button"
+                                    @click="setRating(star)"
+                                    @mouseenter="setHoverRating(star)"
+                                    @mouseleave="resetHoverRating"
+                                    class="text-2xl focus:outline-none transition-transform hover:scale-110"
+                                    :class="(hoverRating || form.rating) >= star ? 'text-yellow-400' : 'text-gray-300'"
+                                >
+                                    ★
+                                </button>
+                                <span class="ml-2 text-sm text-gray-500">
+                                    {{ form.rating ? `${form.rating}/5` : 'Click to rate' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message or Description-->
                     <div>
                         <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Review</label>
                         <textarea 
@@ -87,7 +233,19 @@ defineProps({
                             placeholder="Type your review here"
                             >
                         </textarea>
+                    </div>
 
+                    <!-- Anonymous -->
+                    <div class="flex items-center mt-2">
+                        <input 
+                            v-model="form.is_anonymous"
+                            type="checkbox" 
+                            id="is_anonymous"
+                            class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label for="is_anonymous" class="ml-2 text-sm text-gray-700">
+                            <p>Post as anonymous? <span class="text-blue-500 text-xs">(Your name will be hidden from public)</span></p>
+                        </label>
                     </div>
                     
                     <div class="">
@@ -98,4 +256,3 @@ defineProps({
         </div>
     </div>
 </template>
-     

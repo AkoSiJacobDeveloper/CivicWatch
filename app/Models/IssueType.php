@@ -11,10 +11,12 @@ class IssueType extends Model
 
     protected $table = 'issue_types';
 
-    protected $fillable = [ 'name', 'active' ];
+    protected $fillable = [ 'name', 'active', 'priority_level' ];
 
-    protected $casts = [ 'active' => 'boolean' ];
-
+    protected $casts = [
+        'active' => 'boolean',
+        'priority_level' => 'string'
+    ];
     // Get the active issue type
     public function scopeActive($query) {
         return $query->where('active', true);
