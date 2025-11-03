@@ -17,6 +17,9 @@ class Report extends Model
         'custom_issue_description',
         'description',
         'image',
+        'latitude',          // ADD THIS
+        'longitude',         // ADD THIS  
+        'gps_accuracy',      // ADD THIS
         'barangay_name',
         'sitio_name',
         'sender_name',
@@ -25,6 +28,14 @@ class Report extends Model
         'status',
         'priority_level',
         'rejection_reason',
+    ];
+
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float', 
+        'gps_accuracy' => 'float',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function getSenderAttribute()

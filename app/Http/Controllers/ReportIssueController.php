@@ -49,7 +49,7 @@ class ReportIssueController extends Controller
 {
     $validated = $request->validate([
         'title' => 'required|string|max:255',
-        'issue_type' => 'required|string', // This is the issue type NAME
+        'issue_type' => 'required|string',
         'custom_issue_description' => 'nullable|string|max:255',
         'description' => 'required|string',
         'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:10000',
@@ -59,6 +59,9 @@ class ReportIssueController extends Controller
         'contact_number' => 'required|string|max:20',
         'remarks' => 'nullable|string',
         'g-recaptcha-response' => 'required|string',
+        'latitude' => 'nullable|numeric|between:-90,90',
+        'longitude' => 'nullable|numeric|between:-180,180',
+        'gps_accuracy' => 'nullable|numeric|min:0',
     ]);
 
     $barangay = Barangay::find($request->barangay_id);
@@ -102,7 +105,6 @@ class ReportIssueController extends Controller
 
     $trackingCode = "CW-{$today}-{$sequence}";
 
-    // NEW: Get priority from issue_types table
     $issueType = \App\Models\IssueType::where('name', $validated['issue_type'])->first();
     
     if ($issueType) {
@@ -146,6 +148,9 @@ class ReportIssueController extends Controller
                 'remarks' => $validated['remarks'],
                 'priority_level' => $priority,
                 'status' => 'pending',
+                'latitude' => $validated['latitude'] ? (float)$validated['latitude'] : null,         
+                'longitude' => $validated['longitude'] ? (float)$validated['longitude'] : null,       
+                'gps_accuracy' => $validated['gps_accuracy'] ? (float)$validated['gps_accuracy'] : null, 
             ]);
 
             break; // Success, exit loop

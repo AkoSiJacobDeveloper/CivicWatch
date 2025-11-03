@@ -7,6 +7,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import DeleteModal from '@/Components/DeleteModal.vue';
 import RejectingModal from '@/Components/RejectingModal.vue';
 import ConfirmRejectModal from '@/Components/ConfirmRejectModal.vue';
+import ReportMap from '@/Components/ReportMap.vue';
 
 const props = defineProps({ report: Object })
 const toast = useToast();
@@ -307,6 +308,28 @@ const finalizeRejection = () => {
                     <div class="my-10">
                         <p class="text-lg mb-1 font-[Poppins] font-semibold">Remarks</p>
                         <p class="text-lg text-gray-500">{{ report.remarks || 'User didnt leave a remarks'}}</p>
+                    </div>
+
+                    <!-- Map -->
+                    <div v-if="report.latitude && report.longitude" class="mt-10">
+                        <div class="flex items-center gap-2 mb-3">
+                            <p class="font-semibold text-lg font-[Poppins] dark:text-[#faf9f6]">Reported Location</p>
+                        </div>
+                        
+                        <ReportMap 
+                            :latitude="report.latitude"
+                            :longitude="report.longitude"
+                            :accuracy="report.gps_accuracy"
+                            :report-location="`${report.location}`"
+                        />
+                        
+                        <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                            <p v-if="report.gps_accuracy">
+                                <strong>GPS Accuracy:</strong> {{ report.gps_accuracy.toFixed(0) }} meters
+                            </p>
+                            <p><strong>Coordinates:</strong> {{ report.latitude.toFixed(6) }}, {{ report.longitude.toFixed(6) }}</p>
+                            <p class="text-xs mt-1">This shows the exact location where you submitted your report from.</p>
+                        </div>
                     </div>
                 </div>
 

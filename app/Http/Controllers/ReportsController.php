@@ -108,11 +108,10 @@ class ReportsController extends Controller
             'priority_level' => $report->priority_level,
             'created_at' => $report->created_at->format('M d, Y h:i A'),
             'updated_at' => $report->updated_at->format('M d, Y h:i A'),
-            'duplicate_of_report_id' => $report->duplicate_of_report_id
+            'duplicate_of_report_id' => $report->duplicate_of_report_id,
         ];
     });
     
-        // Fetch issue types for the filter modal
         $issueTypes = IssueType::select('id', 'name')->get();
         $barangays = Barangay::select('id', 'name')->orderBy('name')->get();
         $sitios = Sitio::select('id', 'name', 'barangay_id')->with('barangay:id,name')->orderBy('name')->get();
@@ -254,7 +253,7 @@ class ReportsController extends Controller
         'tracking_code' => $report->tracking_code,
         'image' => $report->image,
         'title' => $report->title,
-        'type' => $report->issue_type ?: 'Unknown Category', // Use issue_type directly
+        'type' => $report->issue_type ?: 'Unknown Category',
         'description' => $report->description,
         'location' => ($report->barangay_name && $report->sitio_name) 
             ? $report->barangay_name . ', ' . $report->sitio_name 
@@ -270,6 +269,9 @@ class ReportsController extends Controller
         'priority_level' => $report->priority_level,
         'rejection_reason' => $report->rejection_reason,
         'duplicate_of_report_id' => $report->duplicate_of_report_id,
+        'latitude' => $report->latitude,
+        'longitude' => $report->longitude,
+        'gps_accuracy' => $report->gps_accuracy,
 
         'duplicates' => $report->duplicates->map(fn($dup) => [
             'id' => $dup->id,

@@ -30,15 +30,108 @@ const form = useForm({
     contact_number: '',
     remarks: '',
     status: 'pending',
+    latitude: null,      
+    longitude: null,     
+    gps_accuracy: null,  
 });
+
+const showCameraModal = ref(false);
+const showImagePreviewModal = ref(false);
+
+// ========== GPS LOCATION VARIABLES ==========
+const isGettingLocation = ref(false);
+const locationStatus = ref('');
+const hasLocation = ref(false);
+
+// ========== GPS LOCATION FUNCTIONS ==========
+async function getCurrentLocation() {
+    if (!navigator.geolocation) {
+        Swal.fire({
+            title: 'Location Not Supported',
+            text: 'Your browser does not support location services. Please use a modern browser.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+
+    isGettingLocation.value = true;
+    locationStatus.value = 'Getting your location...';
+
+    try {
+        const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            });
+        });
+
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy;
+
+        // Update form data
+        form.latitude = lat;
+        form.longitude = lng;
+        form.gps_accuracy = accuracy;
+
+        hasLocation.value = true;
+        locationStatus.value = `Location captured! Accuracy: ${accuracy.toFixed(1)} meters`;
+
+        Swal.fire({
+            title: 'Location Captured!',
+            text: `Your location has been successfully captured with ${accuracy.toFixed(1)} meter accuracy.`,
+            icon: 'success',
+            confirmButtonText: 'OK',
+            timer: 3000
+        });
+
+    } catch (error) {
+        let errorMessage = 'Could not get your location. ';
+        
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage += 'Please allow location access in your browser settings.';
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage += 'Location information is unavailable. Try moving to an area with better signal.';
+                break;
+            case error.TIMEOUT:
+                errorMessage += 'Location request timed out. Please try again.';
+                break;
+            default:
+                errorMessage += 'Please try again.';
+        }
+
+        locationStatus.value = errorMessage;
+        
+        Swal.fire({
+            title: 'Location Error',
+            text: errorMessage,
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    } finally {
+        isGettingLocation.value = false;
+    }
+}
+
+function clearLocation() {
+    form.latitude = null;
+    form.longitude = null;
+    form.gps_accuracy = null;
+    hasLocation.value = false;
+    locationStatus.value = '';
+}
 
 // ========== CAMERA CAPTURE VARIABLES ==========
 const isCameraActive = ref(false);
 const stream = ref(null);
-const videoElement = ref(null); // This will now work properly
+const videoElement = ref(null);
 const useCamera = ref(false);
 const capturedImage = ref(null);
-const showFileUpload = ref(false); // Control file upload visibility
+const showFileUpload = ref(false);
 
 // ========== CAMERA FUNCTIONS ==========
 async function startCamera() {
@@ -47,41 +140,27 @@ async function startCamera() {
         isCameraActive.value = true;
         showFileUpload.value = false;
         
-        // Wait for Vue to render the video element
+        // Show camera modal
+        showCameraModal.value = true;
+        
+        // Wait for Vue to render the video element in the modal
         await nextTick();
         
-        console.log('Looking for video element...');
-        
-        // Try multiple ways to get the video element
-        let videoEl = videoElement.value;
-        
-        if (!videoEl) {
-            // Try to find it in the DOM
-            videoEl = document.querySelector('video');
+        let videoEl = document.querySelector('#camera-modal video');
+        if (videoEl) {
+            videoElement.value = videoEl;
+        } else {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            videoEl = document.querySelector('#camera-modal video');
             if (videoEl) {
                 videoElement.value = videoEl;
-                console.log('Found video element via DOM query');
             }
         }
         
         if (!videoEl) {
-            // Last attempt - wait a bit more and try again
-            await new Promise(resolve => setTimeout(resolve, 100));
-            videoEl = document.querySelector('video');
-            if (videoEl) {
-                videoElement.value = videoEl;
-                console.log('Found video element after delay');
-            }
-        }
-        
-        if (!videoEl) {
-            console.error('Video element not found after multiple attempts');
-            throw new Error('Video element not found in DOM');
+            throw new Error('Video element not found in modal');
         }
 
-        console.log('Requesting camera access...');
-        
-        // Request camera access FIRST, before setting up the video element
         stream.value = await navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: 'environment',
@@ -90,31 +169,26 @@ async function startCamera() {
             } 
         });
         
-        console.log('Camera access granted, setting up video element');
-        
-        // Now set up the video element with the stream
         videoEl.srcObject = stream.value;
         
-        // Wait for video to be ready
         await new Promise((resolve) => {
             videoEl.onloadedmetadata = () => {
                 videoEl.play().then(resolve).catch(console.error);
             };
         });
         
-        // Clear any existing file upload
         if (fileInput.value) {
             fileInput.value.value = '';
         }
         imagePreview.value = null;
         form.image = null;
         
-        console.log('Camera started successfully');
-        
     } catch (error) {
         console.error('Error accessing camera:', error);
         useCamera.value = false;
         isCameraActive.value = false;
+        showCameraModal.value = false;
+        videoElement.value = null;
         
         // Reset the video element reference if it failed
         videoElement.value = null;
@@ -160,6 +234,12 @@ function stopCamera() {
     }
     isCameraActive.value = false;
     useCamera.value = false;
+    showCameraModal.value = false;
+}
+
+function closeCameraModal() {
+    stopCamera();
+    showCameraModal.value = false;
 }
 
 function capturePhoto() {
@@ -215,12 +295,22 @@ function capturePhoto() {
         
         Swal.fire({
             title: 'Photo Captured!',
-            text: 'Timestamp has been added to your photo.',
+            text: 'Your photo has been captured successfully.',
             icon: 'success',
             confirmButtonText: 'OK',
             timer: 2000
         });
     }, 'image/jpeg', 0.8);
+}
+
+function showImagePreview() {
+    if (imagePreview.value) {
+        showImagePreviewModal.value = true;
+    }
+}
+
+function closeImagePreview() {
+    showImagePreviewModal.value = false;
 }
 
 function removeImage() {
@@ -231,18 +321,18 @@ function removeImage() {
     
     form.image = null;
     capturedImage.value = null;
+    showImagePreviewModal.value = false;
     
     if (fileInput.value) {
         fileInput.value.value = '';
     }
     
-    if (!isCameraActive.value) {
-        useCamera.value = false;
-    }
+    useCamera.value = false;
+    showFileUpload.value = false;
     
     Swal.fire({
         title: 'Image Removed',
-        text: 'The image has been removed. You can capture a new one or upload another.',
+        text: 'The image has been removed.',
         icon: 'success',
         confirmButtonText: 'OK',
         timer: 2000
@@ -252,7 +342,6 @@ function removeImage() {
 function checkCameraSupport() {
     return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 }
-
 
 // Computed property for available sitios
 const availableSitios = computed(() => {
@@ -299,10 +388,17 @@ function handleFileChange(event) {
         capturedImage.value = null;
         useCamera.value = false;
         
-        // Stop camera if active
         if (isCameraActive.value) {
             stopCamera();
         }
+        
+        Swal.fire({
+            title: 'Image Uploaded!',
+            text: 'Your image has been uploaded successfully.',
+            icon: 'success',
+            confirmButtonText: 'OK',
+            timer: 2000
+        });
     } else {
         if (imagePreview.value) {
             URL.revokeObjectURL(imagePreview.value);
@@ -318,6 +414,8 @@ function handleFileChange(event) {
 async function resetForm() {
     form.reset();
     customIssueDescription.value = '';
+
+    clearLocation();
     
     if (imagePreview.value) {
         URL.revokeObjectURL(imagePreview.value);
@@ -331,6 +429,8 @@ async function resetForm() {
     
     capturedImage.value = null;
     useCamera.value = false;
+    showCameraModal.value = false;
+    showImagePreviewModal.value = false;
     
     await nextTick();
     
@@ -355,6 +455,45 @@ function submitForm() {
         return;
     }
 
+    // GPS requirement check
+    if (!form.latitude || !form.longitude) {
+        Swal.fire({
+            title: '📍 Location Verification Required',
+            html: `
+                <div class="text-left">
+                    <p class="mb-3"><strong>To ensure reports come from within Cabulijan, we need to verify your location.</strong></p>
+                    <p class="text-sm mb-3">Your report may be rejected without location verification.</p>
+                    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                        <p class="text-sm font-semibold text-yellow-800">Why we need your location:</p>
+                        <ul class="text-sm list-disc ml-4 mt-1 text-yellow-700">
+                            <li>Verify you're in Barangay Cabulijan</li>
+                            <li>Prevent fake reports from outside</li>
+                            <li>Help officials locate issues accurately</li>
+                        </ul>
+                    </div>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Proceed Anyway',
+            cancelButtonText: 'Get My Location',
+            reverseButtons: true
+        }).then((result) => {
+            if (!result.isConfirmed) {
+                getCurrentLocation();
+                return;
+            }
+            // Pass token to continueSubmission
+            continueSubmission(token);
+        });
+        return;
+    }
+    
+    // If GPS is available, continue with submission
+    continueSubmission(token);
+}
+
+function continueSubmission(token) {
     if (!form.barangay_id) {
         alert('Please select a Barangay');
         return;
@@ -365,7 +504,7 @@ function submitForm() {
         return;
     }
 
-    isSubmitting.value = true; // Set loading state to true
+    isSubmitting.value = true;
 
     const formData = new FormData();
     formData.append('title', form.title || '');
@@ -379,6 +518,13 @@ function submitForm() {
     formData.append('barangay_id', form.barangay_id || '');
     formData.append('sitio_id', form.sitio_id || '');
     
+    // Add GPS data if available
+    if (form.latitude && form.longitude) {
+        formData.append('latitude', form.latitude);
+        formData.append('longitude', form.longitude);
+        formData.append('gps_accuracy', form.gps_accuracy || 0);
+    }
+    
     if (form.image instanceof File) {
         formData.append('image', form.image);
     }
@@ -391,11 +537,11 @@ function submitForm() {
         onSuccess: () => {
             trackingCode.value = page.props.flash?.tracking_code || null;
             showModal.value = true;
-            isSubmitting.value = false; // Reset loading state
+            isSubmitting.value = false;
             resetForm();
         },
         onError: (errors) => {
-            isSubmitting.value = false; // Reset loading state on error
+            isSubmitting.value = false;
             if (errors) {
                 Object.keys(errors).forEach(key => {
                     form.errors[key] = errors[key];
@@ -411,8 +557,6 @@ function submitForm() {
 onMounted(async () => {
     await fetchIssueType();
     await fetchBarangaysWithSitios();
-        console.log('Video element ref:', videoElement.value); // Should be null initially
-
 
     if (window.grecaptcha) {
         window.grecaptcha.render(document.querySelector('.g-recaptcha'), {
@@ -420,7 +564,7 @@ onMounted(async () => {
         });
     }
 
-    Swal.fire ({
+    Swal.fire({
         title: '<strong>Important Notice</strong>',
         icon: 'warning',
         html: `
@@ -462,7 +606,7 @@ onUnmounted(() => {
             <section class="px-3 md:px-10 lg:px-32">
                 <div>
                     <h1 class="font-bold text-lg md:text-3xl font-[Poppins]">Submit New Report</h1>
-                    <p class="text-sm text-gray-500 dark:text-[#FAF9F6]">Provide details about a local issue you've observed. Include a description, location, and a photo if possible to help your barangay officials respond effectively and quickly.</p>
+                    <p class="text-sm text-gray-500 dark:text-[#FAF9F6]">Describe a local issue you’ve noticed. Include the location and a photo to help barangay officials respond faster.</p>
                 </div>
 
                 <!-- NOTICE -->
@@ -631,7 +775,7 @@ onUnmounted(() => {
                         </div>
 
                         <!-- LOCATION SECTION -->
-                        <div class="mb-8 flex flex-col gap-3">
+                        <div class="mb-4 flex flex-col gap-3">
                             <div class="md:flex md:gap-3 items-center">
                                 <!-- BARANGAY -->
                                 <div class="mb-4 md:w-1/2 md:mb-0">
@@ -672,20 +816,6 @@ onUnmounted(() => {
                                             >
                                                 {{ barangay.name }}
                                             </ListboxOption>
-
-                                            <!-- Coming Soon Group -->
-                                            <div v-if="barangays.some(b => !b.is_available)" class="px-4 py-2 text-gray-500 text-sm font-semibold">
-                                                Coming Soon
-                                            </div>
-                                            <ListboxOption
-                                                v-for="barangay in barangays.filter(b => !b.is_available)"
-                                                :key="barangay.id"
-                                                :value="null"
-                                                disabled
-                                                class="px-4 py-2 text-gray-400 cursor-not-allowed dark:text-gray-500"
-                                            >
-                                                {{ barangay.name }} (Not Available)
-                                            </ListboxOption>
                                         </ListboxOptions>
                                     </Listbox>
                                     <div v-if="form.errors.barangay_id" class="text-red-500 text-sm mt-1">
@@ -693,24 +823,30 @@ onUnmounted(() => {
                                     </div>
                                 </div>
 
-                                <!-- SITIO -->
-                                <div 
-                                    class="md:w-1/2"
-                                    v-if="form.barangay_id && availableSitios.length > 0"
-                                >
+                                <!-- SITIO - Always Visible -->
+                                <div class="md:w-1/2">
                                     <Listbox 
                                         v-model="form.sitio_id"
                                         as="div"
                                         class="relative w-full"
+                                        :disabled="!form.barangay_id"
                                     >
                                         <ListboxButton
-                                            class="flex justify-between items-center text-left p-4 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
-                                            required
+                                            :class="[
+                                                'flex justify-between items-center text-left p-4 w-full text-base bg-white rounded-lg border focus:outline-none focus:ring-0 peer',
+                                                !form.barangay_id 
+                                                    ? 'text-gray-400 border-gray-200 bg-gray-50 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500' 
+                                                    : 'text-gray-500 border-gray-300 dark:text-gray-400 dark:border-gray-700 dark:bg-[#2c2c2c] focus:border-gray-200'
+                                            ]"
+                                            :disabled="!form.barangay_id"
                                         >
                                             {{ availableSitios.find(s => s.id === form.sitio_id)?.name || 'Select Sitio' }}
 
                                             <svg
-                                                class="w-5 h-5 text-gray-400"
+                                                :class="[
+                                                    'w-5 h-5',
+                                                    !form.barangay_id ? 'text-gray-300' : 'text-gray-400'
+                                                ]"
                                                 xmlns="http://www.w3.org/2000/svg"
                                                 viewBox="0 0 20 20"
                                                 fill="currentColor"
@@ -724,6 +860,7 @@ onUnmounted(() => {
                                         </ListboxButton>
 
                                         <ListboxOptions
+                                            v-if="form.barangay_id && availableSitios.length > 0"
                                             class="absolute z-50 mt-4 w-full bg-white rounded-lg shadow-lg border border-gray-300 dark:bg-[#2c2c2c] max-h-56 overflow-y-auto"
                                         >
                                             <ListboxOption
@@ -736,6 +873,9 @@ onUnmounted(() => {
                                             </ListboxOption>
                                         </ListboxOptions>
                                     </Listbox>
+                                    
+                                    <!-- Help text when disabled -->
+                                    
                                     <div v-if="form.errors.sitio_id" class="text-red-500 text-sm mt-1">
                                         {{ form.errors.sitio_id }}
                                     </div>
@@ -750,146 +890,9 @@ onUnmounted(() => {
                                     {{ availableSitios.find(s => s.id == form.sitio_id)?.name }}
                                 </p>
                             </div>
-                        </div>
-
-                        <div class="md:flex gap-3">
-                            <!-- UPLOAD PHOTO -->
-                            <div class="mb-4 md:w-1/2 md:mb-0">
-                                <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">
-                                    Upload Photo 
-                                </label>
-                                
-                                <!-- Camera Toggle Buttons -->
-                                <div class="flex flex-col gap-2 mb-3">
-                                    <div class="border-2 border-dashed border-green-500 bg-slate-100 w-full p-5 rounded-md">
-                                        <div class="flex items-center justify-center py-3 ">
-                                            <img :src="'/Images/SVG/camera.svg'" alt="Icon" class="h-7 w-7">
-                                        </div>
-                                        <button 
-                                            type="button"
-                                            @click="startCamera"
-                                            :disabled="isCameraActive"
-                                            class="flex items-center justify-center gap-2 px-4 py-3 w-full bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
-                                        >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                            </svg>
-                                            <p class="text-sm">Take Photo</p>
-                                        </button>
-
-                                        <button 
-                                            type="button"
-                                            @click="stopCamera"
-                                            v-if="isCameraActive"
-                                            class="flex items-center justify-center gap-2 w-full mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                        >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                            </svg>
-                                            <p class="text-sm">Stop Camera</p>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Camera Preview -->
-                                <div v-if="isCameraActive" class="mb-3">
-                                    <video 
-                                        ref="videoElement" 
-                                        autoplay 
-                                        playsinline
-                                        muted
-                                        class="w-full rounded-lg border-2 border-green-500"
-                                    ></video>
-                                    <button 
-                                        type="button"
-                                        @click="capturePhoto"
-                                        class="mt-2 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        </svg>
-                                        Capture Photo with Timestamp
-                                    </button>
-                                </div>
-
-                                <div class="inline-flex items-center px-2 gap-2">
-                                    <hr class=" w-72 h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
-                                    <p class="text-medium text-gray-500 text-xs">OR</p>
-                                    <hr class="w-72 h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
-                                </div>
-
-                                <!-- File Upload Section -->
-                                <div class="mb-3">
-                                    <div>
-                                        <!-- Show "Or upload file" option only when no image is previewed and camera is not active -->
-                                        <div v-if="!isCameraActive && !imagePreview && !showFileUpload" class="text-center mb-2 border">
-                                            <button 
-                                                type="button"
-                                                @click="showFileUpload = true"
-                                                class="text-xs border-2 border-dashed border-gray-400 bg-slate-100 w-full p-4 flex items-center justify-center rounded-md"
-                                            >
-                                                <img :src="'/Images/SVG/upload-simple (gray).svg'" alt="Icon" class="h-5 w-5">
-                                                <p class="text-sm text-medium text-gray-500">Upload File</p>
-                                            </button>
-                                        </div>
-
-                                        <!-- File Upload Input - Show when user explicitly clicks to upload or when image is already uploaded -->
-                                        <div v-if="(showFileUpload || imagePreview) && !isCameraActive" class="mb-3">
-                                            <span class="text-xs text-gray-500 block mb-1">Upload existing photo (not recommended for verification)</span>
-                                            <input
-                                                type="file"
-                                                id="image"
-                                                ref="fileInput"
-                                                accept="image/*"
-                                                @change="handleFileChange"
-                                                class="block w-full p-2 text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer 
-                                                    bg-white dark:text-gray-300 focus:outline-none 
-                                                    file:mr-4 file:py-2 file:px-4 
-                                                    file:rounded-md file:border-0 
-                                                    file:text-sm file:font-medium 
-                                                    file:bg-blue-600 file:text-white 
-                                                    hover:file:bg-blue-700 
-                                                    dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400"
-                                            />
-                                            <!-- Cancel upload button -->
-                                            <button 
-                                                v-if="showFileUpload && !imagePreview"
-                                                type="button"
-                                                @click="showFileUpload = false"
-                                                class="mt-1 text-xs text-red-500 hover:text-red-700 underline"
-                                            >
-                                                Cancel upload
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Image Preview -->
-                                <div v-if="imagePreview" class="mt-3">
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                                        {{ capturedImage ? 'Verified Photo (with timestamp)' : 'Image Preview:' }}
-                                    </p>
-                                    <div class="relative inline-block">
-                                        <img :src="imagePreview" alt="Image Preview" class="max-w-[200px] mt-2 rounded shadow border-2" :class="capturedImage ? 'border-green-500' : 'border-gray-300'">
-                                        <!-- Floating Remove Button -->
-                                        <button 
-                                            type="button"
-                                            @click="removeImage"
-                                            class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
-                                            title="Remove image"
-                                        >
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <p v-if="capturedImage" class="text-xs text-green-600 mt-1">✓ This photo includes verification timestamp</p>
-                                </div>
-                            </div>
 
                             <!-- CONTACT NUMBER -->
-                            <div class="mb-4 md:w-1/2">
+                            <div class="md:w-1/2">
                                 <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Contact Number</label>
                                 <div class="">
                                     <div class="">
@@ -913,11 +916,171 @@ onUnmounted(() => {
                                     {{ form.errors.contact_number }}
                                 </div>
                             </div>
+
+                            <div class="md:flex gap-3">
+                                <!-- UPLOAD PHOTO -->
+                                <div class="md:w-1/2 md:mb-0">
+                                    <label class="block text-sm font-semibold font-[Poppins] mb-1">
+                                        Upload Photo 
+                                    </label>
+                                    
+                                    <div class="flex flex-col gap-2">
+                                        <div class="w-full p-4 border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-[#2c2c2c]">
+                                            <!-- Show camera and upload buttons only when no image is selected -->
+                                            <div v-if="!imagePreview">
+                                                <!-- Take Photo Button -->
+                                                <button 
+                                                    type="button"
+                                                    @click="startCamera"
+                                                    :disabled="isCameraActive"
+                                                    class="mb-2 flex items-center justify-center gap-2 px-4 py-3 w-full bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-green-400 transition-colors"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                                    </svg>
+                                                    <p class="text-sm">Take Photo</p>
+                                                </button>
+
+                                                <!-- Upload File Section -->
+                                                <div class="mb-1">
+                                                    <div v-if="!showFileUpload" class="text-center">
+                                                        <button 
+                                                            type="button"
+                                                            @click="showFileUpload = true"
+                                                            class="text-xs w-full px-4 py-3 flex gap-1 items-center justify-center border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                                        >
+                                                            <img :src="'/Images/SVG/upload-simple (gray).svg'" alt="Icon" class="h-4 w-4">
+                                                            <p class="text-sm text-medium text-gray-500">Upload File</p>
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- File Upload Input -->
+                                                    <div v-if="showFileUpload" class="mb-3">
+                                                        <span class="text-xs text-gray-500 block mb-1">Upload existing photo</span>
+                                                        <input
+                                                            type="file"
+                                                            id="image"
+                                                            ref="fileInput"
+                                                            accept="image/*"
+                                                            @change="handleFileChange"
+                                                            class="block w-full p-2 text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer 
+                                                                bg-white dark:text-gray-300 focus:outline-none 
+                                                                file:mr-4 file:py-2 file:px-4 
+                                                                file:rounded-md file:border-0 
+                                                                file:text-sm file:font-medium 
+                                                                file:bg-blue-600 file:text-white 
+                                                                hover:file:bg-blue-700 
+                                                                dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400"
+                                                        />
+                                                        <button 
+                                                            type="button"
+                                                            @click="showFileUpload = false"
+                                                            class="mt-1 text-xs text-red-500 hover:text-red-700 underline"
+                                                        >
+                                                            Cancel upload
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Show image preview controls when image is selected -->
+                                            <div v-else class="mt-3">
+                                                <div class="flex items-center gap-2">
+                                                    <button 
+                                                        type="button"
+                                                        @click="showImagePreview"
+                                                        class="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-1"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9a3 3 0 100 6 3 3 0 000-6z"/>
+                                                        </svg>
+                                                        View Image
+                                                    </button>
+                                                    <button 
+                                                        type="button"
+                                                        @click="removeImage"
+                                                        class="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                        </svg>
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                                <p v-if="capturedImage" class="text-xs text-green-600 mt-2 text-center">
+                                                    ✓ This photo includes verification timestamp
+                                                </p>
+                                                <p v-else class="text-xs text-gray-500 mt-2 text-center">
+                                                    Uploaded image
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- GPS LOCATION SECTION -->
+                                <div class="md:w-1/2">
+                                    <label class="block text-sm font-semibold font-[Poppins] mb-1">
+                                        Location Verification 
+                                        <span class="text-xs font-normal text-blue-500">(Optional but recommended)</span>
+                                    </label>
+                                    
+                                    <div class="p-4 border border-gray-300 rounded-lg dark:border-gray-600 dark:bg-[#2c2c2c]">
+                                        <div class="space-y-3">
+                                            <!-- Location Status -->
+                                            <div v-if="locationStatus" class="p-3 rounded-lg text-sm" 
+                                                :class="hasLocation ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'">
+                                                {{ locationStatus }}
+                                            </div>
+
+                                            <!-- Action Buttons -->
+                                            <div class="flex flex-col sm:flex-row gap-2">
+                                                <button 
+                                                    type="button"
+                                                    @click="getCurrentLocation"
+                                                    :disabled="isGettingLocation"
+                                                    class="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors flex-1"
+                                                >
+                                                    <svg v-if="isGettingLocation" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                    </svg>
+                                                    <span class="text-sm">{{ isGettingLocation ? 'Getting Location...' : 'Get My Current Location' }}</span>
+                                                </button>
+
+                                                <button 
+                                                    v-if="hasLocation"
+                                                    type="button"
+                                                    @click="clearLocation"
+                                                    class="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex-1"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                    <span class="text-sm">Clear Location</span>
+                                                </button>
+                                            </div>
+
+                                            <!-- Help Text -->
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                <p>• This helps barangay officials verify your exact location</p>
+                                                <p>• Your coordinates will be shown on a map when officials review your report</p>
+                                                <p>• You can still submit without location data</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="md:flex gap-3">
                             <!-- DESCRIPTION -->
-                            <div class="mb-4 md:w-1/2 md:mb-0">
+                            <div class=" md:w-1/2 md:mb-0">
                                 <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Description</label>
                                 <textarea
                                     v-model="form.description"
@@ -933,7 +1096,7 @@ onUnmounted(() => {
                             </div>
 
                             <!-- ADDITIONAL NOTES -->
-                            <div class="mb-4 md:w-1/2 md:mb-0">
+                            <div class=" md:w-1/2 md:mb-0">
                                 <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Additional Notes <span class="text-xs font-normal text-blue-500">(Optional)</span></label>
                                 <textarea
                                     v-model="form.remarks"
@@ -947,6 +1110,10 @@ onUnmounted(() => {
                                 </div>
                             </div>
                         </div>
+
+
+
+                        
                         
                         <!-- SUBMIT SECTION -->
                         <div class="md:flex justify-between">
@@ -978,6 +1145,123 @@ onUnmounted(() => {
                     </form>
                 </div>
             </section>
+
+            <!-- Camera Modal -->
+            <div v-if="showCameraModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50" id="camera-modal">
+                <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+                    <!-- Modal Header -->
+                    <div class="flex justify-between items-center p-4 border-b bg-blue-600 text-white">
+                        <h3 class="text-lg font-semibold font-[Poppins]">Take Photo</h3>
+                        <button 
+                            @click="closeCameraModal" 
+                            class="p-2 rounded-full hover:bg-blue-700 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Camera Preview -->
+                    <div class="flex-1 flex items-center justify-center bg-black p-4">
+                        <video 
+                            ref="videoElement" 
+                            autoplay 
+                            playsinline
+                            muted
+                            class="w-full max-w-2xl max-h-[60vh] object-contain rounded-lg"
+                        ></video>
+                    </div>
+                    
+                    <!-- Modal Footer -->
+                    <div class="p-4 border-t bg-gray-50">
+                        <div class="flex justify-center gap-4">
+                            <button 
+                                type="button"
+                                @click="closeCameraModal"
+                                class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Cancel
+                            </button>
+                            <button 
+                                type="button"
+                                @click="capturePhoto"
+                                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                Capture Photo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Preview Modal -->
+            <div v-if="showImagePreviewModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
+                    <!-- Modal Header -->
+                    <div class="flex justify-between items-center p-4 border-b bg-blue-600 text-white">
+                        <h3 class="text-lg font-semibold font-[Poppins]">
+                            {{ capturedImage ? 'Verified Photo' : 'Uploaded Image' }}
+                        </h3>
+                        <button 
+                            @click="closeImagePreview" 
+                            class="p-2 rounded-full hover:bg-blue-700 transition-colors"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Image Preview -->
+                    <div class="flex-1 flex items-center justify-center bg-black p-4">
+                        <img 
+                            :src="imagePreview" 
+                            alt="Image Preview" 
+                            class="max-w-full max-h-[70vh] object-contain rounded-lg"
+                        />
+                    </div>
+                    
+                    <!-- Modal Footer -->
+                    <div class="p-4 border-t bg-gray-50">
+                        <div class="flex justify-center gap-4">
+                            <button 
+                                type="button"
+                                @click="removeImage"
+                                class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                Remove Image
+                            </button>
+                            <button 
+                                type="button"
+                                @click="closeImagePreview"
+                                class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Close
+                            </button>
+                        </div>
+                        <div v-if="capturedImage" class="mt-3 text-center">
+                            <p class="text-green-600 text-sm font-medium">
+                                ✓ This photo includes verification timestamp
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <SuccessfulModal
                 :show="showModal"
                 :tracking-code="trackingCode"

@@ -1,7 +1,9 @@
 <script setup>
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { nextTick, computed } from 'vue';
+
+import GuestLayout from '@/Layouts/GuestLayout.vue';
+import ReportMap from '@/Components/ReportMap.vue';
 
 const props = defineProps({ 
     reports: Array, 
@@ -86,6 +88,8 @@ const values = computed(() => {
             { label: 'Paper Plane Tilt', headline: 'Submitted By:', data: '', img: '/Images/SVG/paper-plane-tilt.svg' },
             { label: 'Phone', headline: 'Contact Number:', data: '', img: '/Images/SVG/phone.svg' },
             { label: 'Hash', headline: 'Report ID:', data: '', img: '/Images/SVG/hash.svg' },
+            // ADD GPS STATUS
+            { label: 'GPS', headline: 'Location Data:', data: 'Not captured', img: '/Images/SVG/gps.svg' },
         ];
     }
 
@@ -132,6 +136,13 @@ const values = computed(() => {
             headline: 'Report ID:', 
             data: currentReport.id || '', 
             img: '/Images/SVG/hash.svg' 
+        },
+        // ADD GPS STATUS
+        { 
+            label: 'GPS', 
+            headline: 'Location Data:', 
+            data: currentReport.latitude ? 'Captured ✓' : 'Not captured', 
+            img: '/Images/SVG/gps.svg' 
         },
     ];
 });
@@ -303,6 +314,35 @@ const values = computed(() => {
                                             </p>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Map -->
+                            <div v-if="report.latitude && report.longitude" class="mt-10">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">📍 Your Reported Location</p>
+                                </div>
+                                
+                                <ReportMap 
+                                    :latitude="report.latitude"
+                                    :longitude="report.longitude"
+                                    :accuracy="report.gps_accuracy"
+                                    :report-location="`${report.barangay_name}, ${report.sitio_name}`"
+                                />
+                                
+                                <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                    <p v-if="report.gps_accuracy">
+                                        <strong>GPS Accuracy:</strong> {{ report.gps_accuracy.toFixed(0) }} meters
+                                    </p>
+                                    <p><strong>Coordinates:</strong> {{ report.latitude.toFixed(6) }}, {{ report.longitude.toFixed(6) }}</p>
+                                    <p class="text-xs mt-1">This shows the exact location where you submitted your report from.</p>
+                                </div>
+                            </div>
+
+                            <div v-else class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900 dark:border-blue-700">
+                                <div class="flex items-center gap-2">
+                                    <img :src="'/Images/SVG/info.svg'" alt="Info" class="w-4 h-4">
+                                    <p class="text-blue-700 dark:text-blue-300">ℹ️ No GPS location data was captured for this report.</p>
                                 </div>
                             </div>
 
