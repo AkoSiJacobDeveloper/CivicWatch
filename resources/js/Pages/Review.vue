@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import ReviewModal from '@/Components/ReviewModal.vue';
@@ -8,7 +8,58 @@ import ReviewModal from '@/Components/ReviewModal.vue';
 const props = defineProps({ reviews: Object })
 
 const showReviewModal = ref(false)
-const sortOrder = ref('desc') // Add this - default to newest first
+const sortOrder = ref('desc') 
+let pollInterval = null;
+const previousReviewsCount = ref(props.reviews.total || 0);
+const currentReviewIds = ref(new Set());
+const newReviewIds = ref(new Set());
+
+onMounted(() => {
+    props.reviews.data.forEach(review => {
+        currentReviewIds.value.add(review.id);
+    });
+    
+    pollInterval = setInterval(pollForNewReviews, 15000);
+});
+
+onUnmounted(() => {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+    }
+});
+
+const pollForNewReviews = () => {
+    router.reload({
+        preserveState: true,
+        preserveScroll: true,
+        only: ['reviews'], 
+        onSuccess: (page) => {
+            const currentReviewsCount = page.props.reviews.total || 0;
+
+            setTimeout(() => {
+                newReviewIds.value.clear();
+            }, 5000);
+
+            if (currentReviewsCount > previousReviewsCount.value) {
+                const newReviewsCount = currentReviewsCount - previousReviewsCount.value;
+                
+                page.props.reviews.data.forEach(review => {
+                    if (!currentReviewIds.value.has(review.id)) {
+                        newReviewIds.value.add(review.id);
+                        currentReviewIds.value.add(review.id);
+                    }
+                });
+                
+                previousReviewsCount.value = currentReviewsCount;
+            }
+        }
+    });
+};
+
+// Check if a review is new
+const isNewReview = (reviewId) => {
+    return newReviewIds.value.has(reviewId);
+};
 
 function openReviewModal() {
     showReviewModal.value = true;
@@ -54,7 +105,27 @@ function toggleSort() {
                     </div>
 
                     <!-- Sort Button -->
-                    <div>
+                    <div class="flex items-center gap-3">
+                        <!-- Refresh Button -->
+                        <button
+                            @click="pollForNewReviews"
+                            class="border p-3 rounded flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors group duration-300"
+                            title="Check for new reviews"
+                        >
+                            <span>Refresh</span>
+                            <img 
+                                :src="'/Images/SVG/arrows-clockwise.svg'" 
+                                alt="Icon" 
+                                class="h-5 w-5 group-hover:hidden dark:invert"
+                            >
+
+                            <img 
+                                :src="'/Images/SVG/arrows-clockwise (white).svg'" 
+                                alt="Icon" 
+                                class="h-5 w-5 hidden group-hover:block group-hover:animate-spin"
+                            >
+                        </button>
+                        
                         <button
                             @click="toggleSort"
                             class="border p-3 rounded flex items-center gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300"
@@ -78,8 +149,16 @@ function toggleSort() {
                 <div v-if="!reviews.data || reviews.data.length === 0"  class="text-center text-gray-500">
                     <p class="text-xl mb-4 py-20">No reviews yet. Be the first to write one!</p>
                 </div>
+                
                 <div class="grid grid-cols-3 gap-5">
-                    <div v-for="review in props.reviews.data" :key="review.id" class="shadow-lg rounded-lg p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] ">
+                    <div 
+                        v-for="review in props.reviews.data" 
+                        :key="review.id" 
+                        :class="[
+                            'shadow-lg rounded-lg p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] transition-all duration-500',
+                            isNewReview(review.id) ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20 animate-pulse' : ''
+                        ]"
+                    >
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
                                 <img :src="'/Images/SVG/quote-30-double-open.svg'" alt="Quotation Icon" class="h-12">
@@ -176,5 +255,3 @@ function toggleSort() {
         </main>
     </GuestLayout>
 </template>
-
-<!-- 📍 -->

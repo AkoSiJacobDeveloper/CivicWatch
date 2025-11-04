@@ -25,17 +25,14 @@ class AchievementController extends Controller
     {
         $status = $request->get('status', 'active');
         
-        // Base query with relationships
         $query = Achievement::with('category', 'location', 'galleries');
         
-        // Filter by archive status
         if ($status === 'archive') {
             $achievements = $query->archived()->latest()->get();
         } else {
             $achievements = $query->active()->latest()->get();
         }
 
-        // Get counts for both tabs
         $totalAchievements = Achievement::active()->count();
         $totalArchived = Achievement::archived()->count();
         
@@ -43,7 +40,7 @@ class AchievementController extends Controller
             'achievements' => $achievements,
             'totalAchievements' => $totalAchievements,
             'totalArchived' => $totalArchived,
-            'filters' => ['status' => $status] // Pass the current filter
+            'filters' => ['status' => $status] 
         ]);
     }
 
@@ -68,12 +65,10 @@ class AchievementController extends Controller
 {
     $validated = $request->validated();
 
-    // Generate unique slug from title
     $slug = Str::slug($validated['title']);
     $originalSlug = $slug;
     $counter = 1;
 
-    // Check if slug already exists and make it unique
     while (Achievement::where('slug', $slug)->exists()) {
         $slug = $originalSlug . '-' . $counter;
         $counter++;
@@ -81,15 +76,12 @@ class AchievementController extends Controller
 
     $validated['slug'] = $slug;
     
-    // Auto-set as published
     $validated['status'] = 'published';
 
-    // Handle featured image upload
     if ($request->hasFile('featured_image')) {
         $validated['featured_image'] = $request->file('featured_image')->store('achievements', 'public');
     }
 
-    // Handle document attachments - store files and get paths
     $documentPaths = [];
     if ($request->hasFile('document_attachments')) {
         foreach ($request->file('document_attachments') as $file) {
@@ -101,20 +93,16 @@ class AchievementController extends Controller
         }
     }
     
-    // Convert array to JSON string for database storage
     $validated['document_attachments'] = !empty($documentPaths) ? $documentPaths : null;
 
-
-    // Create the achievement first
     $achievement = Achievement::create($validated);
 
-    // Handle gallery images
     if ($request->hasFile('gallery_images')) {
         foreach ($request->file('gallery_images') as $index => $file) {
             AchievementGallery::create([
                 'achievement_id' => $achievement->id,
                 'image_path' => $file->store('achievements/gallery', 'public'),
-                'caption' => '', // You can add caption input later
+                'caption' => '', 
                 'order_index' => $index
             ]);
         }
@@ -156,7 +144,6 @@ class AchievementController extends Controller
         try {
             $data = $request->except(['document_attachments', 'gallery_images', 'existing_document_attachments', 'existing_galleries', 'removed_featured_image', 'removed_galleries', 'removed_attachments', 'keep_existing_featured_image']);
             
-            // Handle featured image
             if ($request->removed_featured_image && $achievement->featured_image) {
                 Storage::delete($achievement->featured_image);
                 $data['featured_image'] = null;
@@ -172,7 +159,6 @@ class AchievementController extends Controller
                 $data['featured_image'] = $achievement->featured_image;
             }
             
-            // Handle document attachments
             $existingAttachments = json_decode($request->existing_document_attachments, true) ?? [];
             $newAttachments = [];
             
@@ -187,18 +173,15 @@ class AchievementController extends Controller
                 }
             }
             
-            // Handle removed attachments
             $removedAttachments = json_decode($request->removed_attachments, true) ?? [];
             $filteredExistingAttachments = array_filter($existingAttachments, function($attachment) use ($removedAttachments) {
                 return !isset($attachment['id']) || !in_array($attachment['id'], $removedAttachments);
             });
             
-            // Combine attachments
             $data['document_attachments'] = array_merge($filteredExistingAttachments, $newAttachments);
             
             $achievement->update($data);
             
-            // Handle gallery images
             if ($request->hasFile('gallery_images')) {
                 foreach ($request->file('gallery_images') as $galleryImage) {
                     $galleryPath = $galleryImage->store('achievements/galleries', 'public');
@@ -211,7 +194,6 @@ class AchievementController extends Controller
                 }
             }
             
-            // Handle removed galleries
             $removedGalleries = json_decode($request->removed_galleries, true) ?? [];
             if (!empty($removedGalleries)) {
                 $galleriesToDelete = AchievementGallery::whereIn('id', $removedGalleries)->get();
@@ -234,7 +216,7 @@ class AchievementController extends Controller
         $sort = $request->input('sort', 'desc');
 
         $achievements = Achievement::with(['galleries', 'location', 'category'])
-            ->whereNull('archived_at') // Only show non-archived achievements
+            ->whereNull('archived_at') 
             ->orderBy('created_at', $sort)
             ->paginate(5);
 
@@ -327,12 +309,10 @@ class AchievementController extends Controller
                     ->get();
 
                 foreach ($achievements as $achievement) {
-                    // Delete featured image
                     if ($achievement->featured_image) {
                         Storage::disk('public')->delete($achievement->featured_image);
                     }
 
-                    // Delete document attachments
                     if ($achievement->document_attachments) {
                         foreach ($achievement->document_attachments as $attachment) {
                             if (isset($attachment['path'])) {
@@ -341,7 +321,6 @@ class AchievementController extends Controller
                         }
                     }
 
-                    // Delete gallery images
                     if ($achievement->galleries->isNotEmpty()) {
                         foreach ($achievement->galleries as $gallery) {
                             if ($gallery->image_path) {

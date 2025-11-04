@@ -1,8 +1,8 @@
 <script setup>
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
+import Swal from 'sweetalert2';
 
-import LogoutModal from './LogoutModal.vue';
 import ApplicationImage from './ApplicationImage.vue';
 
 const page = usePage();
@@ -91,14 +91,24 @@ function toggleSidebar() {
 }
 
 const showLogoutModal = ref(false)
-
-function openLogoutModal () {
-    showLogoutModal.value = true
+function openLogoutModal() {
+    Swal.fire({
+        title: 'End Session?',
+        text: 'Logging out will close your access to the dashboard.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb', 
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, logout',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.post(route('logout'))
+        }
+    })
 }
 
-function confirmLogout() {
-    router.post(route('logout'))
-}
 </script>
 
 <template>
@@ -243,11 +253,11 @@ function confirmLogout() {
     </aside>
 
     <!-- LogoutModal - positioned outside sidebar for proper centering -->
-    <LogoutModal 
+    <!-- <LogoutModal 
         :show="showLogoutModal"
         @logout="confirmLogout"
         @close="showLogoutModal = false"
-    />
+    /> -->
 </template>
 
 <style scoped>

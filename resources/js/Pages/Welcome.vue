@@ -104,30 +104,40 @@ const issueCards = ref([])
 const whyItems = ref([])
 const testimonials = ref([])
 
+// Ref for intersection observer
+const observer = ref(null)
+
 onMounted(() => {
     // Initialize animations with Intersection Observer
     initScrollAnimations()
 })
 
 const initScrollAnimations = () => {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    }
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
+    observer.value = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
             if (entry.isIntersecting) {
+                // Add animation class when element comes into view
                 entry.target.classList.add('animate-in')
-                // Unobserve after animation to improve performance
-                observer.unobserve(entry.target)
+                
+        
+                if (entry.target.dataset.stagger) {
+                    const staggerIndex = parseInt(entry.target.dataset.stagger)
+                    entry.target.style.transitionDelay = `${staggerIndex * 50}ms`
+                }
+                
+                observer.value.unobserve(entry.target)
             }
         })
-    }, observerOptions)
-    
-    // Observe all elements with the 'observe-me' class
-    document.querySelectorAll('.observe-me').forEach(el => {
-        observer.observe(el)
+    }, {
+        threshold: 0.01, 
+        rootMargin: '50px' 
+    })
+
+    const elementsToObserve = document.querySelectorAll('.scroll-observe')
+    elementsToObserve.forEach((el, index) => {
+        // Add stagger index for sequential animations
+        el.setAttribute('data-stagger', index)
+        observer.value.observe(el)
     })
 }
 
@@ -160,35 +170,34 @@ const scrollRightIssues = () => {
     <GuestLayout>
         <main class="pt-[50px]">
             <!-- Hero Section -->
-            <!-- <section class="flex justify-center items-center w-full h-screen bg-cover bg-center bg-no-repeat relative hero-section"> -->
-            <section class="md:px-10 lg:px-32 py-20 flex">
-                <div class="w-1/2 pt-10">
-                    <h2 class="font-bold text-7xl font-[Poppins] leading-none text-blue-950">
+            <section class="md:px-10 lg:px-32 py-20 flex scroll-observe">
+                <div class="w-1/2 pt-10 scroll-observe" data-stagger="0">
+                    <h2 class="font-bold text-7xl font-[Poppins] leading-none text-blue-950 dark:text-white">
                         Strengthening <span class="text-blue-600">Communication</span> Between the 
                         <span class="text-blue-700">Barangay</span> and Its <span class="text-blue-500">People</span>
                     </h2>
-                    <p class="my-4 font-light">Stay informed about local projects, announcements, and reports. Together, let’s build a safer and more connected barangay.</p>
-                    <CallToActionBtn />
+                    <p class="my-4 font-light dark:text-gray-300">Stay informed about local projects, announcements, and reports. Together, let's build a safer and more connected barangay.</p>
+                    <CallToActionBtn class="scroll-observe" data-stagger="1" />
                 </div>
-                <div class="w-1/2 flex justify-end pt-10">
+                <div class="w-1/2 flex justify-end pt-10 scroll-observe" data-stagger="2">
                     <img 
                         :src="'/Images/Cabulijan/Official Cabulijan Logo.png'" 
                         alt="Cabulijan Logo"
-                        class="flex h-[75%]"
+                        class="flex h-[75%] transform transition-all duration-700"
                     >
                 </div>
             </section>
 
             <!-- How It Works Section -->
             <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
-                <div class="flex justify-between">
-                    <div class="observe-me" ref="sectionHeadings">
+                <div class="flex justify-between scroll-observe">
+                    <div class="scroll-observe" data-stagger="0">
                         <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-[#FAF9F6]">How It Works</h2>
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Learn how <span class="font-bold">CivicWatch</span> lets you report local issues in just a few simple steps.</p>
                     </div>
-                    <div class="flex justify-center items-center gap-3">
+                    <div class="flex justify-center items-center gap-3 scroll-observe" data-stagger="1">
                         <!-- Left Button -->
-                        <button class="p-4 border flex justify-center items-center rounded-full transform hover:scale-110 hover:bg-blue-600 transition duration-300 " @click="scrollLeftHowItWorks">
+                        <button class="p-4 border flex justify-center items-center rounded-full transform hover:scale-110 hover:bg-blue-600 transition duration-300" @click="scrollLeftHowItWorks">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="text-black fill-current size-6 hover:text-[#FAF9F6] transition-all duration-300 dark:text-white">
                                 <path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z" clip-rule="evenodd" />
                             </svg>
@@ -208,9 +217,8 @@ const scrollRightIssues = () => {
                         <div
                             v-for="(step, index) in steps"
                             :key="index"
-                            class="inline-block h-auto w-[400px] lg:w-96 lg:h-auto flex-shrink-0 observe-me"
-                            :style="`transition-delay: ${index * 100}ms`"
-                            ref="howItWorksItems"
+                            class="inline-block h-auto w-[400px] lg:w-96 lg:h-auto flex-shrink-0 scroll-observe"
+                            :data-stagger="index"
                         >
                             <div class="border-t border-l border-r p-5 border-b-4 border-b-[#3B82F6] px-10 py-5 w-[300px] h-[300px] lg:h-64 lg:w-auto flex flex-col justify-center rounded-[20px] bg-white shadow-[5px_5px_16px_#bdbdbd,-5px_-5px_16px_#ffffff] dark:bg-[#2c2c2c] dark:text-[#FAF9F6] dark:border-b-4 dark:border-b-[#3B82F6] dark:border-t-0 dark:border-l-0 dark:border-r-0 dark:shadow-none overflow-y-hidden">
                                 <div class="">
@@ -228,13 +236,13 @@ const scrollRightIssues = () => {
 
             <!-- Supported Issues Section -->
             <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
-                <div class="flex justify-between items-center">
-                    <div class="observe-me">
+                <div class="flex justify-between items-center scroll-observe">
+                    <div class="scroll-observe" data-stagger="0">
                         <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-[#FAF9F6] ">Supported Issues</h2>
                         <p class="text-sm md:text-base text-gray-700 dark:text-gray-300">Discover the types of community problems you can report through our platform.</p>
                     </div>
 
-                    <div class="flex justify-center items-center gap-3">
+                    <div class="flex justify-center items-center gap-3 scroll-observe" data-stagger="1">
                         <!-- Left Button -->
                         <button class="p-4 border rounded-full flex justify-center items-center transform hover:scale-110 hover:bg-blue-600 transition duration-300" @click="scrollLeftIssues">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"  class="text-black fill-current size-6 hover:text-[#FAF9F6] transition-all duration-300 dark:text-white">
@@ -256,9 +264,8 @@ const scrollRightIssues = () => {
                         <div 
                             v-for="(issue, index) in issues" 
                             :key="index" 
-                            class="inline-block h-auto w-[400px] lg:w-96 lg:h-auto flex-shrink-0 observe-me"
-                            :style="`transition-delay: ${index * 100}ms`"
-                            ref="issueCards"
+                            class="inline-block h-auto w-[400px] lg:w-96 lg:h-auto flex-shrink-0 scroll-observe"
+                            :data-stagger="index"
                         >
                             <div class="bg-white shadow-md rounded dark:bg-[#2c2c2c] dark:text-[#FAF9F6] dark:border-none">
                                 <img :src="issue.img" alt="Issue Image" class="mb-1 h-80 lg:h-96 lg:w-96 object-cover rounded">
@@ -273,7 +280,7 @@ const scrollRightIssues = () => {
                         </div>
                     </div>
                 </div>
-                <Link href="/about" class="flex justify-center observe-me">
+                <Link href="/about" class="flex justify-center scroll-observe" data-stagger="0">
                     <div class="flex gap-2 justify-center items-center px-3 py-2 bg-blue-600 md:px-4 md:py-2 rounded hover:bg-blue-700 transition-colors duration-300 dark:bg-[#343434] dark:text-[#FAF9F6] dark:hover:bg-[#454545]">
                         <span class="text-white text-sm md:text-base flex justify-center items-center">View All Issues</span>
                         <font-awesome-icon icon="chevron-right" class="text-white  flex justify-center items-center" />
@@ -283,13 +290,13 @@ const scrollRightIssues = () => {
 
             <!-- Why CivicWatch Section -->
             <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
-                <div class="observe-me">
+                <div class="scroll-observe" data-stagger="0">
                     <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Why CivicWatch?</h2>
                     <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">See how <span class="font-bold">CivicWatch</span> improves community engagement, transparency, and response time.</p>
                 </div>
 
                 <div class="flex flex-col gap-3">
-                    <section class="flex justify-between py-5 border-b border-gray-300 dark:border-gray-800 observe-me" ref="whyItems">
+                    <section class="flex justify-between py-5 border-b border-gray-300 dark:border-gray-800 scroll-observe" data-stagger="0">
                         <div class="flex flex-col gap-2 justify-center w-2/3 md:w-1/2">
                             <div class="flex gap-2 items-center">
                                 <span class="bg-blue-500 w-10 rounded-full px-4 py-2 flex justify-center text-[#FAF9F6] font-bold">01.</span>
@@ -303,7 +310,7 @@ const scrollRightIssues = () => {
                         </div>
                     </section>
 
-                    <section class="flex justify-between py-5 border-b border-gray-300 dark:border-gray-800 observe-me">
+                    <section class="flex justify-between py-5 border-b border-gray-300 dark:border-gray-800 scroll-observe" data-stagger="1">
                         <div class="flex justify-center items-center md:justify-start w-3/2 md:w-1/2">
                             <img :src="'/Images/SVG/navigation-arrow.svg'" alt="fasteresponse" class="h-20 w-auto lg:h-auto lg:w-32">
                         </div>
@@ -314,7 +321,7 @@ const scrollRightIssues = () => {
                         </div>
                     </section>
 
-                    <section class="flex justify-between py-5 border-b border-gray-300 dark:border-gray-800 observe-me">
+                    <section class="flex justify-between py-5 border-b border-gray-300 dark:border-gray-800 scroll-observe" data-stagger="2">
                         <div class="flex flex-col gap-2 justify-center w-2/3 md:w-1/2">
                             <span class="bg-blue-500 w-10 rounded-full px-4 py-2 flex justify-center text-[#FAF9F6] font-bold">03.</span>
                             <h3 class="font-bold text-base md:text-2xl font-[Poppins] dark:text-[#FAF9F6]">Easy To Use</h3>
@@ -325,7 +332,7 @@ const scrollRightIssues = () => {
                         </div>
                     </section>
 
-                    <section class="flex justify-between py-5 observe-me">
+                    <section class="flex justify-between py-5 scroll-observe" data-stagger="3">
                         <div class="flex justify-center items-center md:justify-start w-3/2 md:w-1/2">
                             <img :src="'/Images/SVG/devices.svg'" alt="fasteresponse" class="h-20 w-auto lg:h-auto lg:w-32">
                         </div>
@@ -340,7 +347,7 @@ const scrollRightIssues = () => {
 
             <!-- Testimonial Section -->
             <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10 ">
-                <div class="observe-me">
+                <div class="scroll-observe" data-stagger="0">
                     <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Trusted by Our Community</h2>
                     <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Hear how we've made a difference.</p>
                 </div>
@@ -349,9 +356,8 @@ const scrollRightIssues = () => {
                     <div 
                         v-for="(review, index) in reviews" 
                         :key="review.id" 
-                        class="border p-8 observe-me dark:border-none rounded-[20px] bg-white shadow-[5px_5px_16px_#bdbdbd,-5px_-5px_16px_#ffffff] dark:bg-[#2c2c2c] dark:shadow-none"
-                        :style="`transition-delay: ${index * 100}ms`"
-                        ref="testimonials"
+                        class="border p-8 gap-6 scroll-observe dark:border-none rounded-[20px] bg-white shadow-[5px_5px_16px_#bdbdbd,-5px_-5px_16px_#ffffff] dark:bg-[#2c2c2c] dark:shadow-none"
+                        :data-stagger="index"
                     >
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
@@ -359,17 +365,47 @@ const scrollRightIssues = () => {
                                 <p class="text-sm text-gray-600 dark:text-[#faf9f6]">{{ review.created_at }}</p>
                             </div>
                             <div class="h-[145px] overflow-y-auto">
-                                <p class="text-gray-600 dark:text-[#faf9f6]">{{ review.review_message }}</p>
+                                <p class="text-gray-600 text-base dark:text-[#faf9f6]">{{ review.review_message }}</p>
                             </div>
                         </div>
                         
-                        <div class="mt-6">
-                            <h3 class="font-bold text-base dark:text-[#faf9f6] font-[Poppins]">{{ review.name }}</h3>
-                            <p class="text-gray-600 text-sm mb-2 dark:text-[#faf9f6]">{{ review.location }}</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-1">
+                                <div>
+                                    <img 
+                                        :src="'/Images/SVG/user-circle-fill.svg'"
+                                        :alt="Icon"
+                                        :class="review.is_anonymous ? 'opacity-55': 'opacity-100'"
+                                        class="h-10 w-10"
+                                    />
+                                </div>
+                    
+                                <div>
+                                    <!-- Update these lines to use display names -->
+                                    <span class="font-bold text-base font-[Poppins]">
+                                        {{ review.is_anonymous ? 'Anonymous User' : review.name }}
+                                    </span>
+                                    <p class="text-gray-600 text-xs dark:text-[#faf9f6]">
+                                        {{ review.location }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-1">
+                                    <span v-for="star in 5" :key="star" 
+                                        :class="star <= review.rating ? 'text-yellow-400' : 'text-gray-300'">
+                                        ★
+                                    </span>
+                                    <span v-if="review.rating" class="ml-1 text-sm text-gray-600">
+                                        ({{ review.rating }}/5)
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <Link href="/review" class="flex justify-center observe-me">
+                <Link href="/review" class="flex justify-center scroll-observe" data-stagger="0">
                     <div class="flex gap-2 justify-center items-center px-3 py-2 bg-blue-600 md:px-4 md:py-2 rounded hover:bg-blue-700 transition-colors duration-300 dark:bg-[#343434] dark:text-[#FAF9F6] dark:hover:bg-[#454545]">
                         <span class="text-white text-sm md:text-base flex justify-center items-center">View All Reviews</span>
                         <font-awesome-icon icon="chevron-right" class="text-white  flex justify-center items-center" />
@@ -381,57 +417,20 @@ const scrollRightIssues = () => {
 </template>
 
 <style scoped>
-/* .hero-section {
-    background-image: url('/Images/herobg3.jpg');
-} */
 /* Animation classes for scroll-driven animations */
-.observe-me {
+.scroll-observe {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
     transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 }
 
-.observe-me.animate-in {
+.scroll-observe.animate-in {
     opacity: 1;
     transform: translateY(0);
 }
 
-/* Specific animations for different sections */
-.hero-content.animate-in {
-    animation: fadeInUp 1s ease-out forwards;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Staggered animations for cards */
-.how-it-works-card {
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: all 0.5s ease-out;
-}
-
-.how-it-works-card.animate-in {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.issue-card {
-    opacity: 0;
-    transform: scale(0.95);
-    transition: all 0.5s ease-out;
-}
-
-.issue-card.animate-in {
-    opacity: 1;
+/* Specific animations for different elements */
+.scroll-observe.animate-in img {
     transform: scale(1);
 }
 
@@ -442,5 +441,14 @@ const scrollRightIssues = () => {
 }
 .hide-scrollbar::-webkit-scrollbar {
     display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Additional smooth transitions */
+.scroll-observe {
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.scroll-observe img {
+    transition: transform 0.7s ease-out;
 }
 </style>

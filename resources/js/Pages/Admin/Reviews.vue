@@ -1,7 +1,9 @@
 <script setup>
+import { onUnmounted, onMounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { ref } from 'vue';
+import Swal from 'sweetalert2';
 
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import DeleteReview from '@/Components/DeleteReview.vue';
@@ -15,28 +17,102 @@ const props = defineProps({
         default: 'all'
     }
 })
-const showDeleteModal = ref(false);
-const itemToDelete = ref(null);
-const sortOrder = ref(props.filters?.date || 'desc');
 
-function confirmDelete(id) {
-    itemToDelete.value = id;
-    showDeleteModal.value = true;
+const sortOrder = ref(props.filters?.date || 'desc');
+const lastUpdate = ref(new Date().toISOString()); 
+let pollInterval = null;
+const previousReviewsCount = ref(props.reviews.total || 0);
+const currentReviewIds = ref(new Set());
+const newReviewIds = ref(new Set());
+
+// Polling function
+const pollForUpdates = () => {
+    router.reload({
+        preserveState: true,
+        preserveScroll: true,
+        only: ['reviews'], 
+        onSuccess: (page) => {
+            const currentReviewsCount = page.props.reviews.total || 0;
+
+            setTimeout(() => {
+                newReviewIds.value.clear();
+            }, 5000);
+
+            if (currentReviewsCount > previousReviewsCount.value) {
+                const newReviewsCount = currentReviewsCount - previousReviewsCount.value;
+                
+                toast.info('New review submitted!');
+                
+                page.props.reviews.data.forEach(review => {
+                    if (!currentReviewIds.value.has(review.id)) {
+                        newReviewIds.value.add(review.id);
+                        currentReviewIds.value.add(review.id);
+                    }
+                });
+                
+                previousReviewsCount.value = currentReviewsCount;
+            }
+
+            if (page.props.reviews.data.length > 0) {
+                lastUpdate.value = new Date().toISOString();
+            }
+        }
+    });
+};
+
+
+function confirmDelete(review) {
+    Swal.fire({
+        title: 'Delete Review?',
+        html: `Are you sure you want to delete the review from <strong>${review.name}</strong>?<br>
+            <span class="text-sm text-gray-500">This action cannot be undone.</span>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        customClass: {
+            popup: 'rounded-lg shadow-xl',
+            confirmButton: 'px-4 py-2 rounded-lg',
+            cancelButton: 'px-4 py-2 rounded-lg'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            deleteReview(review.id);
+        }
+    });
 }
 
-function deleteReview() {
-    if (!itemToDelete.value) return;
-    router.delete(route('reviews.delete', itemToDelete.value), {
+function deleteReview(review) {
+    Swal.fire({
+        title: 'Deleting...',
+        text: 'Please wait while we delete the review.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    router.delete(route('reviews.delete', review), {
+        preserveScroll: true,
         onSuccess: () => {
+            Swal.close();
             toast.success('Review deleted successfully');
-            showDeleteModal.value = false;
-            itemToDelete.value = null;
         },
         onError: () => {
-            toast.error('Failed to delete the review. Please try again.');
+            Swal.close();
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to delete the review. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
         },
     })
 }
+
 
 function toggleSort() {
     sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
@@ -47,6 +123,24 @@ function toggleSort() {
         replace: true
     })
 }
+
+const isNewReview = (reviewId) => {
+    return newReviewIds.value.has(reviewId);
+};
+
+onMounted(() => {
+    props.reviews.data.forEach(review => {
+        currentReviewIds.value.add(review.id);
+    });
+
+    pollInterval = setInterval(pollForUpdates, 5000);
+});
+
+onUnmounted(() => {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+    }
+});
 </script>
 
 <template>
@@ -89,7 +183,10 @@ function toggleSort() {
                     <div 
                         v-for="review in props.reviews.data" 
                         :key="review.id"
-                        class="shadow-container p-8 bg-white flex flex-col gap-6"
+                        :class="[
+                            'shadow-container p-8 bg-white flex flex-col gap-6 transition-all duration-500',
+                            isNewReview(review.id) ? 'border-2 border-green-500 bg-green-50 animate-pulse' : ''
+                        ]"
                     >
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
@@ -136,7 +233,7 @@ function toggleSort() {
                             </div>
 
                             <div class="flex justify-center items-center hover:scale-110 transition-all duration-300">
-                                <button @click="confirmDelete(review.id)">
+                                <button @click="confirmDelete(review)">
                                     <img :src="'/Images/SVG/trash (red).svg'" alt="Icon" class="h-6 cursor-pointer">
                                 </button>
                             </div>
@@ -198,11 +295,11 @@ function toggleSort() {
                     </div>
                 </div>
 
-                <DeleteReview
+                <!-- <DeleteReview
                     :show="showDeleteModal" 
                     @close="showDeleteModal = false" 
                     @delete="deleteReview"
-                />
+                /> -->
             </section>
         </main>
     </AdminLayout>

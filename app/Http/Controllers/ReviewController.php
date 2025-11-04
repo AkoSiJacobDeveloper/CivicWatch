@@ -55,7 +55,8 @@ class ReviewController extends Controller
             'location',
             'review_message',
             'is_anonymous',
-            'created_at'
+            'created_at',
+            'rating'
         )
         ->inRandomOrder()
         ->take(3)

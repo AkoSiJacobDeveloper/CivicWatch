@@ -4,9 +4,30 @@ import { ref, computed } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { useToast } from 'vue-toastification';
 import Swal from 'sweetalert2';
+import {
+    Listbox,
+    ListboxButton,
+    ListboxOptions,
+    ListboxOption,
+} from '@headlessui/vue'
 
 const props = defineProps({
     issue_type: Object,
+});
+
+const priority_levels = [
+    { id: 1, level: 'High Priority', place: 'high' },
+    { id: 2, level: 'Medium Priority', place: 'medium' },
+    { id: 3, level: 'Low Priority', place: 'low' },
+];
+
+const displayPriority = computed(() => {
+    if (!createForm.priority_level) return 'Select Priority Level';
+
+    return createForm.priority_level
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 });
 
 const headings = [
@@ -25,18 +46,18 @@ const selectedPriority = ref('all');
 
 const createForm = useForm({
     name: '',
-    priority_level: 'medium', // Add priority level to create form
+    priority_level: '', // Add priority level to create form
 });
 
 const editForm = useForm({
     name: '',
     active: true,
-    priority_level: 'medium',
+    priority_level: '',
 });
 
 function openCreateModal() {
     createForm.reset();
-    createForm.priority_level = 'medium'; // Set default value
+    createForm.priority_level = ''; 
     showCreateModal.value = true;
 }
 
@@ -358,8 +379,45 @@ function deleteCategory(issueType) {
                                     {{ createForm.errors.name }}
                                 </div>
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Priority Level</label>
+                            <div class="mb-4 relative">
+                                <Listbox v-model="createForm.priority_level">
+                                    <ListboxButton
+                                class="flex justify-between items-center text-left p-4 w-full text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:outline-none focus:ring-0 focus:border-blue-600"
+                                    >
+                                        <span class="block truncate" :class="{ 'text-gray-500': !createForm.priority_level }">
+                                            {{ displayPriority }}
+                                        </span>
+                                        <span class="pointer-events-none flex items-center">
+                                            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </ListboxButton>
+
+                                    <ListboxOptions
+                                        class="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-300 max-h-56 overflow-y-auto"
+                                    >
+                                        <ListboxOption
+                                            v-for="priority_level in priority_levels"
+                                            :key="priority_level.id"
+                                            :value="priority_level.place"
+                                            v-slot="{ active, selected }"
+                                            class="cursor-pointer select-none relative py-2 pl-3 pr-9"
+                                            :class="active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'"
+                                        >
+                                            <span class="block truncate" :class="selected ? 'font-medium' : 'font-normal'">
+                                                {{ priority_level.level }}
+                                            </span>
+                                            <span v-if="selected" class="absolute inset-y-0 right-0 flex items-center pr-4 text-blue-600">
+                                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                            </span>
+                                        </ListboxOption> 
+                                    </ListboxOptions>
+                                </Listbox>
+
+                                <!-- <label class="block text-sm font-medium text-gray-700 mb-2">Priority Level</label>
                                 <select 
                                     v-model="createForm.priority_level"
                                     class="w-full border border-gray-300 rounded px-3 py-2"
@@ -368,7 +426,7 @@ function deleteCategory(issueType) {
                                     <option value="high">High Priority</option>
                                     <option value="medium">Medium Priority</option>
                                     <option value="low">Low Priority</option>
-                                </select>
+                                </select> -->
                                 <div v-if="createForm.errors.priority_level" class="text-red-500 text-sm mt-1">
                                     {{ createForm.errors.priority_level }}
                                 </div>

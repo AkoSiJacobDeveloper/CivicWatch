@@ -1,6 +1,6 @@
 <script setup>
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
-import { nextTick, computed } from 'vue';
+import { nextTick, computed, ref } from 'vue';
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import ReportMap from '@/Components/ReportMap.vue';
@@ -13,6 +13,9 @@ const props = defineProps({
 const trackCode = useForm({
     search: props.searchTerm || '',
 })
+
+// Ref for the results section
+const resultsSection = ref(null);
 
 const performSearch = () => {
     const searchTerm = trackCode.search.trim();
@@ -28,6 +31,10 @@ const performSearch = () => {
         replace: true,
         onSuccess: (page) => {
             console.log('Search completed', page.props);
+            // Scroll to results after search
+            nextTick(() => {
+                scrollToResults();
+            });
         },
         onError: (errors) => {
             console.error('Search failed', errors);
@@ -38,11 +45,15 @@ const performSearch = () => {
 const clearResults = () => {
     trackCode.search = '';
     router.get('/track-reports', {}, {
-        preserveState: false, // Changed to false
+        preserveState: false,
         preserveScroll: true,
         replace: true,
         onSuccess: () => {
             console.log('Results cleared');
+            // Scroll to top after clearing results
+            nextTick(() => {
+                scrollToTop();
+            });
         }
     });
 }
@@ -51,13 +62,42 @@ const clearAndFocusSearch = async () => {
     trackCode.search = '';
     
     await router.get('/track-reports', {}, {
-        preserveState: false, // Changed to false
+        preserveState: false,
         preserveScroll: true,
         replace: true
     });
     
     await nextTick();
     document.getElementById('default-search')?.focus();
+    // Scroll to top when clearing and focusing search
+    scrollToTop();
+}
+
+// Scroll to results section
+const scrollToResults = () => {
+    if (resultsSection.value) {
+        resultsSection.value.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+    } else {
+        // Fallback: scroll to the results section by ID
+        const element = document.getElementById('results-section');
+        if (element) {
+            element.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }
+}
+
+// Scroll to top of page
+const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
 }
 
 const formatDate = (dateString) => {
@@ -204,7 +244,12 @@ const values = computed(() => {
                 </div>
 
                 <!-- Result -->
-                <section class="" v-if="reports && reports.data && reports.data.length > 0">
+                <section 
+                    ref="resultsSection"
+                    id="results-section"
+                    class="" 
+                    v-if="reports && reports.data && reports.data.length > 0"
+                >
                     <div class="">
                         <!-- Header with Clear Button -->
                         <div class="flex justify-between items-center mb-4">

@@ -11,8 +11,7 @@ use App\Models\Barangay;
 use App\Models\Sitio;
 use Carbon\Carbon;
 use Inertia\Inertia;
-use App\Services\FirebaseService; // ADD THIS LINE
-
+use App\Services\FirebaseService; 
 
 class ReportIssueController extends Controller
 {
@@ -153,7 +152,7 @@ class ReportIssueController extends Controller
                 'gps_accuracy' => $validated['gps_accuracy'] ? (float)$validated['gps_accuracy'] : null, 
             ]);
 
-            break; // Success, exit loop
+            break;
 
             } catch (\Illuminate\Database\QueryException $e) {
                 if (str_contains($e->getMessage(), 'Duplicate entry') && str_contains($e->getMessage(), 'tracking_code_unique')) {
@@ -164,14 +163,12 @@ class ReportIssueController extends Controller
                     $trackingCode = "CW-{$today}-{$sequence}";
                     
                     if ($retryCount === $maxRetries) {
-                        // Log the error and return a user-friendly message
                         Log::error('Failed to generate unique tracking code after ' . $maxRetries . ' attempts. Last attempted code: ' . $trackingCode);
                         return back()->withErrors(['error' => 'Unable to generate unique tracking code. Please try again.']);
                     }
                     
-                    continue; // Retry with new code
+                    continue;
                 }
-                // Re-throw other database exceptions
                 throw $e;
             }
         }

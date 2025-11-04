@@ -1065,13 +1065,6 @@ onUnmounted(() => {
                                                     <span class="text-sm">Clear Location</span>
                                                 </button>
                                             </div>
-
-                                            <!-- Help Text -->
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                <p>• This helps barangay officials verify your exact location</p>
-                                                <p>• Your coordinates will be shown on a map when officials review your report</p>
-                                                <p>• You can still submit without location data</p>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>

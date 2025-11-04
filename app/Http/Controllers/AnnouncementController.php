@@ -44,7 +44,7 @@ class AnnouncementController extends Controller
             'level' => 'required|in:urgent,important,general',
             'is_pinned' => 'required|in:yes,no',
             'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10048',
             'publish_at' => 'nullable|date',
             'event_date' => 'required|date',
             'venue' => 'required|string|max:255',
@@ -186,7 +186,7 @@ class AnnouncementController extends Controller
                 'title' => $announcement->title, 
                 'type' => $announcement->category_id,
                 'level' => $announcement->level, 
-                'is_pinned' => $announcement->is_pinned ? 'yes' : 'no', // Convert boolean to string
+                'is_pinned' => $announcement->is_pinned ? 'yes' : 'no', 
                 'content' => $announcement->content, 
                 'image' => $announcement->image, 
                 'publish_at' => $announcement->publish_at, 
@@ -197,7 +197,7 @@ class AnnouncementController extends Controller
                 'contact_number' => $announcement->contact_number, 
                 'purok' => $announcement->purok, 
                 'specific_area' => $announcement->specific_area, 
-                'requirements' => $announcement->documents->pluck('id')->toArray(), // Get IDs for multiselect
+                'requirements' => $announcement->documents->pluck('id')->toArray(), 
                 'instructions' => $announcement->instructions, 
                 'counts' => $announcement->counts, 
                 'reg_deadline' => $announcement->reg_deadline, 
@@ -205,8 +205,8 @@ class AnnouncementController extends Controller
                 'attachments' => $announcement->attachments,
                 'category' => $announcement->category,
                 'documents' => $announcement->documents,
-                'departments' => $announcement->departments->pluck('id')->toArray(), // Get IDs for multiselect
-                'audiences' => $announcement->audiences->pluck('id')->toArray(), // Get IDs for multiselect
+                'departments' => $announcement->departments->pluck('id')->toArray(), 
+                'audiences' => $announcement->audiences->pluck('id')->toArray(), 
             ],
             // Dropdown data
             'announcementCategories' => $announcementCategories,
@@ -227,7 +227,7 @@ class AnnouncementController extends Controller
             'level' => 'required|in:urgent,important,general',
             'is_pinned' => 'required|in:yes,no',
             'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10048',
             'publish_at' => 'nullable|date',
             'event_date' => 'required|date',
             'venue' => 'required|string|max:255',
@@ -250,7 +250,7 @@ class AnnouncementController extends Controller
             'existing_attachments' => 'nullable|string',
             'existing_attachments.*.id' => 'exists:attachments,id',
             'specific_area' => 'nullable|string|max:255|required_if:purok,specific',
-            'removed_featured_image' => 'nullable|boolean', // Add this validation
+            'removed_featured_image' => 'nullable|boolean', 
         ]);
 
         try {

@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { initTooltips } from 'flowbite';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import AchievementsClientDetailsModal from '@/Components/AchievementsClientDetailsModal.vue';
@@ -12,7 +12,59 @@ const props = defineProps({
 
 const sortOrder = ref(props.sort || 'desc')
 
-// Watch for changes in props.sort and update sortOrder
+let pollInterval = null;
+const previousAchievementsCount = ref(props.achievements.total || 0);
+const currentAchievementIds = ref(new Set());
+const newAchievementIds = ref(new Set());
+
+onMounted(() => {
+    props.achievements.data.forEach(achievement => {
+        currentAchievementIds.value.add(achievement.id);
+    });
+    
+    pollInterval = setInterval(pollForNewAchievements, 15000);
+    
+    initTooltips();
+});
+
+onUnmounted(() => {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+    }
+});
+
+const pollForNewAchievements = () => {
+    router.reload({
+        preserveState: true,
+        preserveScroll: true,
+        only: ['achievements'], 
+        onSuccess: (page) => {
+            const currentAchievementsCount = page.props.achievements.total || 0;
+
+            setTimeout(() => {
+                newAchievementIds.value.clear();
+            }, 5000);
+
+            if (currentAchievementsCount > previousAchievementsCount.value) {
+                const newAchievementsCount = currentAchievementsCount - previousAchievementsCount.value;
+                
+                page.props.achievements.data.forEach(achievement => {
+                    if (!currentAchievementIds.value.has(achievement.id)) {
+                        newAchievementIds.value.add(achievement.id);
+                        currentAchievementIds.value.add(achievement.id);
+                    }
+                });
+                
+                previousAchievementsCount.value = currentAchievementsCount;
+            }
+        }
+    });
+};
+
+const isNewAchievement = (achievementId) => {
+    return newAchievementIds.value.has(achievementId);
+};
+
 watch(() => props.sort, (newSort) => {
     sortOrder.value = newSort
 })
@@ -56,10 +108,6 @@ const closeModal = () => {
     openModal.value = false
     selectedAchievements.value = null
 }
-
-onMounted(() => {
-    initTooltips();
-})
 </script>
 
 <template>
@@ -88,8 +136,23 @@ onMounted(() => {
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Here's a look at the latest achievements in your community today.</p>
                     </div>
 
-                    <!-- Sort Button -->
-                    <div>
+                    <!-- Sort and Refresh Buttons -->
+                    <div class="flex items-center gap-3">
+                        <!-- Refresh Button -->
+                        <button
+                            @click="pollForNewAchievements"
+                            class="border p-3 rounded flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors group duration-300 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-green-600"
+                            title="Check for new achievements"
+                        >
+                            <span>Refresh</span>
+                            <img 
+                                :src="'/Images/SVG/arrows-clockwise.svg'" 
+                                alt="Icon" 
+                                class="h-5 w-5 group-hover:animate-spin group-hover:brightness-0 group-hover:invert dark:invert"
+                            >
+                        </button>
+                        
+                        <!-- Sort Button -->
                         <button
                             @click="toggleSort"
                             class="border p-3 rounded flex items-center gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300"
@@ -115,7 +178,14 @@ onMounted(() => {
                 </div>
 
                 <div v-else class="grid grid-rows-1">
-                    <div v-for="achievement in props.achievements.data" :key="achievement.id" class="shadow-lg mb-3 rounded-lg border-b-1 border-[#000] p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c]">
+                    <div 
+                        v-for="achievement in props.achievements.data" 
+                        :key="achievement.id" 
+                        :class="[
+                            'shadow-lg mb-3 rounded-lg border-b-1 border-[#000] p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] transition-all duration-500',
+                            isNewAchievement(achievement.id) ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20 animate-pulse' : ''
+                        ]"
+                    >
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between mb-2">
                                 <h1 class="font-[Poppins] font-semibold text-lg">{{ achievement.title }}</h1>

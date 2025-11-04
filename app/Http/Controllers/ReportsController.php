@@ -523,7 +523,6 @@ class ReportsController extends Controller
         // Get reports and check if all are rejected
         $reports = Report::whereIn('id', $validated['report_ids'])->get();
         
-        // Check the RAW database value, not the accessor
         $nonRejected = $reports->filter(function($report) {
             // Get the raw attribute from database
             $rawStatus = $report->getRawOriginal('status');

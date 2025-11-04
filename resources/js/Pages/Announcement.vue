@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import AnnouncementClientDetailsModal from '@/Components/AnnouncementClientDetailsModal.vue';
 
@@ -9,10 +9,59 @@ const props = defineProps({
     sort: String
 })
 
-// Use ref for sortOrder and watch for prop changes
 const sortOrder = ref(props.sort || 'desc')
 
-// Watch for changes in props.sort and update sortOrder
+let pollInterval = null;
+const previousAnnouncementsCount = ref(props.announcements.total || 0);
+const currentAnnouncementIds = ref(new Set());
+const newAnnouncementIds = ref(new Set());
+
+onMounted(() => {
+    props.announcements.data.forEach(announcement => {
+        currentAnnouncementIds.value.add(announcement.id);
+    });
+    
+    pollInterval = setInterval(pollForNewAnnouncements, 15000);
+});
+
+onUnmounted(() => {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+    }
+});
+
+const pollForNewAnnouncements = () => {
+    router.reload({
+        preserveState: true,
+        preserveScroll: true,
+        only: ['announcements'], 
+        onSuccess: (page) => {
+            const currentAnnouncementsCount = page.props.announcements.total || 0;
+
+            setTimeout(() => {
+                newAnnouncementIds.value.clear();
+            }, 5000);
+
+            if (currentAnnouncementsCount > previousAnnouncementsCount.value) {
+                const newAnnouncementsCount = currentAnnouncementsCount - previousAnnouncementsCount.value;
+                
+                page.props.announcements.data.forEach(announcement => {
+                    if (!currentAnnouncementIds.value.has(announcement.id)) {
+                        newAnnouncementIds.value.add(announcement.id);
+                        currentAnnouncementIds.value.add(announcement.id);
+                    }
+                });
+                
+                previousAnnouncementsCount.value = currentAnnouncementsCount;
+            }
+        }
+    });
+};
+
+const isNewAnnouncement = (announcementId) => {
+    return newAnnouncementIds.value.has(announcementId);
+};
+
 watch(() => props.sort, (newSort) => {
     sortOrder.value = newSort
 })
@@ -83,8 +132,23 @@ const closeModal = () => {
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Here's what's happening around you today.</p>
                     </div>
 
-                    <!-- Sort Button -->
-                    <div>
+                    <!-- Sort and Refresh Buttons -->
+                    <div class="flex items-center gap-3">
+                        <!-- Refresh Button -->
+                        <button
+                            @click="pollForNewAnnouncements"
+                            class="border p-3 rounded flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors group duration-300 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-green-600"
+                            title="Check for new announcements"
+                        >
+                            <span>Refresh</span>
+                            <img 
+                                :src="'/Images/SVG/arrows-clockwise.svg'" 
+                                alt="Icon" 
+                                class="h-5 w-5 group-hover:animate-spin group-hover:brightness-0 group-hover:invert dark:invert"
+                            >
+                        </button>
+                        
+                        <!-- Sort Button -->
                         <button
                             @click="toggleSort"
                             class="border p-3 rounded flex items-center gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300"
@@ -113,7 +177,10 @@ const closeModal = () => {
                     v-else class="grid grid-rows-1">
                     <div
                         v-for="announcement in props.announcements.data" :key="announcement.id" 
-                        class="shadow-lg mb-3 rounded-lg border-b-1 border-[#000] p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] "
+                        :class="[
+                            'shadow-lg mb-3 rounded-lg border-b-1 border-[#000] p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] transition-all duration-500',
+                            isNewAnnouncement(announcement.id) ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20 animate-pulse' : ''
+                        ]"
                     >
                         <div 
                             class="flex flex-col gap-3"

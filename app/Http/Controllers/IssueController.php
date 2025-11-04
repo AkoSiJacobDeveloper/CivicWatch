@@ -18,7 +18,6 @@ class IssueController extends Controller
     );
 }
 
-    // View all type of issue
     public function index() {
         $issue_type = IssueType::withCount('reports')
             ->orderBy('name')
@@ -29,7 +28,6 @@ class IssueController extends Controller
         ]);
     }
 
-    // Create new type of issue
     public function store(Request $request) {
         $request->validate([
             'name' => 'required|string|max:255|unique:issue_types,name',
@@ -56,8 +54,6 @@ class IssueController extends Controller
         return back()->with('success', 'Type of Issue updated successfully!');
     }
 
-
-    // Delete the type of issue (soft delete by setting it inactive)
     public function destroy(IssueType $issueType) {
         $issueType->update(['active' => false]);
         return back()->with('success', 'Type of issue deactivated successfully!');
