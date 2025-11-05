@@ -155,4 +155,5 @@ Route::get('/barangays-with-sitios', function () {
 //     ]);
 // });
 
+
 require __DIR__.'/auth.php';

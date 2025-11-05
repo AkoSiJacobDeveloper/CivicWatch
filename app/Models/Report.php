@@ -17,9 +17,9 @@ class Report extends Model
         'custom_issue_description',
         'description',
         'image',
-        'latitude',          // ADD THIS
-        'longitude',         // ADD THIS  
-        'gps_accuracy',      // ADD THIS
+        'latitude',          
+        'longitude',           
+        'gps_accuracy',      
         'barangay_name',
         'sitio_name',
         'sender_name',

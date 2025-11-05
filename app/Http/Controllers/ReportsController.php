@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Log;
 
 class ReportsController extends Controller
 {
-    // Fetching All reports by categories or status
     public function index(Request $request) {
     $status = $request->query('status');
 

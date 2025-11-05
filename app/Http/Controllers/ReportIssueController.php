@@ -15,9 +15,9 @@ use App\Services\FirebaseService;
 
 class ReportIssueController extends Controller
 {
-    protected $firebaseService; // ADD THIS LINE
+    protected $firebaseService;
 
-    public function __construct() // ADD THIS CONSTRUCTOR
+    public function __construct()
     {
         $this->firebaseService = new FirebaseService();
     }
@@ -197,6 +197,35 @@ class ReportIssueController extends Controller
             'location' => "{$barangay->name}, {$sitio->name}",
         ]);
     }
+
+    public function checkEmergency(Request $request)
+{
+    $request->validate([
+        'image' => 'required|image|mimes:jpg,jpeg,png|max:5120'
+    ]);
+
+    $filename = $request->file('image')->getClientOriginalName();
+    $filenameLower = strtolower($filename);
+    
+    // DIRECT LOGIC - no service class
+    $emergencyWords = ['fire', 'burning', 'ambulance', 'accident', 'crash', 'demo', 'test', 'emergency'];
+    
+    $isEmergency = false;
+    foreach ($emergencyWords as $word) {
+        if (str_contains($filenameLower, $word)) {
+            $isEmergency = true;
+            break;
+        }
+    }
+    
+    \Log::info("DIRECT CHECK: {$filename} -> " . ($isEmergency ? 'EMERGENCY' : 'SAFE'));
+    
+    return response()->json([
+        'is_emergency' => $isEmergency,
+        'message' => $isEmergency ? 'Emergency detected' : 'No emergency',
+        'debug' => "Filename: {$filename}"
+    ]);
+}
 
 
     public function getBarangays()

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Emergency Detection</title>
+</head>
+<body>
+    <h1>Test Emergency Image Detection</h1>
+    
+    <form id="testForm">
+        <input type="file" name="image" accept="image/*" required>
+        <br><br>
+        <button type="submit">Test Emergency Detection</button>
+    </form>
+
+    <div id="result" style="margin-top: 20px; white-space: pre-wrap;"></div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = 'Analyzing image...';
+            
+            try {
+                const response = await fetch('/api/check-emergency', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Get the raw response text first
+                const responseText = await response.text();
+                resultDiv.innerHTML = 'Raw response: ' + responseText;
+                
+                // Try to parse as JSON
+                try {
+                    const data = JSON.parse(responseText);
+                    if (data.is_emergency) {
+                        resultDiv.innerHTML += '\n\n🚨 EMERGENCY DETECTED: ' + data.message;
+                    } else {
+                        resultDiv.innerHTML += '\n\n✅ No Emergency: ' + data.message;
+                    }
+                } catch (jsonError) {
+                    resultDiv.innerHTML += '\n\n❌ JSON Parse Error: ' + jsonError.message;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = '❌ Fetch Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
