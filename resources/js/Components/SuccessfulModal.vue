@@ -1,33 +1,68 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import Swal from 'sweetalert2';
 
 const props = defineProps({
     show: Boolean,
     trackingCode: String
 });
 
+const hasCopied = ref(false);
+
+// Define emits first and get the emit function
+const emit = defineEmits(['close']);
+
 const copyToClipboard = async () => {
     try {
         await navigator.clipboard.writeText(props.trackingCode);
-        alert('Tracking code copied to clipboard!');
+        hasCopied.value = true;
+        
+        // Show SweetAlert2 success message
+        Swal.fire({
+            title: 'Copied!',
+            text: 'Tracking code copied to clipboard!',
+            icon: 'success',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#16a34a'
+        });
     } catch (err) {
-        alert('Failed to copy. Please try again.');
+        Swal.fire({
+            title: 'Failed',
+            text: 'Failed to copy. Please try again.',
+            icon: 'error',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#dc2626'
+        });
         console.error(err);
     }
 };
 
-defineEmits(['close']);
+const handleClose = () => {
+    if (!hasCopied.value) {
+        Swal.fire({
+            title: 'Important!',
+            text: 'Please copy your tracking code before closing this modal.',
+            icon: 'warning',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#16a34a'
+        });
+        return;
+    }
+    // Reset the flag when closing
+    hasCopied.value = false;
+    // Emit the close event using the emit function
+    emit('close');
+};
 </script>
 
-
 <template>
-    <div v-if="show"  class="fixed z-[9999] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
+    <div v-if="show" class="fixed z-[50] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
         <div class="w-[35%] shadow-lg border rounded-lg bg-white">
             <div class="bg-green-600 p-5 rounded-lg">
                 <!-- Close Button -->
                 <div class="flex justify-end">
-                    <img @click="$emit('close')" :src="'/Images/SVG/x (white).svg'" alt="Close Icon" class="w-5 h-5 hover:cursor-pointer">
+                    <img @click="handleClose" :src="'/Images/SVG/x (white).svg'" alt="Close Icon" class="w-5 h-5 hover:cursor-pointer">
                 </div>
                 <div class="">
                     <!-- Icon -->
@@ -59,7 +94,6 @@ defineEmits(['close']);
                                 <p class="font-bold text-xs text-gray-600">{{ trackingCode || 'Not available' }}</p>
                             </div>
                             <button @click="copyToClipboard" title="Copy Tracking Code" class="bg-green-700 px-3 rounded-md">
-                                <!-- <font-awesome-icon icon="copy" class="text-white cursor-pointer text-sm p-5" /> -->
                                 <img :src="'/Images/SVG/copy (white).svg'" alt="Icon" class="h-5 w-5 cursor-pointer">
                             </button>  
                         </div>
@@ -80,7 +114,7 @@ defineEmits(['close']);
                     <div class="flex gap-1 text-[#FAF9F6] w-[50%] ">
                         <Link href="/track-reports" class="w-1/2 bg-gray-500 p-2 rounded hover:bg-gray-600 transition duration-300 text-center text-sm">Track Report</Link>
                         <button class="w-1/2 bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition-colors duration-300"
-                            @click="$emit('close')"
+                            @click="handleClose"
                             >
                         Okay
                         </button>
@@ -90,4 +124,3 @@ defineEmits(['close']);
         </div>
     </div>
 </template>
-                    

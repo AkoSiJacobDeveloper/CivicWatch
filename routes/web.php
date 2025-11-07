@@ -138,6 +138,9 @@ Route::prefix('admin')->group(function () {
         Route::post('/achievements/bulk-archive', [AchievementController::class, 'bulkArchive'])->name('admin.bulk-archived.achievement');
         Route::post('/achievements/bulk-restore', [AchievementController::class, 'bulkRestore'])->name('admin.bulk-restore.achievement');
         Route::delete('/achievements/bulk-delete', [AchievementController::class, 'bulkDelete'])->name('admin.bulk-deletes.achievement');
+
+        Route::get('/settings', fn() => Inertia::render('Admin/Settings'))->name('admin.settings');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('password.update');
     }); 
 });
 

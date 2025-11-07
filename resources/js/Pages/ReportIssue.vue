@@ -36,6 +36,17 @@ const form = useForm({
     longitude: null,
     gps_accuracy: null,
 });
+
+const restrictToNumbers = (event) => {
+    let value = event.target.value;
+    
+    // Remove any non-numeric characters
+    value = value.replace(/[^0-9]/g, '');
+    
+    // Update the form value
+    form.contact_number = value;
+};
+
 const showCameraModal = ref(false);
 const showImagePreviewModal = ref(false);
 
@@ -465,6 +476,27 @@ async function checkImageForEmergencyWithCanvas(canvas) {
         analyzingImage.value = false;
     }
 }
+
+function callEmergency(number) {
+    // Format number for tel: link
+    const formattedNumber = number.replace(/[^\d+]/g, '');
+    window.open(`tel:${formattedNumber}`, '_self');
+}
+
+function removeImageAndClose() {
+    emergencyDetected.value = false;
+    removeImage();
+    
+    // Optional: Show confirmation
+    Swal.fire({
+        title: 'Report Cancelled',
+        text: 'Emergency reports should be made directly to the appropriate authorities.',
+        icon: 'info',
+        confirmButtonText: 'Understand',
+        timer: 3000
+    });
+}
+
 function showImagePreview() {
     if (imagePreview.value) {
         showImagePreviewModal.value = true;
@@ -657,13 +689,10 @@ function submitForm() {
                 getCurrentLocation();
                 return;
             }
-            // Pass token to continueSubmission
             continueSubmission(token);
         });
         return;
     }
-
-    // If GPS is available, continue with submission
     continueSubmission(token);
 }
 function continueSubmission(token) {
@@ -935,13 +964,7 @@ function analyzeWithConservativeFallback(file) {
 
     return isClearEmergency;
 }
-function proceedAnyway() {
-    emergencyDetected.value = false;
-}
-function cancelEmergencySubmission() {
-    emergencyDetected.value = false;
-    removeImage();
-}
+
 function showEmergencyContacts() {
     Swal.fire({
         title: '🚨 Emergency Contacts',
@@ -976,6 +999,7 @@ onUnmounted(() => {
         URL.revokeObjectURL(imagePreview.value);
     }
 });
+
 onMounted(async () => {
     await fetchIssueType();
     await fetchBarangaysWithSitios();
@@ -1354,12 +1378,12 @@ onMounted(async () => {
                                         class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white">Contact Number
                                     </label>
                                     <div class="">
-                                    
                                         <input
                                             v-model="form.contact_number"
                                             type="tel"
                                             id="contact_number"
-                                            placeholder="+63xxxxxxxxxx"
+                                            placeholder="Enter contact number (numbers only)"
+                                            @input="restrictToNumbers"
                                             class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                             required
                                         />
@@ -1654,48 +1678,61 @@ onMounted(async () => {
                     <!-- Modal Header -->
                     <div class="bg-red-600 text-white p-4 rounded-t-lg">
                         <h3 class="text-lg font-semibold flex items-center gap-2">
-                            🚨 Emergency Detected
+                            🚨 Emergency Situation Detected
                         </h3>
                     </div>
                 
                     <!-- Modal Content -->
                     <div class="p-6">
                         <p class="text-gray-700 mb-4">
-                            Our system detected a possible emergency situation in your image.
+                            <strong>This appears to be an emergency situation.</strong> Our system is for <strong>non-urgent barangay concerns only</strong>.
                         </p>
                     
                         <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                            <h4 class="font-semibold text-red-800 mb-2">Emergency Contacts:</h4>
-                            <ul class="text-sm text-red-700 space-y-1">
-                                <li>🏥 <strong>Medical:</strong> 911</li>
-                                <li>🚒 <strong>Fire:</strong> 911</li>
-                                <li>🚓 <strong>Police:</strong> 911</li>
-                                <li>📍 <strong>Barangay:</strong> (02) 123-4567</li>
+                            <h4 class="font-semibold text-red-800 mb-2">Please contact emergency services immediately:</h4>
+                            <ul class="text-sm text-red-700 space-y-2">
+                                <li class="flex items-center gap-2">
+                                    <span class="font-bold">🏥 Medical Emergency:</span>
+                                    <span class="flex-1">911</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <span class="font-bold">🚒 Fire Department:</span>
+                                    <span class="flex-1">911</span>
+                                    
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <span class="font-bold">🚓 Police:</span>
+                                    <span class="flex-1">911</span>
+                                    
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <span class="font-bold">📍 Barangay Hotline:</span>
+                                    <span class="flex-1">(02) 123-4567</span>
+                                    
+                                </li>
                             </ul>
                         </div>
                     
-                        <p class="text-sm text-gray-600 mb-4">
-                            Please contact emergency services immediately if this is a real emergency.
+                        <p class="text-sm text-gray-600 mb-2">
+                            <strong>Important:</strong> For emergencies, direct phone calls are the fastest way to get help.
+                        </p>
+                        <p class="text-xs text-gray-500">
+                            This report cannot be submitted through our system as it requires immediate professional response.
                         </p>
                     </div>
                 
-                    <!-- Modal Footer -->
-                    <div class="flex gap-3 p-4 border-t">
+                    <!-- Modal Footer - REMOVED "Continue Anyway" -->
+                    <div class="flex gap-3 p-4 border-t bg-gray-50">
                         <button
-                            @click="cancelEmergencySubmission"
-                            class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors font-semibold"
+                            @click="removeImageAndClose"
+                            class="flex-1 bg-gray-500 text-white py-3 px-4 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
                         >
-                            🚨 Cancel - This is an Emergency
-                        </button>
-                        <button
-                            @click="proceedAnyway"
-                            class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
-                        >
-                            Continue Anyway
+                            Remove Image & Close
                         </button>
                     </div>
                 </div>
             </div>
+
             <!-- Analyzing Overlay -->
             <div v-if="analyzingImage" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div class="bg-white rounded-lg p-6 flex items-center gap-3">
@@ -1709,4 +1746,3 @@ onMounted(async () => {
         </main>
     </GuestLayout>
 </template>
-<!-- pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" -->

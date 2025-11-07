@@ -843,13 +843,18 @@ onUnmounted(() => {
     <AdminLayout>
         <main class="table-fixed flex flex-col gap-5 text-sm hide-scrollbar"> 
             <div class="flex justify-between">
-                <div class="flex gap-1 items-center">
-                    <img 
-                        :src="'/Images/SVG/clipboard-text-black.svg'" 
-                        alt="icon"
-                        class="h-8"
-                    >
-                    <h1 class="font-semibold text-3xl font-[Poppins] my-3">Reports</h1>
+                <div class="flex gap-3 items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <img 
+                            :src="'/Images/SVG/clipboard-text-black.svg'" 
+                            alt="icon"
+                            class="h-8"
+                        >
+                    </div>
+                    <div>
+                        <h1 class="font-semibold text-2xl font-[Poppins]">Reports</h1>
+                        <p class="text-gray-600 text-sm">Data-driven insights at a glance</p>
+                    </div>
                 </div>
 
                 <!-- Active Filter -->

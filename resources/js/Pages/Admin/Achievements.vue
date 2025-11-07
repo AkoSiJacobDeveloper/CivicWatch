@@ -434,13 +434,18 @@ const clearSelection = () => {
     <AdminLayout>
         <main class="flex flex-col gap-7 text-sm">
             <section class="flex justify-between items-center">
-                <div class="flex gap-1 items-center">
-                    <img 
-                        :src="'/Images/SVG/medal.svg'" 
-                        alt="icon"
-                        class="h-8"
-                    >
-                    <h1 class="font-semibold text-3xl font-[Poppins] my-3">Achievements</h1>
+                <div class="flex gap-3 items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <img 
+                            :src="'/Images/SVG/medal.svg'" 
+                            alt="icon"
+                            class="h-8"
+                        >
+                    </div>
+                    <div>   
+                        <h1 class="font-semibold text-3xl font-[Poppins]">Achievements</h1>
+                        <p class="text-gray-600 text-sm">Celebrate success and milestones</p>
+                    </div>
                 </div>  
 
                 <!-- Search -->

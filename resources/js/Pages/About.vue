@@ -111,18 +111,7 @@ const containers = [
 
 const teams = [
     { 
-        img: '/Images/Team/dan.jpg', 
-        name: 'Dan Christian Aguillon', 
-        role: '4th Year - Web Developer', 
-        course: 'Bachelor of Science in Information Technology',
-        socials: [
-            { link: '#', icon: 'facebook' },
-            { link: '#', icon: 'instagram' },
-            { link: '#', icon: 'twitter' },
-        ]
-    },
-    { 
-        img: '/Images/Team/jacob.jpg', 
+        img: '/Images/Team/jacob.png', 
         name: 'Paul Jacob Tocmo', 
         role: '4th Year - Web Developer', 
         course: 'Bachelor of Science in Information Technology',
@@ -133,7 +122,18 @@ const teams = [
         ]
     },
     { 
-        img: '/Images/Team/jarred.jpg', 
+        img: '/Images/Team/dan.png', 
+        name: 'Dan Christian Aguillon', 
+        role: '4th Year - Web Developer', 
+        course: 'Bachelor of Science in Information Technology',
+        socials: [
+            { link: '#', icon: 'facebook' },
+            { link: '#', icon: 'instagram' },
+            { link: '#', icon: 'twitter' },
+        ]
+    },
+    { 
+        img: '/Images/Team/jarred.png', 
         name: 'Jarred Ruba', 
         role: '4th Year - Web Developer', 
         course: 'Bachelor of Science in Information Technology',
@@ -144,7 +144,7 @@ const teams = [
         ]
     },
     { 
-        img: '/Images/Team/makoy.jpg', 
+        img: '/Images/Team/makoy.png', 
         name: 'Mark Lester Jumao-as', 
         role: '4th Year - Web Developer', 
         course: 'Bachelor of Science in Information Technology',
@@ -274,12 +274,12 @@ const teams = [
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <div v-for="(team, i) in teams" :key="i" class="h-auto min-h-[300px] lg:h-[300px] flex flex-col lg:flex-row glass-card hover:-translate-y-1">
-                        <div class="w-full lg:w-1/2 flex justify-center items-center p-4 lg:p-0">
-                            <div class="h-32 w-32 lg:h-[80%] lg:w-[80%]">
-                                <img :src="team.img" alt="CivicWatch Team Images" class="object-cover h-full w-full rounded-full">
+                        <div class="w-full lg:w-1/3 flex justify-start p-4 lg:p-0">
+                            <div class="h-full p-2">
+                                <img :src="team.img" alt="CivicWatch Team Images" class="object-cover h-full w-full rounded-lg">
                             </div>
                         </div>
-                        <div class="w-full lg:w-1/2 text-[#FAF9F6] p-4 lg:p-5 flex flex-col justify-center">
+                        <div class="w-full lg:w-2/3 text-[#FAF9F6] p-4 lg:p-5 flex flex-col justify-center">
                             <div class="w-full h-1/2 flex flex-col justify-center">
                                 <h3 class="font-bold text-lg">{{ team.name }}</h3>
                                 <p class="text-sm">{{ team.role }}</p>

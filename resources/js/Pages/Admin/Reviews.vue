@@ -149,13 +149,19 @@ onUnmounted(() => {
     <AdminLayout>
         <main class="flex flex-col gap-7 text-sm">
             <div class="flex justify-between items-center">
-                <div class="flex gap-1 items-center">
-                    <img 
-                        :src="'/Images/SVG/chat-circle-dots (black).svg'" 
-                        alt="icon"
-                        class="h-8"
-                    >
-                    <h1 class="font-semibold text-3xl font-[Poppins] my-3">Reviews</h1>
+                <div class="flex gap-3 items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <img 
+                            :src="'/Images/SVG/chat-circle-dots (black).svg'" 
+                            alt="icon"
+                            class="h-8"
+                        >
+                    </div>
+                    <div>
+                        <h1 class="font-semibold text-2xl font-[Poppins]3">Reviews</h1>
+                        <p class="text-gray-600 text-sm">Feedback and progress, centralized</p>
+                    </div>
+                    
                 </div>
                 <div>
                     <button

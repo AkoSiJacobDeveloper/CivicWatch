@@ -68,18 +68,26 @@ const secLinks = [
     }
 ]
 
+const settings = [
+    {
+        url: '/admin/settings',
+        urlPage: 'Settings',
+        image: '/Images/SVG/gear-six.svg',
+        svg: `<svg class="shrink-0 w-6 h-6 text-white transition duration-75 dark:text-gray-400 dark:group-hover:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+        </svg>`
+    }
+]
+
 const isLinkActive = (linkUrl) => {
     const currentUrl = page.url
     
-    // Remove query parameters and trailing slashes for comparison
     const cleanCurrentUrl = currentUrl.split('?')[0].replace(/\/$/, '')
     const cleanLinkUrl = linkUrl.replace(/\/$/, '')
     
-    // Exact match first
     if (cleanCurrentUrl === cleanLinkUrl) return true
     
-    // For nested routes (like pagination with route parameters)
-    // Check if current URL starts with the link URL followed by a slash
     if (cleanCurrentUrl.startsWith(cleanLinkUrl + '/')) return true
     
     return false
@@ -223,6 +231,33 @@ function openLogoutModal() {
                                 :class="isCollapsed ? 'opacity-0' : 'opacity-100'"
                             >
                                 {{ secLink.urlPage }}
+                            </span>
+                        </Link>
+                    </li>
+
+                    <hr class="border-t border-gray-400 opacity-50">
+
+                    <li
+                        v-for="(setting, index) in settings" :key="index"
+                    >
+                        <Link
+                            :href="setting.url" 
+                            class="flex items-center p-3 text-white rounded-lg dark:text-white hover:bg-blue-600 dark:hover:bg-gray-700 group transition-colors duration-200"
+                            :class="[
+                                isLinkActive(setting.url) ? 'bg-blue-900 dark:bg-gray-700 text-black' : '',
+                                isCollapsed ? 'justify-center' : ''
+                            ]"
+                        >
+                            <!-- SVG Icon -->
+                            <div v-html="setting.svg" class="shrink-0"></div>
+                            
+                            <!-- Link Text -->
+                            <span 
+                                v-show="!isCollapsed"
+                                class="ms-3 transition-opacity duration-300"
+                                :class="isCollapsed ? 'opacity-0' : 'opacity-100'"
+                            >
+                                {{ setting.urlPage }}
                             </span>
                         </Link>
                     </li>

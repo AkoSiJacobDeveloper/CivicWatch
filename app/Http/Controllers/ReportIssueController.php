@@ -55,12 +55,12 @@ class ReportIssueController extends Controller
         'barangay_id' => 'required|exists:barangays,id',
         'sitio_id' => 'required|exists:sitios,id',
         'sender_name' => 'required|string|max:255',
-        'contact_number' => 'required|string|max:20',
+        'contact_number' => 'required|numeric|digits_between:1,20',
         'remarks' => 'nullable|string',
         'g-recaptcha-response' => 'required|string',
-        'latitude' => 'nullable|numeric|between:-90,90',
-        'longitude' => 'nullable|numeric|between:-180,180',
-        'gps_accuracy' => 'nullable|numeric|min:0',
+        'latitude' => 'sometimes|nullable|numeric|between:-90,90',        // CHANGED
+        'longitude' => 'sometimes|nullable|numeric|between:-180,180',     // CHANGED
+        'gps_accuracy' => 'sometimes|nullable|numeric|min:0',         
     ]);
 
     $barangay = Barangay::find($request->barangay_id);
@@ -147,56 +147,63 @@ class ReportIssueController extends Controller
                 'remarks' => $validated['remarks'],
                 'priority_level' => $priority,
                 'status' => 'pending',
-                'latitude' => $validated['latitude'] ? (float)$validated['latitude'] : null,         
-                'longitude' => $validated['longitude'] ? (float)$validated['longitude'] : null,       
-                'gps_accuracy' => $validated['gps_accuracy'] ? (float)$validated['gps_accuracy'] : null, 
+                'latitude' => isset($validated['latitude']) ? (float)$validated['latitude'] : null,         // CHANGED
+                'longitude' => isset($validated['longitude']) ? (float)$validated['longitude'] : null,      // CHANGED
+                'gps_accuracy' => isset($validated['gps_accuracy']) ? (float)$validated['gps_accuracy'] : null, // CHANGED
             ]);
 
             break;
 
-            } catch (\Illuminate\Database\QueryException $e) {
-                if (str_contains($e->getMessage(), 'Duplicate entry') && str_contains($e->getMessage(), 'tracking_code_unique')) {
-                    $retryCount++;
-                    
-                    // Generate new tracking code
-                    $sequence = str_pad((int)$sequence + 1, 3, '0', STR_PAD_LEFT);
-                    $trackingCode = "CW-{$today}-{$sequence}";
-                    
-                    if ($retryCount === $maxRetries) {
-                        Log::error('Failed to generate unique tracking code after ' . $maxRetries . ' attempts. Last attempted code: ' . $trackingCode);
-                        return back()->withErrors(['error' => 'Unable to generate unique tracking code. Please try again.']);
-                    }
-                    
-                    continue;
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (str_contains($e->getMessage(), 'Duplicate entry') && str_contains($e->getMessage(), 'tracking_code_unique')) {
+                $retryCount++;
+                
+                // Generate new tracking code
+                $sequence = str_pad((int)$sequence + 1, 3, '0', STR_PAD_LEFT);
+                $trackingCode = "CW-{$today}-{$sequence}";
+                
+                if ($retryCount === $maxRetries) {
+                    Log::error('Failed to generate unique tracking code after ' . $maxRetries . ' attempts. Last attempted code: ' . $trackingCode);
+                    return back()->withErrors(['error' => 'Unable to generate unique tracking code. Please try again.']);
                 }
-                throw $e;
+                
+                continue;
             }
+            throw $e;
         }
+    } // ← THIS CLOSING BRACE WAS MISSING!
 
-        // Firebase integration
-        try {
-            // Map your fields to what the alarm system expects
-            $firebaseData = [
-                'type' => $validated['issue_type'],
-                'severity' => strtolower($priority), // Convert "High" to "high"
-                'description' => $validated['description'],
-                'location' => $barangay->name . ', ' . $sitio->name
-            ];
+    // Firebase integration
+    try {
+        Log::info("🔄 Attempting to send report {$report->id} to Firebase");
+        
+        // Map your fields to what the alarm system expects
+        $firebaseData = [
+            'type' => $validated['issue_type'],
+            'severity' => strtolower($priority), // Convert "High" to "high"
+            'description' => $validated['description'],
+            'location' => $barangay->name . ', ' . $sitio->name
+        ];
 
-            // Send to Firebase (use the report ID as document ID)
-            $this->firebaseService->sendReportToFirestore($report->id, $firebaseData);
-            
-        } catch (\Exception $e) {
-            // Log error but don't break the report submission
-            Log::error('Failed to send report to Firebase: ' . $e->getMessage());
+        // Send to Firebase (use the report ID as document ID)
+        $result = $this->firebaseService->sendReportToFirestore($report->id, $firebaseData);
+        
+        if ($result) {
+            Log::info("✅ Successfully sent to Firebase for report ID: {$report->id}");
+        } else {
+            Log::error("❌ Failed to send to Firebase for report ID: {$report->id}");
         }
-
-        return redirect()->back()->with([
-            'tracking_code' => $trackingCode,
-            'status' => 'success',
-            'location' => "{$barangay->name}, {$sitio->name}",
-        ]);
+        
+    } catch (\Exception $e) {
+        Log::error("🔥 Firebase Error in controller: " . $e->getMessage());
     }
+
+    return redirect()->back()->with([
+        'tracking_code' => $trackingCode,
+        'status' => 'success',
+        'location' => "{$barangay->name}, {$sitio->name}",
+    ]);
+}
 
     public function checkEmergency(Request $request)
 {

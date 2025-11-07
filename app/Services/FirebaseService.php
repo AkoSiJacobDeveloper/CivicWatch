@@ -21,6 +21,8 @@ class FirebaseService
             // Firestore REST API URL
             $url = "https://firestore.googleapis.com/v1/projects/{$this->projectId}/databases/(default)/documents/reports/{$reportId}";
             
+            Log::info("📡 Sending to Firebase URL: {$url}");
+            
             // Firestore requires a specific document structure
             $firestoreData = [
                 'fields' => [
@@ -34,21 +36,25 @@ class FirebaseService
                 ]
             ];
 
+            Log::info("📦 Firebase payload prepared");
+
             // Make the API request
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
             ])->patch($url, $firestoreData);
 
+            Log::info("📊 Firebase response status: " . $response->status());
+
             if ($response->successful()) {
-                Log::info("Report {$reportId} sent to Firebase successfully");
+                Log::info("✅ Report {$reportId} sent to Firebase successfully");
                 return true;
             } else {
-                Log::error('Firebase API Error: ' . $response->body() . ' | Status: ' . $response->status());
+                Log::error('❌ Firebase API Error - Status: ' . $response->status() . ' | Body: ' . $response->body());
                 return false;
             }
 
         } catch (\Exception $e) {
-            Log::error('Firebase Firestore Error: ' . $e->getMessage());
+            Log::error('🔥 Firebase Firestore Error: ' . $e->getMessage());
             return false;
         }
     }
