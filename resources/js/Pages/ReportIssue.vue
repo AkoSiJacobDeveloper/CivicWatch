@@ -1072,7 +1072,7 @@ onMounted(async () => {
                                         v-model="form.title"
                                         type="text"
                                         id="title"
-                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Uncollected Garbage"
+                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Uncollected Garbage"
                                         required
                                     />
                                     <!-- Character Indicator -->
@@ -1100,7 +1100,7 @@ onMounted(async () => {
                                         v-model="form.sender_name"
                                         type="text"
                                         id="title"
-                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Joe Doe"
+                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Joe Doe"
                                         required
                                     />
                                     <!-- Character Indicator -->
@@ -1384,7 +1384,7 @@ onMounted(async () => {
                                             id="contact_number"
                                             placeholder="Enter contact number (numbers only)"
                                             @input="restrictToNumbers"
-                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                             required
                                         />
                                     </div>
@@ -1423,7 +1423,7 @@ onMounted(async () => {
                                 <div class="mt-5 mb-3">
                                     <label
                                         for="upload"
-                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white">Upload Photo
+                                        class="block mb-2 text-xs md:text-sm font-medium dark:bg-[#2c2c2c] dark:text-white">Upload Photo
                                     </label>
 
                                     <div class="flex flex-col gap-2">
