@@ -15,7 +15,6 @@ import ApplicationImage from './ApplicationImage.vue';
                     </div>
                     <p class="text-xs mt-1 font-semibold text-blue-900">REPORT.ACT.RESOLVE</p>
                 </div>
-                
             </div>
         </div>
     </Link>

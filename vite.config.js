@@ -8,11 +8,34 @@ export default defineConfig({
     //     port: 5173,
     //     strictPort: true,
     //     hmr: {
-    //         host: '10.165.13.40', 
+    //         host: '192.168.100.4', 
     //     },
     //     cors: {
-    //         origin: ['http://10.165.13.40:8000', 'http://localhost:8000'],
+    //         origin: ['http://192.168.100.4:8000', 'http://localhost:8000'],
     //         credentials: true,
+    //     },
+    // },
+    // 
+    // server: {
+    //     host: '192.168.100.4', // Your WiFi IP
+    //     port: 5173,
+    //     strictPort: true,
+    //     hmr: {
+    //         host: '192.168.100.4',
+    //         protocol: 'ws',
+    //     },
+    //     cors: true, // Simple CORS enable
+    // },
+    // server: {
+    //     host: '0.0.0.0',
+    //     port: 5173,
+    //     hmr: {
+    //         host: '10.208.188.40', // Your actual IP
+    //         port: 5173,
+    //         protocol: 'ws'
+    //     },
+    //     watch: {
+    //         usePolling: true,
     //     },
     // },
     plugins: [
@@ -29,4 +52,8 @@ export default defineConfig({
             },
         }),
     ],
+    define: {
+    __VUE_OPTIONS_API__: true,
+    __VUE_PROD_DEVTOOLS__: false,
+    }
 });

@@ -81,24 +81,24 @@ function toggleSort() {
 
     <GuestLayout>
         <main class="dark:text-[#FAF9F6]">
-            <section class="hero-section h-screen text-[#000] md:px-10 lg:px-32 flex ">
-                <div class="w-full h-full md:w-1/2 md:flex justify-center items-center">
+            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center">
+                <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
                     <div class="">
-                        <h1 class="text-6xl font-bold font-[Poppins] mb-5 text-blue-700">What People Are Saying</h1>
-                        <p class="text-justify text-lg dark:text-[#faf9f6]">See how our platform is helping residents report and solve local problems. These stories show real impact, from fixing small issues to improving the community, and why people rely on our system to make their neighborhoods better.</p>
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">What People Are Saying</h1>
+                        <p class="text-justify text-base sm:text-lg dark:text-[#faf9f6]">See how our platform is helping residents report and solve local problems. These stories show real impact, from fixing small issues to improving the community, and why people rely on our system to make their neighborhoods better.</p>
                         <button @click="openReviewModal" class="bg-blue-500 px-4 py-2 mt-4 rounded text-[#FAF9F6] hover:bg-blue-600 transition-all duration-300">Write a Review</button>
                     </div>
                 </div>
-                <div class="hidden md:w-1/2 h-full md:flex justify-center items-center">
-                    <div class="hidden md:flex justify-end">
+                <div class="hidden lg:flex w-full lg:w-1/2 justify-center items-center">
+                    <div class="flex justify-center lg:justify-end">
                         <img :src="'/Images/testimonials.svg'" alt="Community" class="w-[30rem]">
                     </div>
                 </div>
             </section>
 
             <!-- Review Section -->
-            <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
-                <div class="flex justify-between items-center">
+            <section class="px-4 sm:px-6 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-8 lg:gap-10">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ">
                     <div class="">
                         <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Reviews</h2>
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">See what people are saying and share your own experience.</p>
@@ -109,8 +109,7 @@ function toggleSort() {
                         <!-- Refresh Button -->
                         <button
                             @click="pollForNewReviews"
-                            class="border p-3 rounded flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors group duration-300"
-                            title="Check for new reviews"
+                            class="border p-2 sm:p-3 rounded flex items-center gap-1 sm:gap-2 hover:bg-green-500 hover:text-white transition-colors group duration-300 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-green-600 text-sm sm:text-base"
                         >
                             <span>Refresh</span>
                             <img 
@@ -128,7 +127,7 @@ function toggleSort() {
                         
                         <button
                             @click="toggleSort"
-                            class="border p-3 rounded flex items-center gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300"
+                            class="border p-2 sm:p-3 rounded flex items-center gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300 text-sm sm:text-base"
                         >
                             <span>{{ sortOrder === 'desc' ? 'Newest' : 'Oldest' }}</span>
                             <svg 
@@ -147,42 +146,42 @@ function toggleSort() {
                 </div>
                 
                 <div v-if="!reviews.data || reviews.data.length === 0"  class="text-center text-gray-500">
-                    <p class="text-xl mb-4 py-20">No reviews yet. Be the first to write one!</p>
+                    <p class="text-lg sm:text-xl mb-4 py-20">No reviews yet. Be the first to write one!</p>
                 </div>
                 
-                <div class="grid grid-cols-3 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div 
                         v-for="review in props.reviews.data" 
                         :key="review.id" 
                         :class="[
-                            'shadow-lg rounded-lg p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] transition-all duration-500',
+                            'shadow-lg rounded-lg p-6 sm:p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] transition-all duration-500',
                             isNewReview(review.id) ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20 animate-pulse' : ''
                         ]"
                     >
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
-                                <img :src="'/Images/SVG/quote-30-double-open.svg'" alt="Quotation Icon" class="h-12">
-                                <p class="text-sm text-gray-600 dark:text-[#faf9f6]">{{ review.created_at }}</p>
+                                <img :src="'/Images/SVG/quote-30-double-open.svg'" alt="Quotation Icon" class="h-10 sm:h-12">
+                                <p class="text-xs sm:text-sm text-gray-600 dark:text-[#faf9f6]">{{ review.created_at }}</p>
                             </div>
                             <div class="h-[145px] overflow-y-auto">
-                                <p class="text-gray-600 text-base dark:text-[#faf9f6]">{{ review.review_message }}</p>
+                                <p class="text-sm sm:text-base text-gray-600 dark:text-[#faf9f6]">{{ review.review_message }}</p>
                             </div>
                         </div>
                         
-                        <div class="flex justify-between items-center">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div class="flex items-center gap-1">
                                 <div>
                                     <img 
                                         :src="'/Images/SVG/user-circle-fill.svg'"
                                         :alt="Icon"
                                         :class="review.is_anonymous ? 'opacity-55': 'opacity-100'"
-                                        class="h-10 w-10"
+                                        class="h-8 w-8 sm:h-10 sm:w-10"
                                     />
                                 </div>
                     
                                 <div>
                                     <!-- Update these lines to use display names -->
-                                    <span class="font-bold text-base font-[Poppins]">
+                                    <span class="font-bold text-sm sm:text-base font-[Poppins]">
                                         {{ review.is_anonymous ? 'Anonymous User' : review.name }}
                                     </span>
                                     <p class="text-gray-600 text-xs dark:text-[#faf9f6]">
@@ -194,10 +193,11 @@ function toggleSort() {
                             <div class="flex items-center justify-between mb-2">
                                 <div class="flex items-center space-x-1">
                                     <span v-for="star in 5" :key="star" 
-                                        :class="star <= review.rating ? 'text-yellow-400' : 'text-gray-300'">
+                                        :class="star <= review.rating ? 'text-yellow-400' : 'text-gray-300'"
+                                        class="text-lg sm:text-xl">
                                         ★
                                     </span>
-                                    <span v-if="review.rating" class="ml-1 text-sm text-gray-600">
+                                    <span v-if="review.rating" class="ml-1 text-xs sm:text-sm text-gray-600">
                                         ({{ review.rating }}/5)
                                     </span>
                                 </div>
@@ -207,13 +207,12 @@ function toggleSort() {
                 </div>
                 
                 <!-- Pagination -->
-                <div v-if="reviews.data && reviews.data.length > 0" class="flex justify-end mt-10">
-                    <div class="flex items-center gap-3 rounded">
+                <div v-if="reviews.data && reviews.data.length > 0" class="flex justify-center sm:justify-end mt-10">
+                    <div class="flex items-center gap-2 sm:gap-3 rounded">
                         <template v-for="link in (props.reviews.links || [])" :key="link?.label || 'empty'">
                             <Link
                                 v-if="link.url"
-                                :href="link.url"
-                                :class="['w-10 h-10 grid place-items-center border border-gray-400 rounded justify-center hover:bg-blue-400 transition-all duration-300 hover:text-[#FAF9F6] font-[Poppins]', link.active ? 'bg-blue-600 text-[#FAF9F6] border-none' : '']"
+                                :class="['w-8 h-8 sm:w-10 sm:h-10 grid place-items-center border border-gray-400 rounded justify-center hover:bg-blue-400 transition-all duration-300 hover:text-[#FAF9F6] font-[Poppins] text-sm sm:text-base', link.active ? 'bg-blue-600 text-[#FAF9F6] border-none' : '']"
                             >
                                 <span v-if="link.label.includes('Previous')" class="">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">
@@ -229,7 +228,7 @@ function toggleSort() {
                             </Link>
                             <span
                                 v-else
-                                :class="'px-3 py-1 text-gray-500 cursor-not-allowed'"
+                                :class="'px-2 py-1 sm:px-3 sm:py-1 text-gray-500 cursor-not-allowed'"
                             >
                                 <span v-if="link.label.includes('Previous')">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">

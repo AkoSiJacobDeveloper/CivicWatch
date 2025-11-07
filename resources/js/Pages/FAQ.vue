@@ -151,41 +151,41 @@ const types = [
 
     <GuestLayout>
         <main class="dark:text-[#FAF9F6]">
-            <section class="hero-section h-screen text-[#000] md:px-10 lg:px-32 flex ">
-                <div class="w-full h-full md:w-1/2 md:flex justify-center items-center">
-                    <div class="">
-                        <h1 class="text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Have Questions? We’ve Got Answers!</h1>
-                        <p class="text-justify text-lg dark:text-[#faf9f6]">CivicWatch is built to be simple, but we understand that you might have questions about how it all works. Whether you're unsure about how to report a local issue, track your submission, or understand the process behind the scenes, this page is here to help. Browse through the frequently asked questions to get clear answers and make the most out of your experience as an active community participant.</p>
+            <section class="pt-44 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center">
+                <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
+                    <div class="text-left">
+                        <h1 class="text-3xl sm:text-4xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Have Questions? We've Got Answers!</h1>
+                        <p class="text-justify text-base sm:text-lg dark:text-[#faf9f6]">CivicWatch is built to be simple, but we understand that you might have questions about how it all works. Whether you're unsure about how to report a local issue, track your submission, or understand the process behind the scenes, this page is here to help. Browse through the frequently asked questions to get clear answers and make the most out of your experience as an active community participant.</p>
                     </div>
                 </div>
-                <div class="hidden md:w-1/2 h-full md:flex justify-center items-center">
-                    <div class="hidden md:flex justify-end">
-                        <!-- <img :src="'/Images/Shrug-bro.svg'" alt="Community" class="w-[30rem]"> -->
-                        <img :src="'/Images/questions.svg'" alt="Questions" class="w-[30rem]">
+                <div class="hidden lg:flex w-full lg:w-1/2 justify-center items-center">
+                    <div class="flex justify-center lg:justify-end">
+                        <img :src="'/Images/questions.svg'" alt="Questions" class="w-64 sm:w-80 lg:w-[30rem]">
                     </div>
                 </div>
             </section>
 
-            <section class="text-[#000] md:px-10 lg:px-32 flex flex-col gap-10">
-                <div class="">
-                    <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Frequently Ask Question</h2>
+            <section class="text-[#000] px-4 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-6 lg:gap-10">
+                <div class="text-left">
+                    <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white">Frequently Asked Questions</h2>
                     <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">See how <span class="font-bold">CivicWatch</span> improves community engagement, transparency, and response time.</p>
                 </div>
-                <div v-for="(type, typeIndex) in types" :key="typeIndex" class="flex flex-col gap-2">
-                    <div class="flex gap-2">
-                        <div class="bg-blue-500 rounded-full h-10 w-10 flex justify-center items-center">
-                            <font-awesome-icon :icon="type.icon" class="text-[#FAF9F6] p-3 text-lg " />
+                
+                <div v-for="(type, typeIndex) in types" :key="typeIndex" class="flex flex-col gap-4">
+                    <div class="flex gap-3 items-center">
+                        <div class="bg-blue-500 rounded-full h-8 w-8 sm:h-10 sm:w-10 flex justify-center items-center flex-shrink-0">
+                            <font-awesome-icon :icon="type.icon" class="text-[#FAF9F6] p-2 sm:p-3 text-sm sm:text-lg" />
                         </div>
-                        <h3 class="text-lg font-bold flex justify-center items-center font-[Poppins] dark:text-[#FAF9F6]">{{ type.headline }}</h3>
+                        <h3 class="text-lg sm:text-xl font-bold font-[Poppins] dark:text-[#FAF9F6]">{{ type.headline }}</h3>
                     </div>
                     
-                    <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-3 sm:gap-4">
                         <Disclosure v-for="(item, index) in type.items" :key="index" as="div" class="">
                             <template v-slot="{ open }">
                                 <DisclosureButton
-                                    class="w-full text-left bg-white p-4 rounded-md flex justify-between items-center border-l-4 border-[#2b6cb0] shadow-md hover:bg-blue-100 hover:translate-x-2 transition-all duration-300 dark:bg-[#2c2c2c] ">
-                                    <span class="text-black dark:text-white">{{ item.question }}</span>
-                                    <span class="text-black dark:text-white">{{ open ? '−' : '+' }}</span>
+                                    class="w-full text-left bg-white p-3 sm:p-4 rounded-md flex justify-between items-center border-l-4 border-[#2b6cb0] shadow-md hover:bg-blue-100 hover:translate-x-1 sm:hover:translate-x-2 transition-all duration-300 dark:bg-[#2c2c2c] text-sm sm:text-base">
+                                    <span class="text-black dark:text-white pr-2">{{ item.question }}</span>
+                                    <span class="text-black dark:text-white text-lg font-semibold flex-shrink-0">{{ open ? '−' : '+' }}</span>
                                 </DisclosureButton>
                                 <transition
                                     enter-active-class="transition duration-300 ease-in-out"
@@ -195,9 +195,8 @@ const types = [
                                     leave-from-class="transform scale-100 opacity-100"
                                     leave-to-class="transform scale-95 opacity-0"
                                 >
-                                    <DisclosurePanel class="p-4  rounded-md ">
-                                        <p class="text-gray-700 dark:text-white"> {{ item.answer }} </p>
-                                        
+                                    <DisclosurePanel class="p-3 sm:p-4 rounded-md">
+                                        <p class="text-gray-700 dark:text-white text-sm sm:text-base"> {{ item.answer }} </p>
                                     </DisclosurePanel>
                                 </transition>
                             </template>

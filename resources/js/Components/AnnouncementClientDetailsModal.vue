@@ -134,30 +134,30 @@ onUnmounted(() => {
 <template>
     <div 
         v-if="show" 
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-[9999]"
         @click.self="handleBackdropClick"
     >
         <div 
-            class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+            class="bg-white rounded-lg max-w-full sm:max-w-2xl lg:max-w-3xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-0"
             role="dialog"
             aria-labelledby="modal-title"
             aria-modal="true"
         >
             <!-- Modal Header -->
-            <div class="flex justify-between items-start bg-blue-700 p-6">
-                <div>
-                    <h2 id="modal-title" class="text-3xl font-bold text-white mb-3">{{ announcements?.title }}</h2>
-                    <div class="flex gap-5">
+            <div class="flex justify-between items-start bg-blue-700 p-4 sm:p-6">
+                <div class="flex-1">
+                    <h2 id="modal-title" class="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2 sm:mb-3">{{ announcements?.title }}</h2>
+                    <div class="flex flex-col sm:flex-row sm:gap-5 gap-2">
                         <div class="flex gap-1">
                             <div class="flex justify-center items-center">
-                                <img :src="'/Images/SVG/calendar (white).svg'" alt="Icon" class="h-4 w-4 flex">
+                                <img :src="'/Images/SVG/calendar (white).svg'" alt="Icon" class="h-3 w-3 sm:h-4 sm:w-4 flex">
                             </div>
                             <span class="text-white text-xs">{{ formatDate(announcements?.event_date) }}</span>
                         </div>
                         <div>
                             <div class="flex gap-1">
                                 <div class="flex justify-center items-center">
-                                    <img :src="'/Images/SVG/user (white).svg'" alt="Icon" class="h-4 w-4 flex">
+                                    <img :src="'/Images/SVG/user (white).svg'" alt="Icon" class="h-3 w-3 sm:h-4 sm:w-4 flex">
                                 </div>
                                 <span class="text-white text-xs">System Administrator</span>
                             </div>
@@ -165,7 +165,7 @@ onUnmounted(() => {
                         <div>
                             <div class="flex gap-1">
                                 <div class="flex justify-center items-center">
-                                    <img :src="'/Images/SVG/map-pin-area.svg'" alt="Icon" class="h-4 w-4 flex">
+                                    <img :src="'/Images/SVG/map-pin-area.svg'" alt="Icon" class="h-3 w-3 sm:h-4 sm:w-4 flex">
                                 </div>
                                 <span class="text-white text-xs">{{ announcements.venue || 'Not Specified' }}</span>
                             </div>
@@ -174,27 +174,26 @@ onUnmounted(() => {
                 </div>
                 <button 
                     @click="close"
-                    class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded "
+                    class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded ml-2"
                     aria-label="Close modal"
                 >
-                    <img :src="'/Images/SVG/x (white).svg'" alt="Close Icon" class="h-5 w-5">
+                    <img :src="'/Images/SVG/x (white).svg'" alt="Close Icon" class="h-4 w-4 sm:h-5 sm:w-5">
                 </button>
             </div>
 
-            <div class="h-96 overflow-y-auto">
+            <div class="max-h-96 overflow-y-auto">
                 <!-- Modal Content -->
-                <div class="px-6 ">
+                <div class="px-4 sm:px-6">
                     <!-- Announcement -->
                     <div class="my-3">
-                        <!-- <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">CONTENT</span> -->
-                        <p class="text-gray-600 whitespace-pre-line">{{ announcements?.content }}</p>
+                        <p class="text-gray-600 whitespace-pre-line text-sm sm:text-base">{{ announcements?.content }}</p>
                     </div>
 
                     <!-- Priority Level -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">PRIORITY</span>
                         <p 
-                            class="text-lg font-semibold"
+                            class="text-base sm:text-lg font-semibold"
                             :class="announcements?.level === 'urgent'
                                 ? 'text-red-700' : announcements?.level === 'important'
                                 ? 'text-amber-500' : 'text-green-700'"
@@ -206,25 +205,25 @@ onUnmounted(() => {
                     <!-- Category -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">CATEGORY</span>
-                        <p class="text-lg font-semibold text-blue-500">{{ announcements?.category.name }}</p>
+                        <p class="text-base sm:text-lg font-semibold text-blue-500">{{ announcements?.category.name }}</p>
                     </div>
 
                     <!-- Contact Person -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">CONTACT PERSON</span>
-                        <p class="text-lg font-semibold text-blue-500">{{ announcements?.contact_person }}</p>
+                        <p class="text-base sm:text-lg font-semibold text-blue-500">{{ announcements?.contact_person }}</p>
                     </div>
 
                     <!-- Contact Number -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">CONTACT NUMBER</span>
-                        <p class="text-lg font-semibold text-blue-500">{{ announcements?.contact_number }}</p>
+                        <p class="text-base sm:text-lg font-semibold text-blue-500">{{ announcements?.contact_number }}</p>
                     </div>
 
                     <!-- LOCATIONS -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">LOCATION</span>
-                        <p class="text-lg font-semibold text-blue-500">
+                        <p class="text-base sm:text-lg font-semibold text-blue-500">
                             {{ announcements?.purok === 'all' ? 'All Purok/Sitio' : announcements?.specific_area }}
                         </p>
                     </div>
@@ -250,8 +249,8 @@ onUnmounted(() => {
                                     class="flex items-center gap-3 hover:bg-gray-50 transition-colors"
                                 >
                                 
-                                    <div class="flex-1 border border-blue-200 bg-blue-50 px-3 py-3 rounded-md">
-                                        <span class="text-blue-500 font-semibold">{{ audience.name }}</span>
+                                    <div class="flex-1 border border-blue-200 bg-blue-50 px-3 py-2 sm:py-3 rounded-md">
+                                        <span class="text-blue-500 font-semibold text-sm sm:text-base">{{ audience.name }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -269,15 +268,15 @@ onUnmounted(() => {
                                     class="flex items-center gap-3 hover:bg-gray-50 transition-colors"
                                 >
                                 
-                                    <div class="flex-1 border border-blue-200 bg-blue-50 px-3 py-3 rounded-md">
-                                        <span class="text-blue-500 font-semibold">{{ department.name }}</span>
+                                    <div class="flex-1 border border-blue-200 bg-blue-50 px-3 py-2 sm:py-3 rounded-md">
+                                        <span class="text-blue-500 font-semibold text-sm sm:text-base">{{ department.name }}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div v-if="!announcements?.departments?.length" class="text-gray-500">
-                            <span class="font-medium">No departments specified for this announcement</span>
+                            <span class="font-medium text-sm sm:text-base">No departments specified for this announcement</span>
                         </div>
                     </div>
 
@@ -292,8 +291,8 @@ onUnmounted(() => {
                                     class="flex items-center gap-3 hover:bg-gray-50 transition-colors"
                                 >
                                 
-                                    <div class="flex-1 border border-blue-200 bg-blue-50 px-3 py-1 rounded-md">
-                                        <span class="text-blue-500 font-semibold">{{ document.name }}</span>
+                                    <div class="flex-1 border border-blue-200 bg-blue-50 px-3 py-1 sm:py-2 rounded-md">
+                                        <span class="text-blue-500 font-semibold text-sm sm:text-base">{{ document.name }}</span>
                                         <span class="text-xs text-gray-500 block capitalize">{{ document.document_type?.toLowerCase() }}</span>
                                     </div>
                                 </div>
@@ -303,30 +302,30 @@ onUnmounted(() => {
                         <!-- Custom "Other" Document -->
                         <div v-if="announcements?.other_document" class="mt-3">
                             <p class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">ADDITIONAL REQUIREMENTS</p>
-                            <div class="p-3 border rounded-lg bg-blue-50 border-blue-200">
-                                <span class="text-blue-500 font-medium">{{ announcements.other_document }}</span>
+                            <div class="p-2 sm:p-3 border rounded-lg bg-blue-50 border-blue-200">
+                                <span class="text-blue-500 font-medium text-sm sm:text-base">{{ announcements.other_document }}</span>
                             </div>
                         </div>
 
                         <!-- No Documents Message -->
                         <div v-if="!announcements?.documents?.length && !announcements?.other_document" class="text-gray-500">
-                            <span class="font-medium">No documents required for this announcement</span>
+                            <span class="font-medium text-sm sm:text-base">No documents required for this announcement</span>
                         </div>
                     </div>
 
                     <!-- INSTRUCTIONS -->
                     <div class="border px-3 py-2 rounded-md mb-3">
                         <span class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">INSTRUCTIONS</span>
-                        <p class="text-lg font-semibold text-blue-500">{{ announcements?.instructions }}</p>
+                        <p class="text-base sm:text-lg font-semibold text-blue-500">{{ announcements?.instructions }}</p>
 
                         <div v-if="!announcements?.instructions?.length" class="text-gray-500">
-                            <span class="font-medium">No special instructions</span>
+                            <span class="font-medium text-sm sm:text-base">No special instructions</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Attachments - SIMPLIFIED VERSION -->
-                <div class="px-6" v-if="announcements.attachments.length">
+                <div class="px-4 sm:px-6" v-if="announcements.attachments.length">
                     <div v-if="announcements?.attachments?.length" class="border rounded-md px-3 py-2">
                         <div class="flex items-center">
                             <p class="font-medium text-gray-500 font-[Poppins] text-xs">ATTACHMENTS</p>
@@ -339,16 +338,16 @@ onUnmounted(() => {
                             <div 
                                 v-for="file in announcements.attachments" 
                                 :key="file.id"
-                                class="flex items-center justify-between p-3 rounded-lg transition-colors border border-blue-200 bg-blue-50"
+                                class="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg transition-colors border border-blue-200 bg-blue-50 gap-2"
                             >
                                 <div class="flex items-center space-x-3">
                                     <div class="flex-shrink-0">
-                                        <div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded flex items-center justify-center">
                                             <!-- DYNAMIC FILE ICON -->
                                             <img 
                                                 :src="getFileIcon(file.file_path)" 
                                                 :alt="getFileType(file.file_path) + ' icon'" 
-                                                class="h-6 w-6"
+                                                class="h-4 w-4 sm:h-6 sm:w-6"
                                             >
                                         </div>
                                     </div>
@@ -371,10 +370,10 @@ onUnmounted(() => {
                                 <a 
                                     :href="getFileUrl(file.file_path)"
                                     target="_blank" 
-                                    class="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                                    class="flex items-center justify-center space-x-1 px-2 sm:px-3 py-1 bg-blue-600 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
                                     :download="file.file_name || file.file_path.split('/').pop()"
                                 >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
                                     <span>Download</span>
@@ -384,16 +383,16 @@ onUnmounted(() => {
                     </div>
                     <div v-else class="border rounded-md px-3 py-2 text-gray-500">
                         <p class="font-medium text-gray-500 font-[Poppins] mb-1 text-xs">ATTACHMENTS</p>
-                        <span class="font-medium">No attachments available</span>
+                        <span class="font-medium text-sm sm:text-base">No attachments available</span>
                     </div>
                 </div>
             </div>
 
             <!-- Modal Footer -->
-            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 p-6">
+            <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 p-4 sm:p-6">
                 <button 
                     @click="close"
-                    class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500"
+                    class="px-3 sm:px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm sm:text-base"
                 >
                     Close
                 </button>

@@ -192,12 +192,12 @@ const values = computed(() => {
     <Head title="My Reports" />
 
     <GuestLayout>
-        <main class="mb-20">
-            <section class="hero-section h-screen text-[#000] md:px-10 lg:px-32 flex ">
-                <div class="w-full h-full md:w-1/2 md:flex justify-center items-center">
-                    <div class="">
-                        <h1 class="text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Track Your Report</h1>
-                        <p class="text-justify text-lg dark:text-[#faf9f6]">Enter your unique tracking code below to check the current status of your submitted report.</p>
+        <main class="dark:text-[#FAF9F6]">
+            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center">
+                <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
+                    <div class="max-w-xl w-full">
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Track Your Report</h1>
+                        <p class="text-justify text-base sm:text-lg dark:text-[#faf9f6]">Enter your unique tracking code below to check the current status of your submitted report.</p>
                         
                         <div class="mt-6">
                             <form @submit.prevent="performSearch" class="">
@@ -228,17 +228,17 @@ const values = computed(() => {
                         </div>
                     </div>
                 </div>
-                <div class="hidden md:w-1/2 h-full md:flex justify-center items-center">
-                    <div class="hidden md:flex justify-end">
+                <div class="hidden lg:flex w-full lg:w-1/2 justify-center items-center">
+                    <div class="flex justify-center lg:justify-end">
                         <img :src="'/Images/web-search.svg'" alt="Community" class="w-[30rem]">
                     </div>
                 </div>
             </section>
             
-            <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
+            <section class="px-4 sm:px-6 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-8 lg:gap-10">
                 <div class="flex justify-between items-center">
                     <div class="">
-                        <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Track Your Report</h2>
+                        <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white">Track Your Report</h2>
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Check the status of your report</p>
                     </div>
                 </div>
@@ -266,27 +266,24 @@ const values = computed(() => {
                         
                         <!-- Show current search term -->
                         <div class="mb-4 p-3 border border-l-4 border-l-blue-500 rounded-lg bg-white dark:bg-[#2c2c2c] dark:border-none">
-                            <p class="">
-                                <p class="text-sm dark:text-[#faf9f6] ">Showing results for: {{ searchTerm }}</p> 
-                            </p>
+                            <p class="text-sm dark:text-[#faf9f6]">Showing results for: {{ searchTerm }}</p>
                         </div>
                         
                         <!-- Results List -->
                         <div
                             v-for="report in reports.data"
                             :key="report.id"
-                            class="p-5 border border-gray-200 rounded-lg shadow-sm mb-4 hover:shadow-md transition-shadow duration-200 flex flex-col gap-10 bg-white dark:bg-[#2c2c2c] dark:border-none" 
+                            class="p-4 sm:p-5 border border-gray-200 rounded-lg shadow-sm mb-4 hover:shadow-md transition-shadow duration-200 flex flex-col gap-6 sm:gap-8 bg-white dark:bg-[#2c2c2c] dark:border-none" 
                         >   
-                            <div class="flex justify-between">
-                                <h1 class="font-bold text-2xl font-[Poppins] my-3 dark:text-[#faf9f6]">Report Summary</h1>
+                            <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
+                                <h1 class="font-bold text-xl sm:text-2xl font-[Poppins] dark:text-[#faf9f6]">Report Summary</h1>
 
                                 <!-- If the status of the report is duplicate -->
                                 <div
                                     v-if="report.status === 'Duplicate' && report.duplicate_of_report_id"
-                                    class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[40%] p-2 rounded-lg"
+                                    class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-full sm:w-[40%] p-3 rounded-lg"
                                 >
-                                    <p 
-                                        class="ml-1 text-sm">
+                                    <p class="ml-1 text-sm">
                                         Your report has been consolidated with a similar submission to ensure efficient resolution. All updates will be reflected under the primary case.
                                     </p>
                                 </div>
@@ -294,32 +291,31 @@ const values = computed(() => {
                                 <!-- The primary report of the duplicate report -->
                                 <div
                                     v-if="report.duplicates && report.duplicates.length > 0"
-                                    class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-[40%] p-2 rounded-lg"
+                                    class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-full sm:w-[40%] p-3 rounded-lg"
                                 >
-                                    <p 
-                                        class="ml-1 text-sm">
+                                    <p class="ml-1 text-sm">
                                         Your report is serving as the primary case for this issue. We're addressing similar reports collectively for comprehensive resolution.
                                     </p>
                                 </div>  
                             </div>
                             
                             <!--Upper Part-->
-                            <div class="flex gap-10 h-96">
-                                <div class="w-1/2">
+                            <div class="flex flex-col lg:flex-row gap-6 lg:gap-10">
+                                <div class="w-full lg:w-1/2">
                                     <img 
                                         :src="`/storage/${report.image}`" 
                                         :alt="report.title"
-                                        class="h-full w-full rounded-lg"
+                                        class="w-full h-64 lg:h-80 object-cover rounded-lg"
                                     >
                                 </div>
                                 
-                                <div class="w-1/2 ">
+                                <div class="w-full lg:w-1/2">
                                     <div class="mb-4">
-                                        <p class="font-bold text-2xl font-[Poppins] dark:text-[#faf9f6]">{{ report.title }}</p>
+                                        <p class="font-bold text-xl sm:text-2xl font-[Poppins] dark:text-[#faf9f6]">{{ report.title }}</p>
                                         <span class="text-sm" :class="getStatusClass(report.status)">{{ report.status }}</span>
                                     </div>
 
-                                    <div class="grid grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <template v-for="value in values" :key="value.label">
                                             <!-- Location field with special handling -->
                                             <div v-if="value.label === 'Map Pin'" class="flex flex-col gap-1 py-2">
@@ -345,7 +341,7 @@ const values = computed(() => {
                                         </template>
 
                                         <!-- Rejection -->
-                                        <div  class="flex flex-col gap-1 py-2">
+                                        <div class="flex flex-col gap-1 py-2 sm:col-span-2">
                                             <div class="flex items-center gap-2">
                                                 <img :src="'/Images/SVG/warning-circle.svg'" alt="Icon" class="w-4 h-4">
                                                 <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">Rejection Reason</p>
@@ -363,7 +359,7 @@ const values = computed(() => {
                             </div>
 
                             <!-- Map -->
-                            <div v-if="report.latitude && report.longitude" class="mt-10">
+                            <div v-if="report.latitude && report.longitude" class="mt-6 lg:mt-10">
                                 <div class="flex items-center gap-2 mb-3">
                                     <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">📍 Your Reported Location</p>
                                 </div>
@@ -392,9 +388,9 @@ const values = computed(() => {
                             </div>
 
                             <!--Lower Part-->
-                            <div class="flex gap-10">
-                                <div class="w-1/2">
-                                    <div class="flex flex-col gap-2 ">
+                            <div class="flex flex-col lg:flex-row gap-6 lg:gap-10">
+                                <div class="w-full lg:w-1/2">
+                                    <div class="flex flex-col gap-2">
                                         <div class="flex items-center gap-2">
                                             <img :src="'/Images/SVG/file-text.svg'" alt="Icon" class="w-5 h-5">
                                             <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">Description</p>
@@ -405,7 +401,7 @@ const values = computed(() => {
                                     </div>
                                 </div>
 
-                                <div class="w-1/2 ">
+                                <div class="w-full lg:w-1/2">
                                     <div class="flex flex-col gap-2">
                                         <div class="flex items-center gap-2">
                                             <img :src="'/Images/SVG/chat-circle-text.svg'" alt="Icon" class="w-5 h-5">
@@ -426,7 +422,7 @@ const values = computed(() => {
                         </div>
 
                         <!-- Search Again Suggestion -->
-                        <div class="mt-10 rounded-lg text-center">
+                        <div class="mt-8 lg:mt-10 rounded-lg text-center">
                             <p class="text-gray-600 mb-2">Want to search for another report?</p>
                             <button 
                                 @click="clearAndFocusSearch"
@@ -439,10 +435,10 @@ const values = computed(() => {
                 </section>
                 
                 <!-- No Results Message -->
-                <div v-else-if="searchTerm && (!reports || !reports.data || reports.data.length === 0)" class="flex justify-center items-center h-screen md:px-10 lg:px-32 text-center">
+                <div v-else-if="searchTerm && (!reports || !reports.data || reports.data.length === 0)" class="flex justify-center items-center py-20 lg:py-0 lg:h-screen text-center">
                     <div class="max-w-md mx-auto">
                         <div class="mb-4">
-                            <img :src="'/Images/SVG/not found.svg'" alt="Icon" class=" h-42 mx-auto">
+                            <img :src="'/Images/SVG/not found.svg'" alt="Icon" class="h-32 lg:h-42 mx-auto">
                         </div>
                         <p class="text-gray-500 text-lg mb-2">No reports found for tracking code:</p>
                         <p class="text-xl font-mono font-bold text-red-600 mb-4">"{{ searchTerm }}"</p>

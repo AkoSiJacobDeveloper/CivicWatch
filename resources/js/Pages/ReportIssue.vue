@@ -1017,8 +1017,8 @@ onMounted(async () => {
     <Head title="Report Issue" />
     <GuestLayout>
         <main class="pt-[80px] md:pt-[120px] dark:text-[#FAF9F6] ">
-            <section class="px-3 md:px-10 lg:px-32">
-                <div>
+            <section class="px-4 md:px-10 lg:px-32">
+                <div class="mt-5 md:mt-0">
                     <h1 class="font-bold text-lg md:text-3xl font-[Poppins]">Submit New Report</h1>
                     <p class="text-sm text-gray-500 dark:text-[#FAF9F6]">Describe a local issue you’ve noticed. Include the location and a photo to help barangay officials respond faster.</p>
                 </div>
@@ -1033,22 +1033,22 @@ onMounted(async () => {
                 <div class="my-5">
                     <form @submit.prevent="submitForm" enctype="multipart/form-data">
                         <!-- Div that holds both Basic Information and Media & Detils div -->
-                        <div class="grid grid-cols-2 gap-5">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                             <!-- Basic Information -->
                             <div class="flex flex-col gap-1">
-                                <h2 class="font-medium text-lg font-[Poppins]">Basic Information</h2>
+                                <h2 class="font-medium text-sm md:text-lg font-[Poppins]">Basic Information</h2>
                                 <hr>
                                 <!-- TITLE -->
                                 <div class="mt-5">
                                     <label
                                         for="title"
-                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Title
+                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white">Title
                                     </label>
                                     <input
                                         v-model="form.title"
                                         type="text"
                                         id="title"
-                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Uncollected Garbage"
+                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Uncollected Garbage"
                                         required
                                     />
                                     <!-- Character Indicator -->
@@ -1070,13 +1070,13 @@ onMounted(async () => {
                                 <div>
                                     <label
                                         for="title"
-                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sender Name
+                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white">Sender Name
                                     </label>
                                     <input
                                         v-model="form.sender_name"
                                         type="text"
                                         id="title"
-                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Joe Doe"
+                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Joe Doe"
                                         required
                                     />
                                     <!-- Character Indicator -->
@@ -1098,7 +1098,7 @@ onMounted(async () => {
                                     <!-- Headless UI-->
                                     <label
                                         for="issue_type"
-                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Issue Type
+                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white">Issue Type
                                     </label>
                                     <Listbox
                                         v-model="form.issue_type"
@@ -1106,7 +1106,7 @@ onMounted(async () => {
                                         class="relative"
                                     >
                                         <ListboxButton
-                                            class="flex justify-between items-center text-left p-4 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                                            class="flex justify-between items-center text-left p-3 md:p-4 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
                                             required
                                         >
                                             {{ form.issue_type || 'Select an issue type' }}
@@ -1181,7 +1181,7 @@ onMounted(async () => {
                                         <div class="w-1/2">
                                             <label
                                                 for="barangay"
-                                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Barangay
+                                                class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white">Barangay
                                             </label>
                                         
                                             <Listbox
@@ -1190,7 +1190,7 @@ onMounted(async () => {
                                                 class="relative w-full"
                                             >
                                                 <ListboxButton
-                                                    class="flex justify-between items-center text-left p-4 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
+                                                    class="flex justify-between items-center text-left p-3 md:p-4 w-full text-base bg-white text-gray-500 rounded-lg border border-gray-300 dark:text-gray-400 dark:border-gray-700 focus:outline-none focus:ring-0 focus:border-gray-200 peer dark:bg-[#2c2c2c]"
                                                     required
                                                 >
                                                     {{ barangays.find(b => b.id === form.barangay_id)?.name || 'Select Barangay' }}
@@ -1229,7 +1229,7 @@ onMounted(async () => {
                                         <div class="w-1/2">
                                             <label
                                                 for="sitio"
-                                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Sitio
+                                                class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white">Sitio
                                             </label>
                                             <Listbox
                                                 v-model="form.sitio_id"
@@ -1239,7 +1239,7 @@ onMounted(async () => {
                                             >
                                                 <ListboxButton
                                                     :class="[
-                                                        'flex justify-between items-center text-left p-4 w-full text-base bg-white rounded-lg border focus:outline-none focus:ring-0 peer',
+                                                        'flex justify-between items-center text-left p-3 lg:p-4 w-full text-base bg-white rounded-lg border focus:outline-none focus:ring-0 peer',
                                                         !form.barangay_id
                                                             ? 'text-gray-400 border-gray-200 bg-gray-50 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500'
                                                             : 'text-gray-500 border-gray-300 dark:text-gray-400 dark:border-gray-700 dark:bg-[#2c2c2c] focus:border-gray-200'
@@ -1297,7 +1297,7 @@ onMounted(async () => {
                                 <div class="mb-3">
                                     <label
                                         for="location"
-                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white"
                                     >
                                         Verify Location
                                     </label>
@@ -1351,7 +1351,7 @@ onMounted(async () => {
                                 <div class="mb-3">
                                     <label
                                         for="contact"
-                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Contact Number
+                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white">Contact Number
                                     </label>
                                     <div class="">
                                     
@@ -1360,7 +1360,7 @@ onMounted(async () => {
                                             type="tel"
                                             id="contact_number"
                                             placeholder="+63xxxxxxxxxx"
-                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                             required
                                         />
                                     </div>
@@ -1373,7 +1373,7 @@ onMounted(async () => {
                                 <div class="">
                                     <label
                                         for="location"
-                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white"
                                     >
                                         Description
                                     </label>
@@ -1382,7 +1382,7 @@ onMounted(async () => {
                                         id="description"
                                         placeholder="Describe the issue in detail..."
                                         rows="5"
-                                        class="block p-2.5 w-full text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none"
+                                        class="block p-2.5 w-full text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none placeholder:text-sm"
                                         required
                                     ></textarea>
                                     <div v-if="form.errors.description" class="text-red-500 text-sm mt-1">
@@ -1393,119 +1393,110 @@ onMounted(async () => {
                         
                             <!-- Media & Details -->
                             <div class="flex flex-col gap-1">
-                                <h2 class="font-medium text-lg font-[Poppins]">Media & Details</h2>
+                                <h2 class="font-medium text-sm md:text-lg font-[Poppins]">Media & Details</h2>
                                 <hr>
                                 <!-- UPLOAD PHOTO -->
                                 <div class="mt-5 mb-3">
                                     <label
                                         for="upload"
-                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Upload Photo
+                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white">Upload Photo
                                     </label>
-                                
+
                                     <div class="flex flex-col gap-2">
                                         <div class="flex flex-col">
-                                        
-                                            <div v-if="!imagePreview" class="grid grid-cols-2 gap-6">
+                                            <div v-if="!imagePreview" class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
                                                 <!-- Take Photo -->
                                                 <label
-                                                @click="startCamera"
-                                                :class="[
-                                                    'relative p-12 border-[3px] border-dashed border-gray-300 rounded-[20px] bg-gray-50 cursor-pointer transition-all flex flex-col items-center gap-4 text-gray-600',
-                                                    'hover:border-indigo-500 hover:bg-gradient-to-br hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-500 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)]',
-                                                    isCameraActive && 'opacity-50 cursor-not-allowed'
-                                                ]"
+                                                    @click="startCamera"
+                                                    :class="[
+                                                        'relative p-6 sm:p-8 md:p-10 lg:p-12 border-[3px] border-dashed border-gray-300 rounded-[16px] sm:rounded-[20px] bg-gray-50 cursor-pointer transition-all flex flex-col items-center gap-3 sm:gap-4 text-gray-600',
+                                                        'hover:border-indigo-500 hover:bg-gradient-to-br hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-500 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)]',
+                                                        isCameraActive && 'opacity-50 cursor-not-allowed'
+                                                    ]"
                                                 >
-                                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                                    <circle cx="12" cy="13" r="4"/>
-                                                </svg>
-                                                <span class="text-lg font-semibold">Take Photo</span>
-                                                <span class="text-xs text-gray-400">Use camera</span>
+                                                    <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                                        <circle cx="12" cy="13" r="4"/>
+                                                    </svg>
+                                                    <span class="text-base sm:text-lg font-semibold text-center">Take Photo</span>
+                                                    <span class="text-xs text-gray-400 text-center">Use camera</span>
                                                 </label>
                                                 <!-- Upload File -->
                                                 <label
-                                                for="fileInput"
-                                                class="relative p-12 border-[3px] border-dashed border-gray-300 rounded-[20px] bg-gray-50 cursor-pointer transition-all flex flex-col items-center gap-4 text-gray-600 hover:border-indigo-500 hover:bg-gradient-to-br hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-500 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)]"
+                                                    for="fileInput"
+                                                    class="relative p-6 sm:p-8 md:p-10 lg:p-12 border-[3px] border-dashed border-gray-300 rounded-[16px] sm:rounded-[20px] bg-gray-50 cursor-pointer transition-all flex flex-col items-center gap-3 sm:gap-4 text-gray-600 hover:border-indigo-500 hover:bg-gradient-to-br hover:from-indigo-50 hover:to-purple-50 hover:text-indigo-500 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(99,102,241,0.15)]"
                                                 >
-                                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                                    <polyline points="17 8 12 3 7 8"/>
-                                                    <line x1="12" y1="3" x2="12" y2="15"/>
-                                                </svg>
-                                                <span class="text-lg font-semibold">Upload Image</span>
-                                                <span class="text-xs text-gray-400">Browse files</span>
-                                                <input
-                                                    type="file"
-                                                    id="fileInput"
-                                                    ref="fileInput"
-                                                    accept="image/*"
-                                                    @change="handleFileChange"
-                                                    class="hidden"
-                                                />
+                                                    <svg class="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                        <polyline points="17 8 12 3 7 8"/>
+                                                        <line x1="12" y1="3" x2="12" y2="15"/>
+                                                    </svg>
+                                                    <span class="text-base sm:text-lg font-semibold text-center">Upload Image</span>
+                                                    <span class="text-xs text-gray-400 text-center">Browse files</span>
+                                                    <input
+                                                        type="file"
+                                                        id="fileInput"
+                                                        ref="fileInput"
+                                                        accept="image/*"
+                                                        @change="handleFileChange"
+                                                        class="hidden"
+                                                    />
                                                 </label>
                                             </div>
                                             <!-- Image Preview Controls -->
-                                            <div v-else class="space-y-4">
-                                                <div class="flex gap-4">
+                                            <div v-else class="space-y-3 sm:space-y-4">
+                                                <div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
                                                     <button
                                                         type="button"
                                                         @click="showImagePreview"
-                                                        class="flex-1 flex items-center justify-center gap-3 p-1 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all hover:-translate-y-0.5 font-semibold"
+                                                        class="flex-1 flex items-center justify-center gap-2 sm:gap-3 p-2 sm:p-3 bg-blue-600 text-white rounded-xl sm:rounded-2xl hover:bg-blue-700 transition-all hover:-translate-y-0.5 font-semibold text-sm sm:text-base"
                                                     >
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                                        <circle cx="12" cy="12" r="3"/>
+                                                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                                            <circle cx="12" cy="12" r="3"/>
                                                         </svg>
                                                         View Image
                                                     </button>
                                                     <button
                                                         type="button"
                                                         @click="removeImage"
-                                                        class="flex items-center justify-center gap-3 p-2 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition-all hover:-translate-y-0.5 font-semibold"
+                                                        class="flex items-center justify-center gap-2 sm:gap-3 p-2 sm:p-3 bg-red-600 text-white rounded-xl sm:rounded-2xl hover:bg-red-700 transition-all hover:-translate-y-0.5 font-semibold text-sm sm:text-base"
                                                     >
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                                         </svg>
-                                                    
+                                                        Remove
                                                     </button>
                                                 </div>
                                                 <p v-if="capturedImage" class="text-xs text-green-600 text-center font-medium">
-                                                ✓ This photo includes verification timestamp
+                                                    ✓ This photo includes verification timestamp
                                                 </p>
                                                 <p v-else class="text-xs text-gray-500 text-center">
-                                                Uploaded image
+                                                    Uploaded image
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
                                 <!-- Additional Remarks -->
                                 <div class="">
                                     <label
                                         for="remarks"
-                                        class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"> Additional Remarks
+                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white"> Additional Remarks
                                     </label>
                                     <textarea
                                         v-model="form.remarks"
                                         id="remarks"
                                         placeholder="Anything u want to say..."
                                         rows="5"
-                                        class="block p-2.5 w-full text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none"
+                                        class="block p-2.5 w-full text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none placeholder:text-sm"
                                     ></textarea>
                                     <div v-if="form.errors.remarks" class="text-red-500 text-sm mt-1">
                                         {{ form.errors.remarks }}
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    
-                        <!-- LOCATION SECTION -->
-                    
-                        <div class="md:flex gap-3">
-                            <!-- DESCRIPTION -->
-                        
-                            <!-- ADDITIONAL NOTES -->
-                        
                         </div>
                     
                         <!-- SUBMIT SECTION -->
@@ -1533,10 +1524,10 @@ onMounted(async () => {
                                 </button>
                             </div>
                         </div>
-                    
                     </form>
                 </div>
             </section>
+
             <!-- Camera Modal -->
             <div v-if="showCameraModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50" id="camera-modal">
                 <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
@@ -1592,6 +1583,7 @@ onMounted(async () => {
                     </div>
                 </div>
             </div>
+
             <!-- Image Preview Modal -->
             <div v-if="showImagePreviewModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
                 <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
@@ -1615,7 +1607,7 @@ onMounted(async () => {
                         <img
                             :src="imagePreview"
                             alt="Image Preview"
-                            class="max-w-full max-h-[70vh] object-contain rounded-lg"
+                            class="max-w-full max-h-[50vh] lg:max-h-[70vh] object-contain rounded-lg"
                         />
                     </div>
                 

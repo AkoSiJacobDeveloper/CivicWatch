@@ -51,8 +51,115 @@ const getPurokName = (id) => {
     return purok ? purok.name : 'Select purok area'
 }
 
-const handleImageChange = (e) => {
-    form.image = e.target.files[0]
+// Refs for file inputs and previews
+const imageInputRef = ref(null)
+const attachmentsInputRef = ref(null)
+const imagePreview = ref(null)
+const isCompressing = ref(false)
+
+// Image compression function
+const compressImage = (file, maxWidth = 1920, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) {
+                            reject(new Error('Canvas to Blob conversion failed'));
+                            return;
+                        }
+                        
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+            img.onerror = () => reject(new Error('Failed to load image'));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+    });
+};
+
+// File size validation
+const validateFileSize = (file, maxSizeMB = 20) => {
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+        toast.error(`File "${file.name}" is too large. Maximum size is ${maxSizeMB}MB.`);
+        return false;
+    }
+    return true;
+};
+
+// Handle image change with compression and preview
+const handleImageChange = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        if (!validateFileSize(file, 20)) {
+            event.target.value = '';
+            return;
+        }
+        
+        isCompressing.value = true;
+
+        try {
+            const compressedFile = await compressImage(file, 1920, 0.8);
+            form.image = compressedFile;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.value = e.target.result;
+                isCompressing.value = false;
+                
+                // Show compression results
+                const originalSize = (file.size / (1024 * 1024)).toFixed(2);
+                const compressedSize = (compressedFile.size / (1024 * 1024)).toFixed(2);
+            };
+            reader.readAsDataURL(compressedFile);
+        } catch (error) {
+            isCompressing.value = false;
+            console.error('Compression error:', error);
+            toast.error('Failed to compress image. Using original file.');
+            
+            // Fallback to original file
+            form.image = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.value = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+}
+
+// Remove image
+const removeImage = () => {
+    form.image = null;
+    imagePreview.value = null;
+    if (imageInputRef.value) imageInputRef.value.value = '';
 }
 
 const handleAttachmentsChange = (e) => {
@@ -63,9 +170,6 @@ const getCategoryName = (id) => {
     const category = props.announcementCategories.find(cat => cat.id === id)
     return category ? category.name : 'Select an issue type'
 }
-
-const imageInputRef = ref(null)
-const attachmentsInputRef = ref(null)
 
 const submitForm = () => {
     form.post(route('admin.announcement.store'), {
@@ -78,6 +182,7 @@ const submitForm = () => {
             form.reset()
             form.image = null
             form.attachments = []
+            imagePreview.value = null
             toast.success('Announcement created successfully!');
         },
         onError: (errors) => {
@@ -110,12 +215,12 @@ const showRequirements = computed(() => {
 });
 
 const enhancedDocuments = computed(() => {
-    // Combine predefined documents with "Other" option
     return [
-        ...props.documents, // Your existing documents from backend
+        ...props.documents,
         { id: 'other', name: 'Other (Specify below)', document_type: 'Custom' }
     ];
 });
+
 const hasOtherDocument = computed(() => {
     console.log('Checking hasOtherDocument...');
     
@@ -123,24 +228,15 @@ const hasOtherDocument = computed(() => {
         return false;
     }
     
-    // Try multiple ways to detect "Other"
     const hasOther = form.requirements.some(req => {
-        // Method 1: Check by ID
         if (req?.id === 'other') return true;
-        
-        // Method 2: Check by name
         if (req?.name === 'Other (Specify below)') return true;
-        
-        // Method 3: Check if it's a string
         if (typeof req === 'string' && req === 'other') return true;
-        
-        // Method 4: Check any property that might indicate "Other"
         if (req && typeof req === 'object') {
             return Object.values(req).some(val => 
                 val === 'other' || val === 'Other (Specify below)'
             );
         }
-        
         return false;
     });
     
@@ -430,7 +526,7 @@ onMounted(() => {
                         role="tooltip"
                         class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
                     >
-                        Upload a relevant photo or banner (JPG, PNG)
+                        Upload a relevant photo or banner (JPG, PNG) - Images are automatically compressed
                         <div class="tooltip-arrow" data-popper-arrow></div>
                     </div>
                 </div>
@@ -439,9 +535,33 @@ onMounted(() => {
                         ref="imageInputRef"  
                         type="file"
                         @change="handleImageChange"
-                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600 cursor-pointer "
+                        :disabled="isCompressing"
+                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         accept="image/*"
                     >
+                    <!-- Compression Loading -->
+                    <div v-if="isCompressing" class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            <span class="text-sm text-blue-700">Compressing image...</span>
+                        </div>
+                    </div>
+                    <!-- Image Preview -->
+                    <div v-else-if="imagePreview" class="mt-2 relative">
+                        <img 
+                            :src="imagePreview" 
+                            alt="Image preview"
+                            class="w-full h-48 object-cover rounded-lg border"
+                        >
+                        <button 
+                            type="button"
+                            @click="removeImage"
+                            class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm hover:bg-red-600"
+                            title="Remove image"
+                        >
+                            ×
+                        </button>
+                    </div>
                 </div>
             </div>
 

@@ -29,9 +29,11 @@ const imageInputRef = ref(null);
 const attachmentsInputRef = ref(null);
 const galleryInputRef = ref(null);  
 
-// Add these refs for image previews
+// Add these refs for image previews and loading states
 const featuredImagePreview = ref(null);
 const galleryPreviews = ref([]);
+const isCompressing = ref(false);
+const isCompressingGallery = ref(false);
 
 const selectedLocationName = computed(() => {
     if (!form.location_id) return 'Cabulijan - All Purok'
@@ -47,18 +49,101 @@ const selectedCategory = computed(() => {
     return category ? category.name : 'Select a category'
 })
 
-// Handle featured image with preview
-const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        form.featured_image = file;
-        
-        // Create preview for featured image
+const validateFileSize = (file, maxSizeMB = 20) => {
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+        toast.error(`File "${file.name}" is too large. Maximum size is ${maxSizeMB}MB.`);
+        return false;
+    }
+    return true;
+};
+
+// Image compression function
+const compressImage = (file, maxWidth = 1920, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
-            featuredImagePreview.value = e.target.result;
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Convert to blob with compression
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) {
+                            reject(new Error('Canvas to Blob conversion failed'));
+                            return;
+                        }
+                        
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+            img.onerror = () => reject(new Error('Failed to load image'));
+            img.src = e.target.result;
         };
+        reader.onerror = () => reject(new Error('Failed to read file'));
         reader.readAsDataURL(file);
+    });
+};
+
+// Handle featured image with preview and compression
+const handleImageChange = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        if (!validateFileSize(file, 20)) {
+            event.target.value = '';
+            return;
+        }
+        
+        isCompressing.value = true;
+
+        try {
+            const compressedFile = await compressImage(file, 1920, 0.8);
+            form.featured_image = compressedFile;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                featuredImagePreview.value = e.target.result;
+                isCompressing.value = false;
+                
+                // Show compression results
+                const originalSize = (file.size / (1024 * 1024)).toFixed(2);
+                const compressedSize = (compressedFile.size / (1024 * 1024)).toFixed(2);
+            };
+            reader.readAsDataURL(compressedFile);
+        } catch (error) {
+            isCompressing.value = false;
+            console.error('Compression error:', error);
+            toast.error('Failed to compress image. Using original file.');
+            
+            // Fallback to original file
+            form.featured_image = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                featuredImagePreview.value = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
     }
 }
 
@@ -69,23 +154,68 @@ const removeFeaturedImage = () => {
     if (imageInputRef.value) imageInputRef.value.value = '';
 }
 
-const handleGalleryImagesChange = (event) => {
+// Handle gallery images with compression
+const handleGalleryImagesChange = async (event) => {
     const files = Array.from(event.target.files);
-    
-    // Create preview URLs for each new file
-    files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            galleryPreviews.value.push({
-                url: e.target.result,
-                file: file
-            });
-        };
-        reader.readAsDataURL(file);
-    });
-    
-    // Add files to form
-    form.gallery_images = [...form.gallery_images, ...files];
+    const validFiles = files.filter(file => validateFileSize(file, 20));
+
+    if (validFiles.length !== files.length) {
+        event.target.value = '';
+        return;
+    }
+
+    if (validFiles.length === 0) return;
+
+    isCompressingGallery.value = true;
+
+    try {
+        const compressionPromises = validFiles.map(file => compressImage(file, 1920, 0.8));
+        const compressedFiles = await Promise.all(compressionPromises);
+        
+        let totalOriginalSize = 0;
+        let totalCompressedSize = 0;
+
+        compressedFiles.forEach((compressedFile, index) => {
+            totalOriginalSize += validFiles[index].size;
+            totalCompressedSize += compressedFile.size;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                galleryPreviews.value.push({
+                    url: e.target.result,
+                    file: compressedFile
+                });
+            };
+            reader.readAsDataURL(compressedFile);
+        });
+
+        // Add compressed files to form
+        form.gallery_images = [...form.gallery_images, ...compressedFiles];
+        
+        isCompressingGallery.value = false;
+        
+        // Show compression summary
+        const originalSizeMB = (totalOriginalSize / (1024 * 1024)).toFixed(2);
+        const compressedSizeMB = (totalCompressedSize / (1024 * 1024)).toFixed(2);
+        
+    } catch (error) {
+        isCompressingGallery.value = false;
+        console.error('Gallery compression error:', error);
+        toast.error('Failed to compress some images. Using original files.');
+        
+        // Fallback to original files
+        validFiles.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                galleryPreviews.value.push({
+                    url: e.target.result,
+                    file: file
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+        form.gallery_images = [...form.gallery_images, ...validFiles];
+    }
 }
 
 // Remove single gallery image
@@ -94,10 +224,15 @@ const removeGalleryImage = (index) => {
     galleryPreviews.value.splice(index, 1);
 }
 
-// Handle multiple attachments
+// Handle multiple attachments (no compression for documents)
 const handleAttachmentsChange = (event) => {
     const files = Array.from(event.target.files);
-    form.document_attachments = [...form.document_attachments, ...files];
+    const validFiles = files.filter(file => validateFileSize(file, 50));
+    if (validFiles.length !== files.length) {
+        event.target.value = '';
+        return;
+    }
+    form.document_attachments = [...form.document_attachments, ...validFiles];
 }
 
 // Remove single attachment
@@ -107,6 +242,13 @@ const removeAttachment = (index) => {
 
 // Submit form
 const submitForm = () => {
+    let totalSize = 0;
+    if (form.featured_image) totalSize += form.featured_image.size;
+    form.gallery_images.forEach(img => totalSize += img.size);
+    form.document_attachments.forEach(doc => totalSize += doc.size);
+    
+    const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+    
     form.post(route('admin.store.achievements'), {
         onSuccess: () => {
             toast.success('Achievement recorded successfully!');
@@ -116,6 +258,13 @@ const submitForm = () => {
             if (imageInputRef.value) imageInputRef.value.value = '';
             if (attachmentsInputRef.value) attachmentsInputRef.value.value = '';
             if (galleryInputRef.value) galleryInputRef.value.value = '';
+        },
+        onError: (errors) => {
+            if (errors.featured_image || errors.gallery_images) {
+                toast.error('File upload error: ' + (errors.featured_image?.[0] || errors.gallery_images?.[0]));
+            } else {
+                toast.error('Failed to create achievement. Please check the form for errors.');
+            }
         },
         preserveScroll: true,
     });
@@ -264,7 +413,7 @@ onMounted(() => {
                         role="tooltip"
                         class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
                     >
-                        Upload a relevant photo or banner (JPG, PNG)
+                        Upload a relevant photo or banner (JPG, PNG) - Images are automatically compressed
                         <div class="tooltip-arrow" data-popper-arrow></div>
                     </div>
                 </div>
@@ -273,11 +422,19 @@ onMounted(() => {
                         ref="imageInputRef"  
                         type="file"
                         @change="handleImageChange"
-                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600 cursor-pointer "
+                        :disabled="isCompressing"
+                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500 file:text-white hover:file:bg-blue-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         accept="image/*"
                     >
+                    <!-- Compression Loading -->
+                    <div v-if="isCompressing" class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            <span class="text-sm text-blue-700">Compressing image...</span>
+                        </div>
+                    </div>
                     <!-- Featured Image Preview -->
-                    <div v-if="featuredImagePreview" class="mt-2 relative">
+                    <div v-else-if="featuredImagePreview" class="mt-2 relative">
                         <img 
                             :src="featuredImagePreview" 
                             alt="Featured image preview"
@@ -294,6 +451,7 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
+
 
             <!-- Date of Achievement -->
             <div>
@@ -450,7 +608,7 @@ onMounted(() => {
                         role="tooltip"
                         class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-blue-500 rounded-lg shadow-lg opacity-0 tooltip"
                     >
-                        Add multiple photos to create a gallery (optional)
+                        Add multiple photos to create a gallery (optional) - Images are automatically compressed
                         <div class="tooltip-arrow" data-popper-arrow></div>
                     </div>
                 </div>
@@ -460,11 +618,19 @@ onMounted(() => {
                         type="file"
                         multiple
                         @change="handleGalleryImagesChange"
-                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-500 file:text-white hover:file:bg-green-600 cursor-pointer"
+                        :disabled="isCompressingGallery"
+                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-500 file:text-white hover:file:bg-green-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         accept="image/*"
                     >
+                    <!-- Gallery Compression Loading -->
+                    <div v-if="isCompressingGallery" class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            <span class="text-sm text-blue-700">Compressing gallery images...</span>
+                        </div>
+                    </div>
                     <!-- Preview Grid -->
-                    <div class="grid grid-cols-3 gap-2 mt-2" v-if="galleryPreviews.length > 0">
+                    <div class="grid grid-cols-3 gap-2 mt-2" v-else-if="galleryPreviews.length > 0">
                         <div 
                             v-for="(preview, index) in galleryPreviews" 
                             :key="index"
@@ -487,6 +653,7 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
+
 
             <!-- Content -->
             <div class="col-span-2">
@@ -525,10 +692,11 @@ onMounted(() => {
         <div class="flex justify-end mt-6">
             <button 
                 type="submit" 
-                :disabled="form.processing"
+                :disabled="form.processing || isCompressing || isCompressingGallery"
                 class="mt-5 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
-                <span v-if="form.processing">Creating...</span>
+                <span v-if="isCompressing || isCompressingGallery">Compressing...</span>
+                <span v-else-if="form.processing">Creating...</span>
                 <span v-else>Create Achievement</span>
             </button>
         </div>

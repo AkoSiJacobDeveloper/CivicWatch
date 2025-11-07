@@ -110,54 +110,54 @@ const closeModal = () => {
     <Head title="Announcement" />
 
     <GuestLayout>
-        <main class=" dark:text-[#FAF9F6] ">
-            <section class="hero-section h-screen text-[#000] md:px-10 lg:px-32 flex ">
-                <div class="w-full h-full md:w-1/2 md:flex justify-center items-center">
+        <main class="dark:text-[#FAF9F6]">
+            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center">
+                <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
                     <div class="">
-                        <h1 class="text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Announcements</h1>
-                        <p class="text-justify dark:text-white">Stay informed with the latest news, updates, and important announcements from your community. This page serves as your reliable source for events, reminders, and public information. Check back regularly to stay connected and never miss an important update or opportunity to get involved.</p>
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Announcements</h1>
+                        <p class="text-justify text-base sm:text-lg dark:text-[#faf9f6]">Stay informed with the latest news, updates, and important announcements from your community. This page serves as your reliable source for events, reminders, and public information. Check back regularly to stay connected and never miss an important update or opportunity to get involved.</p>
                     </div>
                 </div>
-                <div class="hidden md:w-1/2 h-full md:flex justify-center items-center">
-                    <div class="hidden md:flex justify-end">
+                <div class="hidden lg:flex w-full lg:w-1/2 justify-center items-center">
+                    <div class="flex justify-center lg:justify-end">
                         <img :src="'/Images/online_information.svg'" alt="Announcement" class="w-[30rem]">
                     </div>
                 </div>
             </section>
             
-            <section class="md:px-10 lg:px-32 py-20 flex flex-col gap-10">
-                <div class="flex justify-between items-center">
-                    <div class="">
-                        <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Announcements</h2>
+            <section class="px-4 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-6 lg:gap-10">
+                <div class="flex flex-col sm:flex-row justify-between gap-4">
+                    <div class="text-left">
+                        <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white">Announcements</h2>
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Here's what's happening around you today.</p>
                     </div>
 
                     <!-- Sort and Refresh Buttons -->
-                    <div class="flex items-center gap-3">
+                    <div class="flex gap-1">
                         <!-- Refresh Button -->
                         <button
                             @click="pollForNewAnnouncements"
-                            class="border p-3 rounded flex items-center gap-2 hover:bg-green-500 hover:text-white transition-colors group duration-300 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-green-600"
+                            class="border p-2 sm:p-3 rounded flex items-center gap-1 sm:gap-2 hover:bg-green-500 hover:text-white transition-colors group duration-300 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-green-600 text-sm sm:text-base"
                             title="Check for new announcements"
                         >
                             <span>Refresh</span>
                             <img 
                                 :src="'/Images/SVG/arrows-clockwise.svg'" 
                                 alt="Icon" 
-                                class="h-5 w-5 group-hover:animate-spin group-hover:brightness-0 group-hover:invert dark:invert"
+                                class="h-4 w-4 sm:h-5 sm:w-5 group-hover:animate-spin group-hover:brightness-0 group-hover:invert dark:invert"
                             >
                         </button>
                         
                         <!-- Sort Button -->
                         <button
                             @click="toggleSort"
-                            class="border p-3 rounded flex items-center gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300"
+                            class="border p-2 sm:p-3 rounded flex items-center gap-1 sm:gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300 text-sm sm:text-base"
                         >
                             <span>{{ sortOrder === 'desc' ? 'Newest' : 'Oldest' }}</span>
                             <svg 
                                 xmlns="http://www.w3.org/2000/svg" 
-                                width="16" 
-                                height="16" 
+                                width="14" 
+                                height="14" 
                                 fill="currentColor" 
                                 viewBox="0 0 256 256"
                                 :class="sortOrder === 'desc' ? 'rotate-0' : 'rotate-180'"
@@ -169,33 +169,30 @@ const closeModal = () => {
                     </div>
                 </div>
                 
-                <div v-if="!announcements.data || announcements.data.length === 0"  class="text-center text-gray-500">
-                    <p class="text-xl mb-4 py-20">No announcement yet. </p>
+                <div v-if="!announcements.data || announcements.data.length === 0" class="text-center text-gray-500 py-10 lg:py-20">
+                    <p class="text-lg lg:text-xl mb-4">No announcement yet.</p>
                 </div>
 
-                <div 
-                    v-else class="grid grid-rows-1">
+                <div v-else class="grid grid-cols-1 gap-4 lg:gap-6">
                     <div
                         v-for="announcement in props.announcements.data" :key="announcement.id" 
                         :class="[
-                            'shadow-lg mb-3 rounded-lg border-b-1 border-[#000] p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] transition-all duration-500',
+                            'shadow-lg rounded-lg border-b-1 border-[#000] p-4 sm:p-6 lg:p-8 bg-white flex flex-col gap-4 lg:gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] transition-all duration-500',
                             isNewAnnouncement(announcement.id) ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20 animate-pulse' : ''
                         ]"
                     >
-                        <div 
-                            class="flex flex-col gap-3"
-                        >
-                            <div class="flex justify-between mb-2">
-                                <h1 class="font-[Poppins] font-semibold text-lg">{{ announcement.title }}</h1>
-                                <p class="text-gray-500 text-sm">{{ formatDate(announcement.event_date) }}</p>
+                        <div class="flex flex-col gap-3">
+                            <div class="flex flex-col sm:flex-row justify-between mb-2 gap-2">
+                                <h1 class="font-[Poppins] font-semibold text-base sm:text-lg lg:text-lg">{{ announcement.title }}</h1>
+                                <p class="text-gray-500 text-xs sm:text-sm">{{ formatDate(announcement.event_date) }}</p>
                             </div>
                             <div class="mb-2">
-                                <p class="font-light">{{ announcement.content }}</p>
+                                <p class="font-light text-sm sm:text-base">{{ announcement.content }}</p>
                             </div>
-                            <div class="flex justify-between">
-                                <div class="flex items-center gap-5">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 sm:gap-5">
                                     <p
-                                        class="p-2 uppercase rounded text-xs"
+                                        class="p-1 sm:p-2 uppercase rounded text-xs"
                                         :class="announcement?.level === 'urgent'
                                         ? 'text-red-700 border-2 border-red-700 font-semibold' : announcement?.level === 'important'
                                         ? 'text-amber-500 border-2 border-amber-500' : 'text-green-700 border-2 border-green-700'
@@ -211,7 +208,7 @@ const closeModal = () => {
                                     class="group flex gap-1 items-center text-gray-500 transition-all duration-300"
                                 >
                                     <p class="text-xs group-hover:text-blue-500">More Details</p>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="group-hover:text-blue-500" width="15" height="15" fill="currentColor" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="group-hover:text-blue-500" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>
                                 </button>
                             </div>
                         </div>
@@ -219,21 +216,21 @@ const closeModal = () => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="announcements.data && announcements.data.length > 0" class="flex justify-end mt-10">
-                    <div class="flex items-center gap-3 rounded">
+                <div v-if="announcements.data && announcements.data.length > 0" class="flex justify-center sm:justify-end mt-6 lg:mt-10">
+                    <div class="flex items-center gap-2 sm:gap-3 rounded">
                         <template v-for="link in (props.announcements.links || [])" :key="link?.label || 'empty'">
                             <Link
                                 v-if="link.url"
                                 :href="link.url"
-                                :class="['w-10 h-10 grid place-items-center border border-gray-400 rounded justify-center hover:bg-blue-400 transition-all duration-300 hover:text-[#FAF9F6] font-[Poppins]', link.active ? 'bg-blue-600 text-[#FAF9F6] border-none' : '']"
+                                :class="['w-8 h-8 sm:w-10 sm:h-10 grid place-items-center border border-gray-400 rounded justify-center hover:bg-blue-400 transition-all duration-300 hover:text-[#FAF9F6] font-[Poppins] text-sm sm:text-base', link.active ? 'bg-blue-600 text-[#FAF9F6] border-none' : '']"
                             >
                                 <span v-if="link.label.includes('Previous')" class="">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
                                     </svg>
                                 </span>
                                 <span v-else-if="link.label.includes('Next')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
                                     </svg>
                                 </span>
@@ -241,15 +238,15 @@ const closeModal = () => {
                             </Link>
                             <span
                                 v-else
-                                :class="'px-3 py-1 text-gray-500 cursor-not-allowed'"
+                                :class="'px-2 py-1 text-gray-500 cursor-not-allowed text-sm sm:text-base'"
                             >
                                 <span v-if="link.label.includes('Previous')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
                                     </svg>
                                 </span>
                                 <span v-else-if="link.label.includes('Next')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
                                     </svg>
                                 </span>
