@@ -1,6 +1,6 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue';
@@ -42,7 +42,7 @@ const types = [
             },
             {
                 question: 'How do I upload a photo when reporting?',
-                answer: 'Simply click the “Upload Photo” button in the report form and select an image from your device. Only image files are accepted.',
+                answer: 'Simply click the "Upload Photo" button in the report form and select an image from your device. Only image files are accepted.',
             },
             {
                 question: 'What locations are supported for reporting?',
@@ -64,14 +64,14 @@ const types = [
         items: [
             {
                 question: 'How can I check the status of my report?',
-                answer: 'After submission, you’ll receive a tracking code. You can use this code on the “Track Reports” page to view the status of your report.',
+                answer: "After submission, you'll receive a tracking code. You can use this code on the \"Track Reports\" page to view the status of your report.",
             },
             {
                 question: 'Where can I use my tracking code?',
                 answer: 'Enter your tracking code on the Track Reports page to see the current status, remarks, and updates from officials.',
             },
             {
-                question: 'What does it mean if my report is “Pending” or “Resolved”?',
+                question: 'What does it mean if my report is "Pending" or "Resolved"?',
                 answer: 'Pending - Your report has been submitted and is waiting for review and Resolved - The reported issue has been addressed or action has been taken.',
             },
             {
@@ -144,6 +144,46 @@ const types = [
     },
 ];
 
+// Intersection Observer setup
+const observer = ref(null);
+const observedElements = ref([]);
+
+onMounted(() => {
+    // Initialize Intersection Observer
+    observer.value = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                } else {
+                    entry.target.classList.remove('is-visible');
+                }
+            });
+        },
+        {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        }
+    );
+
+    // Observe elements with the data-observe attribute
+    const elements = document.querySelectorAll('[data-observe]');
+    elements.forEach((el) => {
+        observer.value.observe(el);
+        observedElements.value.push(el);
+    });
+});
+
+onUnmounted(() => {
+    // Cleanup observer
+    if (observer.value) {
+        observedElements.value.forEach((el) => {
+            observer.value.unobserve(el);
+        });
+        observer.value.disconnect();
+    }
+});
 </script>
 
 <template>
@@ -151,7 +191,7 @@ const types = [
 
     <GuestLayout>
         <main class="dark:text-[#FAF9F6]">
-            <section class="pt-44 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center">
+            <section class="pt-44 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center" data-observe>
                 <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
                     <div class="text-left">
                         <h1 class="text-3xl sm:text-4xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Have Questions? We've Got Answers!</h1>
@@ -166,12 +206,12 @@ const types = [
             </section>
 
             <section class="text-[#000] px-4 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-6 lg:gap-10">
-                <div class="text-left">
+                <div class="text-left" data-observe>
                     <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white">Frequently Asked Questions</h2>
                     <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">See how <span class="font-bold">CivicWatch</span> improves community engagement, transparency, and response time.</p>
                 </div>
                 
-                <div v-for="(type, typeIndex) in types" :key="typeIndex" class="flex flex-col gap-4">
+                <div v-for="(type, typeIndex) in types" :key="typeIndex" class="flex flex-col gap-4" data-observe>
                     <div class="flex gap-3 items-center">
                         <div class="bg-blue-500 rounded-full h-8 w-8 sm:h-10 sm:w-10 flex justify-center items-center flex-shrink-0">
                             <font-awesome-icon :icon="type.icon" class="text-[#FAF9F6] p-2 sm:p-3 text-sm sm:text-lg" />
@@ -180,7 +220,7 @@ const types = [
                     </div>
                     
                     <div class="flex flex-col gap-3 sm:gap-4">
-                        <Disclosure v-for="(item, index) in type.items" :key="index" as="div" class="">
+                        <Disclosure v-for="(item, index) in type.items" :key="index" as="div" class="" data-observe>
                             <template v-slot="{ open }">
                                 <DisclosureButton
                                     class="w-full text-left bg-white p-3 sm:p-4 rounded-md flex justify-between items-center border-l-4 border-[#2b6cb0] shadow-md hover:bg-blue-100 hover:translate-x-1 sm:hover:translate-x-2 transition-all duration-300 dark:bg-[#2c2c2c] text-sm sm:text-base">
@@ -207,3 +247,28 @@ const types = [
         </main>
     </GuestLayout>
 </template>
+
+<style scoped>
+/* Add smooth transition for observed elements */
+[data-observe] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+[data-observe].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Staggered animation delays for multiple elements */
+[data-observe]:nth-child(1) { transition-delay: 0.1s; }
+[data-observe]:nth-child(2) { transition-delay: 0.2s; }
+[data-observe]:nth-child(3) { transition-delay: 0.3s; }
+[data-observe]:nth-child(4) { transition-delay: 0.4s; }
+[data-observe]:nth-child(5) { transition-delay: 0.5s; }
+[data-observe]:nth-child(6) { transition-delay: 0.6s; }
+[data-observe]:nth-child(7) { transition-delay: 0.7s; }
+[data-observe]:nth-child(8) { transition-delay: 0.8s; }
+[data-observe]:nth-child(9) { transition-delay: 0.9s; }
+</style>

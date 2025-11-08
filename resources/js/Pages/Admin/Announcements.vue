@@ -589,6 +589,65 @@ const getSortIcon = (sortType) => {
     return option ? option.icon : 'sort';
 }
 
+const removeImageWithConfirmation = (announcementId) => {
+    Swal.fire({
+        title: 'Remove Image?',
+        text: 'Are you sure you want to remove this image? This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, remove it!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true,
+        customClass: {
+            confirmButton: 'bg-red-500 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200',
+            cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading state
+            Swal.fire({
+                title: 'Removing Image...',
+                text: 'Please wait while we remove the image.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Make the API call to remove the image
+            router.post(route('admin.announcements.remove-image', { id: announcementId }), {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    Swal.close();
+                    
+                    // Update the local state
+                    const announcement = announcementsState.pinned.find(a => a.id === announcementId) ||
+                                       announcementsState.regular.find(a => a.id === announcementId) ||
+                                       announcementsState.archived.find(a => a.id === announcementId);
+                    
+                    if (announcement) {
+                        announcement.image = null;
+                    }
+                    
+                    toast.success('Image removed successfully!');
+                },
+                onError: (errors) => {
+                    Swal.close();
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to remove image. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+    });
+}
+
 onMounted(() => {
     initTooltips();
 });

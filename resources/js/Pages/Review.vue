@@ -1,30 +1,170 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted } from 'vue';
-
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import ReviewModal from '@/Components/ReviewModal.vue';
 
-const props = defineProps({ reviews: Object })
+const { reviews } = defineProps({ reviews: Object })
 
 const showReviewModal = ref(false)
 const sortOrder = ref('desc') 
 let pollInterval = null;
-const previousReviewsCount = ref(props.reviews.total || 0);
-const currentReviewIds = ref(new Set());
-const newReviewIds = ref(new Set());
+
+const seenReviewIds = ref(new Set())
+const newReviewIds = ref(new Map()) // Changed to Map for timestamp support
+
+// Use localStorage to persist seen review IDs
+const getStoredSeenReviews = () => {
+    try {
+        const stored = localStorage.getItem('seenReviewIds');
+        return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+        return new Set();
+    }
+};
+
+const setStoredSeenReviews = (reviewIds) => {
+    try {
+        localStorage.setItem('seenReviewIds', JSON.stringify([...reviewIds]));
+    } catch (error) {
+        console.error('Failed to store seen reviews:', error);
+    }
+};
+
+// Use localStorage to persist new review IDs with timestamps
+const getStoredNewReviews = () => {
+    try {
+        const stored = localStorage.getItem('newReviewIds');
+        return stored ? new Map(Object.entries(JSON.parse(stored))) : new Map();
+    } catch {
+        return new Map();
+    }
+};
+
+const setStoredNewReviews = (reviewIdsMap) => {
+    try {
+        localStorage.setItem('newReviewIds', JSON.stringify(Object.fromEntries(reviewIdsMap)));
+    } catch (error) {
+        console.error('Failed to store new reviews:', error);
+    }
+};
+
+// Initialize from storage
+newReviewIds.value = getStoredNewReviews();
+
+// Function to clean up old new reviews (older than 24 hours)
+const cleanOldNewReviews = () => {
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    for (const [id, timestamp] of newReviewIds.value.entries()) {
+        if (timestamp < oneDayAgo) {
+            newReviewIds.value.delete(id);
+        }
+    }
+    setStoredNewReviews(newReviewIds.value);
+};
+
+// Check if a review is new
+const isNewReview = (reviewId) => {
+    return newReviewIds.value.has(reviewId);
+};
+
+// Shared logic to initialize seen/new reviews from current data
+const initializeSeenAndNew = (currentReviewsData) => {
+    const currentReviewIds = new Set(currentReviewsData.map(review => review.id));
+    
+    // Load seen from storage
+    const storedSeen = getStoredSeenReviews();
+    
+    let trulyNew = [];
+    if (storedSeen.size === 0) {
+        // First visit: no new reviews, just set seen
+        seenReviewIds.value = currentReviewIds;
+    } else {
+        // Compute new reviews based on previously seen
+        trulyNew = [...currentReviewIds].filter(id => !storedSeen.has(id));
+        seenReviewIds.value = new Set([...storedSeen, ...currentReviewIds]);
+    }
+    
+    // Add any truly new to highlights
+    if (trulyNew.length > 0) {
+        trulyNew.forEach(reviewId => {
+            newReviewIds.value.set(reviewId, Date.now());
+        });
+        setStoredNewReviews(newReviewIds.value);
+    }
+    
+    // Store updated seen
+    setStoredSeenReviews(seenReviewIds.value);
+};
+
+// Update logic after reload/navigation that affects reviews
+const updateAfterReload = (page) => {
+    initializeSeenAndNew(page.props.reviews.data);
+    
+    // Re-observe elements after update
+    nextTick(() => {
+        const elements = document.querySelectorAll('[data-observe]');
+        elements.forEach((el) => {
+            if (!observedElements.value.includes(el)) {
+                observer.value?.observe(el);
+                observedElements.value.push(el);
+            }
+        });
+    });
+};
+
+// Intersection Observer setup
+const observer = ref(null);
+const observedElements = ref([]);
 
 onMounted(() => {
-    props.reviews.data.forEach(review => {
-        currentReviewIds.value.add(review.id);
-    });
+    // Clean up old new reviews
+    cleanOldNewReviews();
+    
+    // Initialize seen/new from current props
+    initializeSeenAndNew(reviews.data);
     
     pollInterval = setInterval(pollForNewReviews, 15000);
+
+    // Initialize Intersection Observer
+    observer.value = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                } else {
+                    entry.target.classList.remove('is-visible');
+                }
+            });
+        },
+        {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        }
+    );
+
+    // Observe elements with the data-observe attribute
+    nextTick(() => {
+        const elements = document.querySelectorAll('[data-observe]');
+        elements.forEach((el) => {
+            observer.value.observe(el);
+            observedElements.value.push(el);
+        });
+    });
 });
 
 onUnmounted(() => {
     if (pollInterval) {
         clearInterval(pollInterval);
+    }
+
+    // Cleanup observer
+    if (observer.value) {
+        observedElements.value.forEach((el) => {
+            observer.value.unobserve(el);
+        });
+        observer.value.disconnect();
     }
 });
 
@@ -33,32 +173,8 @@ const pollForNewReviews = () => {
         preserveState: true,
         preserveScroll: true,
         only: ['reviews'], 
-        onSuccess: (page) => {
-            const currentReviewsCount = page.props.reviews.total || 0;
-
-            setTimeout(() => {
-                newReviewIds.value.clear();
-            }, 5000);
-
-            if (currentReviewsCount > previousReviewsCount.value) {
-                const newReviewsCount = currentReviewsCount - previousReviewsCount.value;
-                
-                page.props.reviews.data.forEach(review => {
-                    if (!currentReviewIds.value.has(review.id)) {
-                        newReviewIds.value.add(review.id);
-                        currentReviewIds.value.add(review.id);
-                    }
-                });
-                
-                previousReviewsCount.value = currentReviewsCount;
-            }
-        }
+        onSuccess: updateAfterReload
     });
-};
-
-// Check if a review is new
-const isNewReview = (reviewId) => {
-    return newReviewIds.value.has(reviewId);
 };
 
 function openReviewModal() {
@@ -71,8 +187,46 @@ function toggleSort() {
     router.get('/review', { sort: sortOrder.value }, {
         preserveState: true,
         preserveScroll: true,
-        replace: true
+        replace: true,
+        onSuccess: updateAfterReload
     })
+}
+
+// Function to handle when a new review is submitted
+const handleNewReviewSubmitted = (newReview) => {
+    // Close the modal
+    showReviewModal.value = false;
+    
+    // Force reload to get the latest reviews including the new one
+    router.reload({
+        preserveState: true,
+        preserveScroll: false,
+        only: ['reviews'],
+        onSuccess: (page) => {
+            updateAfterReload(page);
+            
+            // Wait for the DOM to update
+            nextTick(() => {
+                // Scroll to the top of reviews section
+                const reviewsSection = document.querySelector('.grid');
+                if (reviewsSection) {
+                    reviewsSection.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Add highlight to the first review (the newest one)
+                    const firstReview = reviewsSection.querySelector('[data-review-id]');
+                    if (firstReview) {
+                        firstReview.classList.add('highlight-new-review');
+                        setTimeout(() => {
+                            firstReview.classList.remove('highlight-new-review');
+                        }, 3000);
+                    }
+                }
+            });
+        }
+    });
 }
 </script>
 
@@ -81,7 +235,7 @@ function toggleSort() {
 
     <GuestLayout>
         <main class="dark:text-[#FAF9F6]">
-            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center">
+            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center" data-observe>
                 <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
                     <div class="">
                         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">What People Are Saying</h1>
@@ -98,7 +252,7 @@ function toggleSort() {
 
             <!-- Review Section -->
             <section class="px-4 sm:px-6 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-8 lg:gap-10">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 " data-observe>
                     <div class="">
                         <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Reviews</h2>
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">See what people are saying and share your own experience.</p>
@@ -145,18 +299,20 @@ function toggleSort() {
                     </div>
                 </div>
                 
-                <div v-if="!reviews.data || reviews.data.length === 0"  class="text-center text-gray-500">
+                <div v-if="!reviews.data || reviews.data.length === 0"  class="text-center text-gray-500" data-observe>
                     <p class="text-lg sm:text-xl mb-4 py-20">No reviews yet. Be the first to write one!</p>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     <div 
-                        v-for="review in props.reviews.data" 
+                        v-for="review in reviews.data" 
                         :key="review.id" 
+                        :data-review-id="review.id"
                         :class="[
                             'shadow-lg rounded-lg p-6 sm:p-8 bg-white flex flex-col gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] transition-all duration-500',
-                            isNewReview(review.id) ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20 animate-pulse' : ''
+                            isNewReview(review.id) ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20' : ''
                         ]"
+                        data-observe
                     >
                         <div class="flex flex-col gap-3">
                             <div class="flex justify-between items-center">
@@ -180,7 +336,6 @@ function toggleSort() {
                                 </div>
                     
                                 <div>
-                                    <!-- Update these lines to use display names -->
                                     <span class="font-bold text-sm sm:text-base font-[Poppins]">
                                         {{ review.is_anonymous ? 'Anonymous User' : review.name }}
                                     </span>
@@ -207,11 +362,13 @@ function toggleSort() {
                 </div>
                 
                 <!-- Pagination -->
-                <div v-if="reviews.data && reviews.data.length > 0" class="flex justify-center sm:justify-end mt-10">
+                <div v-if="reviews.data && reviews.data.length > 0" class="flex justify-center sm:justify-end mt-10" data-observe>
                     <div class="flex items-center gap-2 sm:gap-3 rounded">
-                        <template v-for="link in (props.reviews.links || [])" :key="link?.label || 'empty'">
+                        <template v-for="link in (reviews.links || [])" :key="link?.label || 'empty'">
                             <Link
                                 v-if="link.url"
+                                :preserve-state="true"
+                                :preserve-scroll="true"
                                 :class="['w-8 h-8 sm:w-10 sm:h-10 grid place-items-center border border-gray-400 rounded justify-center hover:bg-blue-400 transition-all duration-300 hover:text-[#FAF9F6] font-[Poppins] text-sm sm:text-base', link.active ? 'bg-blue-600 text-[#FAF9F6] border-none' : '']"
                             >
                                 <span v-if="link.label.includes('Previous')" class="">
@@ -250,7 +407,50 @@ function toggleSort() {
             <ReviewModal 
                 :show="showReviewModal"
                 @close="showReviewModal = false"
+                @review-submitted="handleNewReviewSubmitted"
             />
         </main>
     </GuestLayout>
 </template>
+
+<style scoped>
+/* Your existing styles remain the same */
+[data-observe] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+[data-observe].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+[data-observe]:nth-child(1) { transition-delay: 0.1s; }
+[data-observe]:nth-child(2) { transition-delay: 0.2s; }
+[data-observe]:nth-child(3) { transition-delay: 0.3s; }
+[data-observe]:nth-child(4) { transition-delay: 0.4s; }
+[data-observe]:nth-child(5) { transition-delay: 0.5s; }
+[data-observe]:nth-child(6) { transition-delay: 0.6s; }
+[data-observe]:nth-child(7) { transition-delay: 0.7s; }
+[data-observe]:nth-child(8) { transition-delay: 0.8s; }
+[data-observe]:nth-child(9) { transition-delay: 0.9s; }
+
+.highlight-new-review {
+    animation: highlight-pulse 2s ease-in-out;
+    border: 2px solid #10B981 !important;
+    background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+@keyframes highlight-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+</style>

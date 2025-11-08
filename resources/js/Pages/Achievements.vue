@@ -17,6 +17,10 @@ const previousAchievementsCount = ref(props.achievements.total || 0);
 const currentAchievementIds = ref(new Set());
 const newAchievementIds = ref(new Set());
 
+// Intersection Observer setup
+const observer = ref(null);
+const observedElements = ref([]);
+
 onMounted(() => {
     props.achievements.data.forEach(achievement => {
         currentAchievementIds.value.add(achievement.id);
@@ -25,11 +29,44 @@ onMounted(() => {
     pollInterval = setInterval(pollForNewAchievements, 15000);
     
     initTooltips();
+
+    // Initialize Intersection Observer
+    observer.value = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                } else {
+                    entry.target.classList.remove('is-visible');
+                }
+            });
+        },
+        {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        }
+    );
+
+    // Observe elements with the data-observe attribute
+    const elements = document.querySelectorAll('[data-observe]');
+    elements.forEach((el) => {
+        observer.value.observe(el);
+        observedElements.value.push(el);
+    });
 });
 
 onUnmounted(() => {
     if (pollInterval) {
         clearInterval(pollInterval);
+    }
+
+    // Cleanup observer
+    if (observer.value) {
+        observedElements.value.forEach((el) => {
+            observer.value.unobserve(el);
+        });
+        observer.value.disconnect();
     }
 });
 
@@ -57,6 +94,15 @@ const pollForNewAchievements = () => {
                 
                 previousAchievementsCount.value = currentAchievementsCount;
             }
+
+            // Re-observe elements after reload
+            const elements = document.querySelectorAll('[data-observe]');
+            elements.forEach((el) => {
+                if (!observedElements.value.includes(el)) {
+                    observer.value?.observe(el);
+                    observedElements.value.push(el);
+                }
+            });
         }
     });
 };
@@ -115,7 +161,7 @@ const closeModal = () => {
 
     <GuestLayout>
         <main class="dark:text-[#FAF9F6]">
-            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center">
+            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center" data-observe>
                 <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
                     <div class="text-left">
                         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Achievements</h1>
@@ -130,7 +176,7 @@ const closeModal = () => {
             </section>
 
             <section class="px-4 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-6 lg:gap-10">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" data-observe>
                     <div class="text-left">
                         <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white">Achievements</h2>
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Here's a look at the latest achievements in your community today.</p>
@@ -173,7 +219,7 @@ const closeModal = () => {
                     </div>
                 </div>
 
-                <div v-if="!achievements.data || achievements.data.length === 0" class="text-center text-gray-500 py-10 lg:py-20">
+                <div v-if="!achievements.data || achievements.data.length === 0" class="text-center text-gray-500 py-10 lg:py-20" data-observe>
                     <p class="text-lg lg:text-xl mb-4">No achievements yet.</p>
                 </div>
 
@@ -185,6 +231,7 @@ const closeModal = () => {
                             'shadow-lg rounded-lg border-b-1 border-[#000] p-4 sm:p-6 lg:p-8 bg-white flex flex-col gap-4 lg:gap-6 dark:shadow-md dark:rounded-lg dark:bg-[#2c2c2c] transition-all duration-500',
                             isNewAchievement(achievement.id) ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20 animate-pulse' : ''
                         ]"
+                        data-observe
                     >
                         <div class="flex flex-col gap-3">
                             <div class="flex flex-col sm:flex-row justify-between mb-2 gap-2">
@@ -217,7 +264,7 @@ const closeModal = () => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="achievements.data && achievements.data.length > 0" class="flex justify-center sm:justify-end mt-6 lg:mt-10">
+                <div v-if="achievements.data && achievements.data.length > 0" class="flex justify-center sm:justify-end mt-6 lg:mt-10" data-observe>
                     <div class="flex items-center gap-2 sm:gap-3 rounded">
                         <template v-for="link in (props.achievements.links || [])" :key="link?.label || 'empty'">
                             <Link
@@ -265,3 +312,28 @@ const closeModal = () => {
         />
     </GuestLayout>
 </template>
+
+<style scoped>
+/* Add smooth transition for observed elements */
+[data-observe] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+[data-observe].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Staggered animation delays for multiple elements */
+[data-observe]:nth-child(1) { transition-delay: 0.1s; }
+[data-observe]:nth-child(2) { transition-delay: 0.2s; }
+[data-observe]:nth-child(3) { transition-delay: 0.3s; }
+[data-observe]:nth-child(4) { transition-delay: 0.4s; }
+[data-observe]:nth-child(5) { transition-delay: 0.5s; }
+[data-observe]:nth-child(6) { transition-delay: 0.6s; }
+[data-observe]:nth-child(7) { transition-delay: 0.7s; }
+[data-observe]:nth-child(8) { transition-delay: 0.8s; }
+[data-observe]:nth-child(9) { transition-delay: 0.9s; }
+</style>

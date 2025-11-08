@@ -1,6 +1,6 @@
 <script setup>
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
-import { nextTick, computed, ref } from 'vue';
+import { nextTick, computed, ref, onMounted, onUnmounted } from 'vue';
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import ReportMap from '@/Components/ReportMap.vue';
@@ -16,6 +16,51 @@ const trackCode = useForm({
 
 // Ref for the results section
 const resultsSection = ref(null);
+
+// Intersection Observer setup
+const observer = ref(null);
+const observedElements = ref([]);
+
+// Initialize Intersection Observer
+onMounted(() => {
+    observer.value = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    // Add a class or perform action when element is visible
+                    entry.target.classList.add('is-visible');
+                } else {
+                    // Remove class when element is not visible
+                    entry.target.classList.remove('is-visible');
+                }
+            });
+        },
+        {
+            root: null, // viewport
+            rootMargin: '0px',
+            threshold: 0.1 // trigger when 10% of element is visible
+        }
+    );
+
+    // Observe elements with the data-observe attribute
+    nextTick(() => {
+        const elements = document.querySelectorAll('[data-observe]');
+        elements.forEach((el) => {
+            observer.value.observe(el);
+            observedElements.value.push(el);
+        });
+    });
+});
+
+// Cleanup observer on unmount
+onUnmounted(() => {
+    if (observer.value) {
+        observedElements.value.forEach((el) => {
+            observer.value.unobserve(el);
+        });
+        observer.value.disconnect();
+    }
+});
 
 const performSearch = () => {
     const searchTerm = trackCode.search.trim();
@@ -34,6 +79,14 @@ const performSearch = () => {
             // Scroll to results after search
             nextTick(() => {
                 scrollToResults();
+                // Re-observe new elements after search
+                const elements = document.querySelectorAll('[data-observe]');
+                elements.forEach((el) => {
+                    if (!observedElements.value.includes(el)) {
+                        observer.value?.observe(el);
+                        observedElements.value.push(el);
+                    }
+                });
             });
         },
         onError: (errors) => {
@@ -53,6 +106,14 @@ const clearResults = () => {
             // Scroll to top after clearing results
             nextTick(() => {
                 scrollToTop();
+                // Re-observe elements after clearing
+                const elements = document.querySelectorAll('[data-observe]');
+                elements.forEach((el) => {
+                    if (!observedElements.value.includes(el)) {
+                        observer.value?.observe(el);
+                        observedElements.value.push(el);
+                    }
+                });
             });
         }
     });
@@ -193,7 +254,7 @@ const values = computed(() => {
 
     <GuestLayout>
         <main class="dark:text-[#FAF9F6]">
-            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center">
+            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center" data-observe>
                 <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
                     <div class="max-w-xl w-full">
                         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Track Your Report</h1>
@@ -236,7 +297,7 @@ const values = computed(() => {
             </section>
             
             <section class="px-4 sm:px-6 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-8 lg:gap-10">
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center" data-observe>
                     <div class="">
                         <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white">Track Your Report</h2>
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">Check the status of your report</p>
@@ -252,7 +313,7 @@ const values = computed(() => {
                 >
                     <div class="">
                         <!-- Header with Clear Button -->
-                        <div class="flex justify-between items-center mb-4">
+                        <div class="flex justify-between items-center mb-4" data-observe>
                             <h2 class="text-lg font-bold font-[Poppins] dark:text-[#faf9f6]">Search Results</h2>
                             <button 
                                 @click="clearResults"
@@ -265,7 +326,7 @@ const values = computed(() => {
                         </div>
                         
                         <!-- Show current search term -->
-                        <div class="mb-4 p-3 border border-l-4 border-l-blue-500 rounded-lg bg-white dark:bg-[#2c2c2c] dark:border-none">
+                        <div class="mb-4 p-3 border border-l-4 border-l-blue-500 rounded-lg bg-white dark:bg-[#2c2c2c] dark:border-none" data-observe>
                             <p class="text-sm dark:text-[#faf9f6]">Showing results for: {{ searchTerm }}</p>
                         </div>
                         
@@ -273,7 +334,8 @@ const values = computed(() => {
                         <div
                             v-for="report in reports.data"
                             :key="report.id"
-                            class="p-4 sm:p-5 border border-gray-200 rounded-lg shadow-sm mb-4 hover:shadow-md transition-shadow duration-200 flex flex-col gap-6 sm:gap-8 bg-white dark:bg-[#2c2c2c] dark:border-none" 
+                            class="p-4 sm:p-5 border border-gray-200 rounded-lg shadow-sm mb-4 hover:shadow-md transition-shadow duration-200 flex flex-col gap-6 sm:gap-8 bg-white dark:bg-[#2c2c2c] dark:border-none"
+                            data-observe
                         >   
                             <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
                                 <h1 class="font-bold text-xl sm:text-2xl font-[Poppins] dark:text-[#faf9f6]">Report Summary</h1>
@@ -359,7 +421,7 @@ const values = computed(() => {
                             </div>
 
                             <!-- Map -->
-                            <div v-if="report.latitude && report.longitude" class="mt-6 lg:mt-10">
+                            <div v-if="report.latitude && report.longitude" class="mt-6 lg:mt-10" data-observe>
                                 <div class="flex items-center gap-2 mb-3">
                                     <p class="font-semibold text-base font-[Poppins] dark:text-[#faf9f6]">📍 Your Reported Location</p>
                                 </div>
@@ -380,7 +442,7 @@ const values = computed(() => {
                                 </div>
                             </div>
 
-                            <div v-else class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900 dark:border-blue-700">
+                            <div v-else class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900 dark:border-blue-700" data-observe>
                                 <div class="flex items-center gap-2">
                                     <img :src="'/Images/SVG/info.svg'" alt="Info" class="w-4 h-4">
                                     <p class="text-blue-700 dark:text-blue-300">ℹ️ No GPS location data was captured for this report.</p>
@@ -422,7 +484,7 @@ const values = computed(() => {
                         </div>
 
                         <!-- Search Again Suggestion -->
-                        <div class="mt-8 lg:mt-10 rounded-lg text-center">
+                        <div class="mt-8 lg:mt-10 rounded-lg text-center" data-observe>
                             <p class="text-gray-600 mb-2">Want to search for another report?</p>
                             <button 
                                 @click="clearAndFocusSearch"
@@ -435,7 +497,7 @@ const values = computed(() => {
                 </section>
                 
                 <!-- No Results Message -->
-                <div v-else-if="searchTerm && (!reports || !reports.data || reports.data.length === 0)" class="flex justify-center items-center py-20 lg:py-0 lg:h-screen text-center">
+                <div v-else-if="searchTerm && (!reports || !reports.data || reports.data.length === 0)" class="flex justify-center items-center py-20 lg:py-0 lg:h-screen text-center" data-observe>
                     <div class="max-w-md mx-auto">
                         <div class="mb-4">
                             <img :src="'/Images/SVG/not found.svg'" alt="Icon" class="h-32 lg:h-42 mx-auto">
@@ -462,10 +524,31 @@ const values = computed(() => {
                     </div>
                 </div>
 
-                <div v-else class="flex justify-center items-center">
+                <div v-else class="flex justify-center items-center" data-observe>
                     <p class="text-gray-500 text-xl mb-4 py-20">Track reports now!</p>
                 </div>
             </section>
         </main>
     </GuestLayout>
 </template>
+
+<style scoped>
+/* Add smooth transition for observed elements */
+[data-observe] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+[data-observe].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Staggered animation delays for multiple elements */
+[data-observe]:nth-child(1) { transition-delay: 0.1s; }
+[data-observe]:nth-child(2) { transition-delay: 0.2s; }
+[data-observe]:nth-child(3) { transition-delay: 0.3s; }
+[data-observe]:nth-child(4) { transition-delay: 0.4s; }
+[data-observe]:nth-child(5) { transition-delay: 0.5s; }
+</style>

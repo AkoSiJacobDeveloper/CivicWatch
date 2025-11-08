@@ -48,7 +48,7 @@ class ReportIssueController extends Controller
 {
     $validated = $request->validate([
         'title' => 'required|string|max:255',
-        'issue_type' => 'required|string',
+        'issue_type' => 'required|string|max:255', // Changed validation
         'custom_issue_description' => 'nullable|string|max:255',
         'description' => 'required|string',
         'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:10000',
@@ -58,9 +58,9 @@ class ReportIssueController extends Controller
         'contact_number' => 'required|numeric|digits_between:1,20',
         'remarks' => 'nullable|string',
         'g-recaptcha-response' => 'required|string',
-        'latitude' => 'sometimes|nullable|numeric|between:-90,90',        // CHANGED
-        'longitude' => 'sometimes|nullable|numeric|between:-180,180',     // CHANGED
-        'gps_accuracy' => 'sometimes|nullable|numeric|min:0',         
+        'latitude' => 'sometimes|nullable|numeric|between:-90,90',
+        'longitude' => 'sometimes|nullable|numeric|between:-180,180',
+        'gps_accuracy' => 'sometimes|nullable|numeric|min:0',
     ]);
 
     $barangay = Barangay::find($request->barangay_id);
@@ -104,13 +104,19 @@ class ReportIssueController extends Controller
 
     $trackingCode = "CW-{$today}-{$sequence}";
 
+    // FIX: Determine the actual issue type to display
+    $displayIssueType = $validated['issue_type'];
+    
+    // If the user selected "Other", use the custom description
+    if ($validated['issue_type'] === 'Other' && !empty($validated['custom_issue_description'])) {
+        $displayIssueType = $validated['custom_issue_description'];
+    }
+
     $issueType = \App\Models\IssueType::where('name', $validated['issue_type'])->first();
     
     if ($issueType) {
-        // Use the priority from issue_types table
-        $priority = ucfirst($issueType->priority_level); // Convert 'medium' to 'Medium'
+        $priority = ucfirst($issueType->priority_level);
     } else {
-        // Fallback to your existing logic if issue type not found
         $priority = 'Medium';
         $highPriorityTypes = ['fire', 'accident'];
         $lowPriorityTypes = [
@@ -132,11 +138,11 @@ class ReportIssueController extends Controller
     
     while ($retryCount < $maxRetries) {
         try {
-            // Create the report
+            // Create the report with the actual display issue type
             $report = Report::create([
                 'tracking_code' => $trackingCode,
                 'title' => $validated['title'],
-                'issue_type' => $validated['issue_type'],
+                'issue_type' => $displayIssueType, // Use the actual description instead of "Other"
                 'custom_issue_description' => $validated['custom_issue_description'] ?? null,
                 'description' => $validated['description'],
                 'image' => $imagePath,
@@ -147,9 +153,9 @@ class ReportIssueController extends Controller
                 'remarks' => $validated['remarks'],
                 'priority_level' => $priority,
                 'status' => 'pending',
-                'latitude' => isset($validated['latitude']) ? (float)$validated['latitude'] : null,         // CHANGED
-                'longitude' => isset($validated['longitude']) ? (float)$validated['longitude'] : null,      // CHANGED
-                'gps_accuracy' => isset($validated['gps_accuracy']) ? (float)$validated['gps_accuracy'] : null, // CHANGED
+                'latitude' => isset($validated['latitude']) ? (float)$validated['latitude'] : null,
+                'longitude' => isset($validated['longitude']) ? (float)$validated['longitude'] : null,
+                'gps_accuracy' => isset($validated['gps_accuracy']) ? (float)$validated['gps_accuracy'] : null,
             ]);
 
             break;
@@ -158,7 +164,6 @@ class ReportIssueController extends Controller
             if (str_contains($e->getMessage(), 'Duplicate entry') && str_contains($e->getMessage(), 'tracking_code_unique')) {
                 $retryCount++;
                 
-                // Generate new tracking code
                 $sequence = str_pad((int)$sequence + 1, 3, '0', STR_PAD_LEFT);
                 $trackingCode = "CW-{$today}-{$sequence}";
                 
@@ -171,21 +176,19 @@ class ReportIssueController extends Controller
             }
             throw $e;
         }
-    } // ← THIS CLOSING BRACE WAS MISSING!
+    }
 
     // Firebase integration
     try {
         Log::info("🔄 Attempting to send report {$report->id} to Firebase");
         
-        // Map your fields to what the alarm system expects
         $firebaseData = [
-            'type' => $validated['issue_type'],
-            'severity' => strtolower($priority), // Convert "High" to "high"
+            'type' => $displayIssueType, // Use the actual description here too
+            'severity' => strtolower($priority),
             'description' => $validated['description'],
             'location' => $barangay->name . ', ' . $sitio->name
         ];
 
-        // Send to Firebase (use the report ID as document ID)
         $result = $this->firebaseService->sendReportToFirestore($report->id, $firebaseData);
         
         if ($result) {

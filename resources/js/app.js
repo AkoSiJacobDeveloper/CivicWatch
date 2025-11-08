@@ -12,12 +12,6 @@ import 'flowbite';
 import VueSweetalert2 from 'vue-sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 
-// import PrimeVue from 'primevue/config'
-// import MultiSelect from 'primevue/multiselect'
-// import 'primeicons/primeicons.css'
-// import '@primevue/themes/aura/theme.css'
-// import Aura from '@primevue/themes/aura'
-
 import { faFacebook, faTwitter, faTiktok, faInstagram } from '@fortawesome/free-brands-svg-icons';
 import { faMoon, faBookOpenReader, faFlag, faSun, faLocation, faPhone, faEnvelope, faChevronRight, faPaperPlane, faInfoCircle, faUserShield, faArrowCircleLeft, faCircleExclamation, faLock, faCheck, faCopy, faChartSimple, faFile, faHourglass, faRightFromBracket, faSquareCaretLeft, faSquareCaretRight, faEllipsisVertical, faChevronCircleLeft, faChevronCircleRight, faCompass, faBullseye, faEye, faRoad, faLightbulb, faTrash, faDroplet, faChair, faTree, faDog, faPersonDigging, faVolumeHigh, faThumbTack, faCamera, faLocationDot, faGear, faComment, faChevronUp, faHome, faExclamationTriangle, faSearch, faQuestionCircle, faShieldAlt, faFileContract, faDatabase, faCookieBite } from '@fortawesome/free-solid-svg-icons';
 

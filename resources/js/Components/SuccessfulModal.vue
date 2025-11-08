@@ -54,6 +54,30 @@ const handleClose = () => {
     // Emit the close event using the emit function
     emit('close');
 };
+
+// Prevent any link clicks from navigating until tracking code is copied
+const handleLinkClick = (event, linkType) => {
+    event.preventDefault(); // Prevent default navigation
+    event.stopPropagation(); // Prevent event from bubbling up
+    
+    if (!hasCopied.value) {
+        Swal.fire({
+            title: 'Important!',
+            text: `Please copy your tracking code before going to ${linkType}.`,
+            icon: 'warning',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#16a34a'
+        });
+        return;
+    }
+    
+    // If tracking code has been copied, allow navigation
+    if (linkType === 'review') {
+        window.location.href = '/review';
+    } else if (linkType === 'track-reports') {
+        window.location.href = '/track-reports';
+    }
+};
 </script>
 
 <template>
@@ -105,14 +129,22 @@ const handleClose = () => {
 
                 <div class="flex justify-between px-5 pb-5">
                     <div class="flex justify-center items-center">
-                        <Link
-                            href="/review" class="text-gray-800 text-base hover:text-blue-500 transition-all duration-300"
+                        <a
+                            href="/review" 
+                            class="text-gray-800 text-base hover:text-blue-500 transition-all duration-300"
+                            @click="(event) => handleLinkClick(event, 'review')"
                         >
                             Submit a review
-                        </Link>
+                        </a>
                     </div>
                     <div class="flex gap-1 text-[#FAF9F6] w-[50%] ">
-                        <Link href="/track-reports" class="w-1/2 bg-gray-500 p-2 rounded hover:bg-gray-600 transition duration-300 text-center text-sm">Track Report</Link>
+                        <a 
+                            href="/track-reports" 
+                            class="w-1/2 bg-gray-500 p-2 rounded hover:bg-gray-600 transition duration-300 text-center text-sm"
+                            @click="(event) => handleLinkClick(event, 'track-reports')"
+                        >
+                            Track Report
+                        </a>
                         <button class="w-1/2 bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition-colors duration-300"
                             @click="handleClose"
                             >

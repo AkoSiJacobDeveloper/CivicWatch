@@ -1,3 +1,4 @@
+<!-- resources/js/Components/ReviewModal.vue -->
 <script setup>
 import { Link, useForm } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
@@ -10,7 +11,8 @@ import {
     ListboxOption,
 } from '@headlessui/vue'
 
-const emit = defineEmits(['close']); 
+// Define both emits
+const emit = defineEmits(['close', 'review-submitted']); 
 const toast = useToast();
 const form = useForm({
     name: '',
@@ -46,8 +48,6 @@ const locations = [
         place: 'Purok 6 - Sitio Sambag 2'
     }
 ]
-
-const selectedLocation = ref(null)
 
 const hoverRating = ref(0)
 
@@ -104,13 +104,25 @@ const submitReview = () => {
             });
 
             form.post('/review', {
-                onSuccess: () => {
+                onSuccess: (page) => {
                     Swal.close();
                     toast.success('Review submitted successfully!');
+                    
+                    // Emit the review-submitted event before resetting and closing
+                    emit('review-submitted', {
+                        name: form.name,
+                        location: form.location,
+                        review_message: form.review_message,
+                        is_anonymous: form.is_anonymous,
+                        rating: form.rating,
+                    });
+                    
+                    // Reset form
                     form.reset()
                     form.is_anonymous = false;
                     form.rating = 0;
-                    selectedLocation.value = null;
+                    
+                    // Close modal
                     emit('close')
                 },
                 onError: () => {

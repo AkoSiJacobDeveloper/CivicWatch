@@ -1,12 +1,53 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import ApplicationImage from '@/Components/ApplicationImage.vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import AboutCTA from '@/Components/AboutCTA.vue';
 import { text } from '@fortawesome/fontawesome-svg-core';
+
+// Intersection Observer setup
+const observer = ref(null);
+const observedElements = ref([]);
+
+onMounted(() => {
+    // Initialize Intersection Observer
+    observer.value = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                } else {
+                    entry.target.classList.remove('is-visible');
+                }
+            });
+        },
+        {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        }
+    );
+
+    // Observe elements with the data-observe attribute
+    const elements = document.querySelectorAll('[data-observe]');
+    elements.forEach((el) => {
+        observer.value.observe(el);
+        observedElements.value.push(el);
+    });
+});
+
+onUnmounted(() => {
+    // Cleanup observer
+    if (observer.value) {
+        observedElements.value.forEach((el) => {
+            observer.value.unobserve(el);
+        });
+        observer.value.disconnect();
+    }
+});
 
 // const scrollContainer = ref(null);
 
@@ -161,7 +202,7 @@ const teams = [
     <Head title="About"/>
     <GuestLayout>
         <main class="dark:text-[#FAF9F6]">
-            <section class="pt-32 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center">
+            <section class="pt-32 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center" data-observe>
                 <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
                     <div class="text-left">
                         <h1 class="text-3xl sm:text-4xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">About Us</h1>
@@ -178,14 +219,14 @@ const teams = [
             </section>
 
             <section class="px-4 md:px-10 lg:px-32 py-10 lg:py-20">
-                <div class="mb-10 flex flex-col lg:flex-row gap-6 py-5 rounded">
+                <div class="mb-10 flex flex-col lg:flex-row gap-6 py-5 rounded" data-observe>
                     <div class="w-full lg:w-1/2 flex justify-center items-center">
                         <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
                             <img :src="'/Images/Cabulijan/Official Cabulijan Logo.png'" alt="Cabulijan Logo" class="h-40 sm:h-60">
                             <div class="flex flex-col">
                                 <div class="flex flex-col leading-none">
-                                    <div class="border-b-2 border-black">
-                                        <p class="text-3xl sm:text-4xl lg:text-5xl font-bold font-[Poppins] text-blue-950">CivicWatch</p>
+                                    <div class="border-b-2 border-black dark:border-white">
+                                        <p class="text-3xl sm:text-4xl lg:text-5xl font-bold font-[Poppins] text-blue-950 dark:text-white">CivicWatch</p>
                                     </div>
                                     <p class="text-xl sm:text-2xl mt-1 font-semibold text-blue-900">REPORT.ACT.RESOLVE</p>
                                 </div>
@@ -195,14 +236,14 @@ const teams = [
 
                     <div class="w-full lg:w-1/2 h-auto">
                         <div class="flex flex-col gap-4 sm:gap-5">
-                            <div class="flex flex-col border-l-4 border-[#3B82F6] p-4 sm:p-5 bg-white shadow-lg rounded-lg dark:bg-[#2c2c2c]">
+                            <div class="flex flex-col border-l-4 border-[#3B82F6] p-4 sm:p-5 bg-white shadow-lg rounded-lg dark:bg-[#2c2c2c]" data-observe>
                                 <div class="">
                                     <font-awesome-icon icon="compass" class="text-xl sm:text-2xl text-[#FAF9F6] bg-blue-500 p-2 rounded-full"/>
                                     <h3 class="font-bold text-xl sm:text-2xl font-[Poppins] mb-2">Our Mission</h3>
                                 </div>
                                 <p class="text-gray-700 text-justify dark:text-gray-500 text-sm sm:text-base">CivicWatch is committed to empowering local communities by providing a reliable, accessible, and user-friendly platform that allows residents to report everyday issues affecting their surroundings. By bridging the gap between the public and barangay officials, CivicWatch aims to foster a culture of transparency, accountability, and collaboration. The platform ensures that every concern, no matter how small, is heard and acted upon efficiently contributing to the overall well-being and order of the community.</p>
                             </div>
-                            <div class="flex flex-col border-l-4 border-[#3B82F6] p-4 sm:p-5 bg-white shadow-lg rounded-lg dark:bg-[#2c2c2c]">
+                            <div class="flex flex-col border-l-4 border-[#3B82F6] p-4 sm:p-5 bg-white shadow-lg rounded-lg dark:bg-[#2c2c2c]" data-observe>
                                 <div class="">
                                     <font-awesome-icon icon="eye" class="text-xl sm:text-2xl text-[#FAF9F6] bg-blue-500 p-2 rounded-full" />
                                     <h3 class="font-bold text-xl sm:text-2xl font-[Poppins] mb-2">Our Vision</h3>
@@ -217,7 +258,7 @@ const teams = [
             </section>
 
             <section class="px-4 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-6 lg:gap-10">
-                <div class="text-left">
+                <div class="text-left" data-observe>
                     <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-[#FAF9F6]">Supported Issues</h2>
                     <p class="text-sm md:text-base text-gray-500 dark:text-gray-300">Below are the categories or problems<span class="font-bold"> CivicWatch</span> is designed to receive and process.</p>
                 </div>
@@ -230,6 +271,7 @@ const teams = [
                             v-for="(container, index) in containers" 
                             :key="index" 
                             class="flex-shrink-0 w-64 p-4 h-[250px] hover:bg-blue-600 group hover:text-white transition-all duration-300 hover:-translate-y-1 rounded-[20px] bg-white shadow-[5px_5px_16px_#bdbdbd,-5px_-5px_16px_#ffffff] dark:bg-[#2c2c2c] dark:shadow-none dark:hover:bg-blue-600"
+                            data-observe
                         >
                             <div class="bg-[#3B82F6] h-10 w-10 flex justify-center items-center rounded-full mb-3">
                                 <font-awesome-icon :icon="container.icon" class="text-[#FAF9F6]"/>
@@ -251,6 +293,7 @@ const teams = [
                             v-for="(container, index) in containers" 
                             :key="index" 
                             class="p-5 h-[250px] hover:bg-blue-600 group hover:text-white transition-all duration-300 hover:-translate-y-1 rounded-[20px] bg-white shadow-[5px_5px_16px_#bdbdbd,-5px_-5px_16px_#ffffff] dark:bg-[#2c2c2c] dark:shadow-none dark:hover:bg-blue-600"
+                            data-observe
                         >
                             <div class="bg-[#3B82F6] h-12 w-12 flex justify-center items-center rounded-full mb-3">
                                 <font-awesome-icon :icon="container.icon" class="text-[#FAF9F6]"/>
@@ -267,13 +310,13 @@ const teams = [
             </section>
 
             <section class="px-4 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col gap-6 lg:gap-10 team-container rounded-t-[10%]">
-                <div class="text-center">
+                <div class="text-center" data-observe>
                     <h2 class="text-2xl lg:text-4xl text-[#FAF9F6] font-bold font-[Poppins]">Meet The Team</h2>
                     <p class="text-sm md:text-base dark:text-gray-300 text-[#FAF9F6]">The passionate minds behind<span class="text-blue-700 font-bold"> CivicWatch</span>.</p>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    <div v-for="(team, i) in teams" :key="i" class="h-auto min-h-[300px] lg:h-[300px] flex flex-col lg:flex-row glass-card hover:-translate-y-1">
+                    <div v-for="(team, i) in teams" :key="i" class="h-auto min-h-[300px] lg:h-[300px] flex flex-col lg:flex-row glass-card hover:-translate-y-1" data-observe>
                         <div class="w-full lg:w-1/3 flex justify-start p-4 lg:p-0">
                             <div class="h-full p-2">
                                 <img :src="team.img" alt="CivicWatch Team Images" class="object-cover h-full w-full rounded-lg">
@@ -303,7 +346,7 @@ const teams = [
             </section>
 
             <section class="px-4 md:px-10 lg:px-32 py-10 lg:py-20">
-                <div class="flex min-h-96 justify-center items-center border p-4 sm:p-5 bg-white rounded-lg dark:bg-[#1e1e1e] dark:border-none">
+                <div class="flex min-h-96 justify-center items-center border p-4 sm:p-5 bg-white rounded-lg dark:bg-[#1e1e1e] dark:border-none" data-observe>
                     <div class="w-full flex flex-col gap-4 sm:gap-5">
                         <div class="flex justify-start">
                             <img :src="'/Images/quotation.svg'" alt="Quotation Icon" class="h-16 sm:h-20 lg:h-24">
@@ -352,4 +395,27 @@ const teams = [
 .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Safari and Chrome */
 }
+
+/* Add smooth transition for observed elements */
+[data-observe] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+[data-observe].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Staggered animation delays for multiple elements */
+[data-observe]:nth-child(1) { transition-delay: 0.1s; }
+[data-observe]:nth-child(2) { transition-delay: 0.2s; }
+[data-observe]:nth-child(3) { transition-delay: 0.3s; }
+[data-observe]:nth-child(4) { transition-delay: 0.4s; }
+[data-observe]:nth-child(5) { transition-delay: 0.5s; }
+[data-observe]:nth-child(6) { transition-delay: 0.6s; }
+[data-observe]:nth-child(7) { transition-delay: 0.7s; }
+[data-observe]:nth-child(8) { transition-delay: 0.8s; }
+[data-observe]:nth-child(9) { transition-delay: 0.9s; }
 </style>

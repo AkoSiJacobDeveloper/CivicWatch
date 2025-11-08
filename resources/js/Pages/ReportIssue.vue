@@ -705,10 +705,19 @@ function continueSubmission(token) {
         return;
     }
     isSubmitting.value = true;
+    
     const formData = new FormData();
     formData.append('title', form.title || '');
-    formData.append('issue_type', form.issue_type || '');
-    formData.append('custom_issue_description', form.issue_type === 'Other' ? customIssueDescription.value : '');
+    
+    // FIX: Use custom description when "Other" is selected
+    if (form.issue_type === 'Other') {
+        formData.append('issue_type', customIssueDescription.value || 'Other');
+        formData.append('custom_issue_description', customIssueDescription.value || '');
+    } else {
+        formData.append('issue_type', form.issue_type || '');
+        formData.append('custom_issue_description', '');
+    }
+    
     formData.append('description', form.description || '');
     formData.append('sender_name', form.sender_name || '');
     formData.append('contact_number', form.contact_number || '');
@@ -729,6 +738,7 @@ function continueSubmission(token) {
     }
 
     formData.append('g-recaptcha-response', token);
+    
     router.post('/report-issue', formData, {
         forceFormData: true,
         preserveScroll: true,
@@ -751,6 +761,7 @@ function continueSubmission(token) {
         }
     });
 }
+
 onUnmounted(() => {
     if (stream.value) {
         stopCamera();
@@ -1423,7 +1434,7 @@ onMounted(async () => {
                                 <div class="mt-5 mb-3">
                                     <label
                                         for="upload"
-                                        class="block mb-2 text-xs md:text-sm font-medium dark:bg-[#2c2c2c] dark:text-white">Upload Photo
+                                        class="block mb-2 text-xs md:text-sm font-medium  dark:text-white">Upload Photo
                                     </label>
 
                                     <div class="flex flex-col gap-2">
