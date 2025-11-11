@@ -84,7 +84,7 @@ function confirmRejection() {
 
             <div class="flex flex-col p-5">
                 <!-- Modal Content -->
-                <div class="flex flex-col h-60 overflow-y-auto">
+                <div class="flex flex-col h-auto overflow-y-auto">
                     <p class="text-sm text-gray-600 mb-4">Reason for rejecting the report</p>
 
                     <!-- Error Message -->
@@ -110,14 +110,13 @@ function confirmRejection() {
                         </label>
                     </div>
                     
-
                     <transition name="fade-slide">
                         <textarea 
                             v-if="selectedRejectReason === 'Other'" 
                             v-model="otherReason"
                             placeholder="Please specify..."
                             name="otherReason"
-                            class="mt-2 rounded border border-gray-400 transition-all duration-300 w-full h-24 p-2 resize-none"
+                            class="mt-2 rounded border border-gray-400 transition-all duration-300 w-full h-20 p-2 resize-none"
                             required
                         >
                         </textarea>

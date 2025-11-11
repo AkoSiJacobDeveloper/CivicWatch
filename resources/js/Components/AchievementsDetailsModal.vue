@@ -298,7 +298,7 @@ const deleteAchievement = (id) => {
         @click.self="handleBackdropClick"
     >
         <div 
-            class="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+            class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             role="dialog"
             aria-labelledby="modal-title"
             aria-modal="true"

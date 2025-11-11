@@ -6,9 +6,11 @@ import { useForm } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import Swal from 'sweetalert2'
+import jsPDF from 'jspdf';
 
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import FilterModal from '@/Components/FilterModal.vue';
+import ReportsDetailsModal from '@/Components/ReportsDetailsModal.vue';
 
 // Props from Laravel
 const props = defineProps({
@@ -36,6 +38,9 @@ const selectedReports = ref([]);
 const showDuplicateModal = ref(false);
 const primaryReportId = ref(null);
 
+const showReportDetailsModal = ref(false);
+const selectedReportDetails = ref(null);
+
 const issueTypes = ref(props.issueTypes);
 const barangays = ref(props.barangays);
 const sitios = ref(props.sitios);
@@ -48,6 +53,48 @@ const activeFilters = ref({
     startDate: '',
     endDate: ''
 });
+
+const viewDetails = async (report) => {
+    try {
+        console.log('🔄 Fetching full report data for ID:', report.id);
+    
+        const response = await fetch(`/api/reports/${report.id}/details`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const reportData = await response.json();
+        console.log('✅ Full report data fetched:', reportData);
+        
+        selectedReportDetails.value = reportData;
+        showReportDetailsModal.value = true;
+        
+    } catch (error) {
+        console.error('❌ Failed to fetch report details:', error);
+    
+        console.log('🔄 Using fallback table data');
+        selectedReportDetails.value = report;
+        showReportDetailsModal.value = true;
+    }
+};
+
+
+const handleReportApproved = (reportId) => {
+    router.reload({ preserveScroll: true });
+};
+
+const handleReportResolved = (reportId) => {
+    router.reload({ preserveScroll: true });
+};
+
+const handleReportRejected = (reportId) => {
+    router.reload({ preserveScroll: true });
+};
+
+const handleReportDeleted = (reportId) => {
+    router.reload({ preserveScroll: true });
+};
 
 const hasPrimaryReports = computed(() => {
     return selectedReports.value.some(reportId => {
@@ -130,7 +177,8 @@ const bulkActions = computed(() => {
         { id: 'bulk-approve', name: 'Approve Selected' },
         { id: 'bulk-resolved', name: 'Resolve Selected' },
         { id: 'bulk-delete', name: 'Move to Trash' },
-        { id: 'revert', name: 'Revert Status' }
+        { id: 'revert', name: 'Revert Status' },
+        { id: 'export-pdf', name: 'Export as PDF' }
     ];
 
     return actions.map(action => {
@@ -152,25 +200,21 @@ const bulkActions = computed(() => {
                 break;
 
             case 'bulk-approve':
-                // Can only approve pending reports
                 disabled = !hasPendingReports.value || hasInProgressReports.value || hasResolvedReports.value || hasRejectedReports.value;
                 disabledReason = 'Can only approve pending reports';
                 break;
 
             case 'bulk-resolved':
-                // Can only resolve in progress reports
                 disabled = !hasInProgressReports.value || hasPendingReports.value || hasResolvedReports.value || hasRejectedReports.value;
                 disabledReason = 'Can only resolve in progress reports';
                 break;
 
             case 'bulk-delete':
-                // Can only delete rejected reports
                 disabled = hasNonRejectedReports.value;
                 disabledReason = 'Can only move rejected reports to trash';
                 break;
 
             case 'revert':
-                // Enhanced revert logic
                 if (hasOnlyDuplicates.value) {
                     disabled = true;
                     disabledReason = 'Duplicate reports cannot be reverted';
@@ -179,11 +223,230 @@ const bulkActions = computed(() => {
                     disabledReason = 'Can only revert in progress, resolved, or rejected reports';
                 }
                 break;
+
+            case 'export-pdf': 
+                disabled = selectedReports.value.length === 0;
+                disabledReason = 'Please select reports to export';
+                break;
         }
 
         return { ...action, disabled, disabledReason };
     });
 });
+
+const exportSelectedReportsPDF = () => {
+    if (selectedReports.value.length === 0) {
+        toast.error('Please select reports to export');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Generating PDF...',
+        text: `Preparing ${selectedReports.value.length} report(s) for export`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        showConfirmButton: false
+    });
+
+    const selectedReportData = props.reports.data.filter(report => 
+        selectedReports.value.includes(report.id)
+    );
+
+    generateMultipleReportsPDF(selectedReportData, 'selected-reports');
+};
+
+const generateMultipleReportsPDF = (reports, filename) => {
+    const doc = new jsPDF();
+    
+    doc.setFont('helvetica');
+    
+    reports.forEach((report, index) => {
+        if (index > 0) {
+            doc.addPage();
+        }
+        
+        let yPosition = 55; 
+        const pageWidth = doc.internal.pageSize.width;
+        const margin = 20;
+        const contentWidth = pageWidth - (margin * 2);
+        const pageHeight = doc.internal.pageSize.height;
+        
+        // ===== ENHANCED HEADER =====
+        doc.setFillColor(59, 130, 246); 
+        doc.rect(0, 0, pageWidth, 45, 'F');
+        doc.setFillColor(37, 99, 235);
+        doc.rect(0, 35, pageWidth, 10, 'F');
+        
+        // Main title
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('DETAILED REPORT', pageWidth / 2, 18, { align: 'center' });
+        
+        // Subtitle
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`COMPREHENSIVE ANALYSIS - REPORT #${report.id}`, pageWidth / 2, 26, { align: 'center' });
+        
+        // Status badge in header
+        const statusColor = getStatusColor(report.status);
+        doc.setFillColor(statusColor.background[0], statusColor.background[1], statusColor.background[2]);
+        doc.rect(pageWidth / 2 - 40, 30, 80, 8, 'F');
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(statusColor.text[0], statusColor.text[1], statusColor.text[2]);
+        doc.text(`STATUS: ${report.status.toUpperCase()}`, pageWidth / 2, 35, { align: 'center' });
+        
+        // Generation info
+        doc.setTextColor(255, 255, 255, 180);
+        doc.setFontSize(8);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })}`, pageWidth / 2, 42, { align: 'center' });
+        
+        // Reset for content
+        doc.setTextColor(0, 0, 0);
+        
+        // ===== SIMPLIFIED MIDDLE CONTENT (YOUR VERSION) =====
+        
+        // Report basic info
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Report #${report.id}: ${report.title}`, margin, yPosition);
+        yPosition += 8;
+        
+        // Status and priority
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Status: ${report.status} | Priority: ${capitalizeFirstLetter(report.priority_level)}`, margin, yPosition);
+        yPosition += 15;
+        
+        // Sender information
+        doc.setFont('helvetica', 'bold');
+        doc.text('Sender Information:', margin, yPosition);
+        yPosition += 6;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Name: ${report.sender}`, margin, yPosition);
+        yPosition += 5;
+        doc.text(`Contact: ${report.contact}`, margin, yPosition);
+        yPosition += 5;
+        doc.text(`Location: ${report.location}`, margin, yPosition);
+        yPosition += 5;
+        doc.text(`Submitted: ${new Date(report.created_at).toLocaleString()}`, margin, yPosition);
+        yPosition += 15;
+        
+        // Description
+        if (report.description) {
+            doc.setFont('helvetica', 'bold');
+            doc.text('Description:', margin, yPosition);
+            yPosition += 6;
+            
+            doc.setFont('helvetica', 'normal');
+            const splitDescription = doc.splitTextToSize(report.description, contentWidth);
+            doc.text(splitDescription, margin, yPosition);
+            yPosition += (splitDescription.length * 5) + 10;
+        }
+        
+        // Remarks
+        doc.setFont('helvetica', 'bold');
+        doc.text('Remarks:', margin, yPosition);
+        yPosition += 6;
+        
+        doc.setFont('helvetica', 'normal');
+        const remarks = report.remarks || 'No additional remarks provided.';
+        const splitRemarks = doc.splitTextToSize(remarks, contentWidth);
+        doc.text(splitRemarks, margin, yPosition);
+        yPosition += (splitRemarks.length * 5) + 10;
+        
+        // Technical details
+        doc.setFont('helvetica', 'bold');
+        doc.text('Technical Details:', margin, yPosition);
+        yPosition += 6;
+        
+        doc.setFont('helvetica', 'normal');
+        
+        // GPS coordinates
+        if (report.latitude && report.longitude) {
+            doc.text(`Coordinates: ${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}`, margin, yPosition);
+            yPosition += 5;
+            
+            if (report.gps_accuracy) {
+                doc.text(`GPS Accuracy: ${report.gps_accuracy.toFixed(0)} meters`, margin, yPosition);
+                yPosition += 5;
+            }
+        }
+        
+        // Image info
+        doc.text(`Image: ${report.image ? 'Attached' : 'Not attached'}`, margin, yPosition);
+        yPosition += 5;
+        
+        // Report type
+        doc.text(`Issue Type: ${report.type}`, margin, yPosition);
+        yPosition += 10;
+        
+        // Rejection reason (if applicable)
+        if (report.rejection_reason) {
+            doc.setFont('helvetica', 'bold');
+            doc.text('Rejection Reason:', margin, yPosition);
+            yPosition += 6;
+            
+            doc.setFont('helvetica', 'normal');
+            const splitReason = doc.splitTextToSize(report.rejection_reason, contentWidth);
+            doc.text(splitReason, margin, yPosition);
+            yPosition += (splitReason.length * 5) + 10;
+        }
+        
+        // ===== ENHANCED FOOTER =====
+        
+        // Footer background
+        doc.setFillColor(249, 250, 251);
+        doc.rect(0, pageHeight - 30, pageWidth, 30, 'F');
+        
+        // Footer separator
+        doc.setDrawColor(229, 231, 235);
+        doc.line(margin, pageHeight - 30, pageWidth - margin, pageHeight - 30);
+        
+        // Footer content
+        doc.setFontSize(8);
+        doc.setTextColor(107, 114, 128);
+        doc.text('CivicWatch - Official Document', pageWidth / 2, pageHeight - 20, { align: 'center' });
+        doc.text(`Document ID: RMS-${report.id}-${Date.now().toString().slice(-6)}`, pageWidth / 2, pageHeight - 15, { align: 'center' });
+        
+        // Page number with total
+        doc.text(`Page ${index + 1} of ${reports.length}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        
+        // Copyright
+        doc.setFontSize(7);
+        doc.text(`Copyright ${new Date().getFullYear()} CivicWatch. All rights reserved.`, margin, pageHeight - 5);
+        
+        // Security classification
+        doc.setTextColor(239, 68, 68);
+        doc.text('CLASSIFIED: INTERNAL USE ONLY', pageWidth - margin, pageHeight - 5, { align: 'right' });
+    });
+    
+    doc.save(`${filename}-${new Date().toISOString().split('T')[0]}.pdf`);
+    
+    Swal.close();
+    toast.success(`PDF with ${reports.length} report(s) downloaded successfully!`);
+};
+
+const getStatusColor = (status) => {
+    const statusMap = {
+        'pending': { background: [253, 230, 138], text: [146, 64, 14] },
+        'in progress': { background: [219, 234, 254], text: [30, 64, 175] },
+        'resolved': { background: [220, 252, 231], text: [22, 101, 52] },
+        'rejected': { background: [254, 226, 226], text: [185, 28, 28] },
+        'duplicate': { background: [233, 213, 255], text: [126, 34, 206] }
+    };
+    
+    const lowerStatus = status.toLowerCase();
+    return statusMap[lowerStatus] || { background: [243, 244, 246], text: [55, 65, 81] };
+};
 
 const selectedBulkAction = ref(bulkActions.value[0]);
 
@@ -231,8 +494,9 @@ function handleBulkAction(action) {
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
+                cancelButtonText: 'Cancel',
                 confirmButtonText: 'Approve',
-                cancelButtonText: 'Cancel'
+                reverseButtons: true
             }).then(result => {
                 if (result.isConfirmed) {
                     executeBulkAction('admin.reports.bulk-approve', 'Selected Reports Successfully Approved!');
@@ -248,8 +512,9 @@ function handleBulkAction(action) {
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
+                cancelButtonText: 'Cancel',
                 confirmButtonText: 'Resolve',
-                cancelButtonText: 'Cancel'
+                reverseButtons: true
             }).then(result => {
                 if (result.isConfirmed) {
                     executeBulkAction('admin.reports.bulk-resolve', 'Selected Reports Successfully Resolved!');
@@ -265,8 +530,9 @@ function handleBulkAction(action) {
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
+                cancelButtonText: 'Cancel',
                 confirmButtonText: 'Move to Trash',
-                cancelButtonText: 'Cancel'
+                reverseButtons: true
             }).then(result => {
                 if (result.isConfirmed) {
                     executeBulkAction('admin.reports.bulk-delete', 'Selected reports successfully moved to Trash!');
@@ -282,13 +548,18 @@ function handleBulkAction(action) {
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
+                cancelButtonText: 'Cancel',
                 confirmButtonText: 'Yes, Revert',
-                cancelButtonText: 'Cancel'
+                reverseButtons: true
             }).then(result => {
                 if (result.isConfirmed) {
                     executeBulkAction('admin.reports.bulk-revert', 'Selected reports successfully reverted!');
                 }
             });
+        },
+
+        'export-pdf': () => { 
+            exportSelectedReportsPDF();
         }
     };
 
@@ -486,11 +757,6 @@ const theads = [
     { heading: 'Action', img: '/Images/SVG/play.svg' }
 ];
 
-// Navigate to details
-const viewDetails = (id) => {
-    router.visit(`/admin/reports/${id}`);
-};
-
 // Filter options with additional styling for tabs
 const filters = [
     { 
@@ -657,8 +923,9 @@ const markAsDuplicate = () => {
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
+        cancelButtonText: 'Cancel',
         confirmButtonText: 'Mark as Duplicate',
-        cancelButtonText: 'Cancel'
+        reverseButtons: true
     }).then(result => {
         if (result.isConfirmed) {
             router.post(route('admin.reports.mark-duplicate'), {
@@ -1371,7 +1638,7 @@ onUnmounted(() => {
                                     <td class="px-3 py-4">
                                         <div class="flex items-center gap-2">
                                             <button 
-                                                @click="viewDetails(report.id)"
+                                                @click="viewDetails(report)"
                                                 class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-blue-600 hover:text-white hover:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200 shadow-sm hover:shadow-md group"
                                             >
                                                 Details
@@ -1530,6 +1797,16 @@ onUnmounted(() => {
                     </div>
                 </div>
             </div>
+
+            <ReportsDetailsModal 
+                :show="showReportDetailsModal"
+                :report="selectedReportDetails"
+                @close="showReportDetailsModal = false"
+                @approved="handleReportApproved"
+                @resolved="handleReportResolved"
+                @rejected="handleReportRejected"
+                @deleted="handleReportDeleted"
+            />
         </main>
     </AdminLayout>
 </template>

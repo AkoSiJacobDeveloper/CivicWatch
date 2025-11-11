@@ -13,10 +13,9 @@ const legalLinks = [
 
 const quickLinks = [
     { urlName: 'Home', urlPage: '/', icon: ['fas', 'home'] },
-    { urlName: 'Report Issue', urlPage: '/report-issue', icon: ['fas', 'exclamation-triangle'] },
-    { urlName: 'Track Report', urlPage: '/track-reports', icon: ['fas', 'search'] },
     { urlName: 'FAQ', urlPage: '/faq', icon: ['fas', 'question-circle'] },
-    { urlName: 'About', urlPage: '/about', icon: ['fas', 'info-circle'] }
+    { urlName: 'About', urlPage: '/about', icon: ['fas', 'info-circle'] },
+    { urlName: 'Contact Us', urlPage: '/contact-us', icon: ['fas', 'envelope'] }
 ];
 
 const contacts = [

@@ -1,11 +1,18 @@
 <script setup>
 import { Head, router, usePage, useForm } from '@inertiajs/vue3';
-import { ref, nextTick, onMounted, computed, onUnmounted } from 'vue';
+import { ref, nextTick, onMounted, computed, onUnmounted, watch } from 'vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import Swal from 'sweetalert2';
 import axios from 'axios';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import SuccessfulModal from '@/Components/SuccessfulModal.vue';
+
+const props = defineProps({
+    tracking_code: String,
+    show_success_modal: Boolean,
+    barangays: Array
+});
+
 const page = usePage();
 const trackingCode = ref(null);
 const showModal = ref(false);
@@ -20,6 +27,7 @@ const emergencyDetected = ref(false);
 const isTFLoaded = ref(false);
 const isTFLoading = ref(false);
 const tfModel = ref(null);
+
 // Form data
 const form = useForm({
     title: '',
@@ -695,6 +703,7 @@ function submitForm() {
     }
     continueSubmission(token);
 }
+
 function continueSubmission(token) {
     if (!form.barangay_id) {
         alert('Please select a Barangay');
@@ -743,7 +752,12 @@ function continueSubmission(token) {
         forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {
-            trackingCode.value = page.props.flash?.tracking_code || null;
+            const pageProps = usePage().props;
+            console.log('All props:', pageProps);
+            
+            trackingCode.value = pageProps.tracking_code || null;
+            console.log('Tracking code:', trackingCode.value);
+            
             showModal.value = true;
             isSubmitting.value = false;
             resetForm();
@@ -1046,8 +1060,15 @@ onMounted(async () => {
         confirmButtonText: 'I Understand',
         confirmButtonColor: '#3085d6',
     });
+
+    if (props.show_success_modal && props.tracking_code) {
+        showModal.value = true;
+        trackingCode.value = props.tracking_code;
+        console.log('Should show modal with code:', trackingCode.value);
+    }
 });
 </script>
+
 <template>
     <Head title="Report Issue" />
     <GuestLayout>
@@ -1530,6 +1551,26 @@ onMounted(async () => {
                                     <div v-if="form.errors.remarks" class="text-red-500 text-sm mt-1">
                                         {{ form.errors.remarks }}
                                     </div>
+                                </div>
+
+                                <!-- Checkbox for anonymousity -->
+                                <div class="mt-5 mb-3">
+                                    <label
+                                        for="remarks"
+                                        class="block mb-2 text-xs md:text-sm font-medium text-gray-900 dark:text-white"> Privacy
+                                    </label>
+                                    <div class="flex items-center border p-4 rounded-lg bg-white">
+                                        <input 
+                                            v-model="form.is_anonymous"
+                                            type="checkbox" 
+                                            id="is_anonymous"
+                                            class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        />
+                                        <label for="is_anonymous" class="ml-2 text-xs sm:text-sm text-gray-700">
+                                            <p>Display my name publicly <span class="text-blue-500 text-xs">(If unchecked, your name will be hidden)</span></p>
+                                        </label>
+                                    </div>
+                                    
                                 </div>
                             </div>
                         </div>

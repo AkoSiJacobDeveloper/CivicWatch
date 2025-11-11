@@ -13,9 +13,10 @@ const links = [
     { name: 'Review', url: '/review' }, 
     { name: 'Announcements', url: '/user-announcements' },
     { name: 'Achievements', url: '/brgy-achievements' },
-    { name: 'FAQ', url: '/faq' },
-    { name: 'About', url: '/about' },
-    { name: 'Contact Us', url: '/contact-us' },
+    { name: 'Reported Issues', url: '/repoted-issues' },
+    // { name: 'FAQ', url: '/faq' },
+    // { name: 'About', url: '/about' },
+    // { name: 'Contact Us', url: '/contact-us' },
 ];
 
 const mblinks = [...links];

@@ -137,7 +137,7 @@ const clearSearchSelection = () => {
 const handleBatchAction = (action) => {
     if (!action || !hasSelectedReports.value) return;
     
-    selectedBatchAction.value = null; // Reset selection
+    selectedBatchAction.value = null;
     
     if (action.id === 'restore') {
         batchRestore();
@@ -158,16 +158,18 @@ const batchRestore = async () => {
         confirmButtonColor: '#10b981',
         cancelButtonColor: '#6b7280',
         confirmButtonText: 'Yes, Restore Them!',
-        cancelButtonText: 'Cancel'
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
     });
     
     if (result.isConfirmed) {
         Swal.fire({
             title: 'Restoring...',
-            didOpen: () => Swal.showLoading(),
+            text: 'Please wait while we restore the selected reports',
             allowOutsideClick: false,
-            showConfirmButton: false,
-            allowEscapeKey: false
+            allowEscapeKey: false,
+            didOpen: () => Swal.showLoading(),
+            showConfirmButton: false
         });
         
         router.post(route('admin.reports.bulk-restore'), {
@@ -199,17 +201,18 @@ const batchPermanentDelete = async () => {
         cancelButtonColor: '#6b7280',
         confirmButtonText: 'Yes, Delete Permanently!',
         cancelButtonText: 'Cancel',
-        focusCancel: true
+        focusCancel: true,
+        reverseButtons: true
     });
     
     if (result.isConfirmed) {
         Swal.fire({
             title: 'Deleting...',
             html: `Permanently deleting ${selectedCount.value} report(s)`,
-            didOpen: () => Swal.showLoading(),
             allowOutsideClick: false,
-            showConfirmButton: false,
-            allowEscapeKey: false
+            allowEscapeKey: false,
+            didOpen: () => Swal.showLoading(),
+            showConfirmButton: false
         });
         
         router.post(route('admin.reports.bulk-force-delete'), {
@@ -247,48 +250,76 @@ const viewDetails = (id) => {
     router.visit(`/admin/reports/${id}`);
 };
 
-const restoreReport = (id) => {
-    if (!confirm('Restore this report?')) return;
-    
-    router.post(route('admin.reports.restore', { report: id }), {}, {
-        onSuccess: () => {
-            toast.success('Report Restored Successfully!');
-        },
-        onError: () => {
-            toast.error('Problem Restoring Report');
-        }
+const restoreReport = async (id) => {
+    const result = await Swal.fire({
+        title: 'Restore Report?',
+        html: `You are about to restore report <strong>#${id}</strong>.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, Restore It!',
+        cancelButtonText: 'Cancel',
+        reverseButtons: true
     });
+    
+    if (result.isConfirmed) {
+        Swal.fire({
+            title: 'Restoring...',
+            text: 'Please wait while we restore the report',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => Swal.showLoading(),
+            showConfirmButton: false
+        });
+        
+        router.post(route('admin.reports.restore', { report: id }), {}, {
+            onSuccess: () => {
+                Swal.close();
+                toast.success('Report Restored Successfully!');
+            },
+            onError: () => {
+                Swal.close();
+                toast.error('Problem Restoring Report');
+            }
+        });
+    }
 };
 
 const permanentDelete = async (id) => {
     const result = await Swal.fire({
-        title: 'Are you sure?',
-        text: 'Are you sure you want to delete this report? This action cannot be undone.',
+        title: 'Permanently Delete Report?',
+        html: `You are about to <strong class="text-red-600">permanently delete</strong> report <strong>#${id}</strong>.<br><br>This action cannot be undone!`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel'
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, Delete Permanently!',
+        cancelButtonText: 'Cancel',
+        focusCancel: true,
+        reverseButtons: true
     });
     
     if(result.isConfirmed) {
         Swal.fire({
-            title: 'Processing...',
-            didOpen: () => Swal.showLoading(),
+            title: 'Deleting...',
+            text: 'Please wait while we permanently delete the report',
             allowOutsideClick: false,
-            showConfirmButton: false,
-            allowEscapeKey: false
-        })
+            allowEscapeKey: false,
+            didOpen: () => Swal.showLoading(),
+            showConfirmButton: false
+        });
+        
         router.delete(route('admin.reports.force-delete', { report: id}), {
             onSuccess: () => {
                 Swal.close();
                 toast.success('Report Permanently Deleted!');
             },
             onError: () => {
+                Swal.close();
                 toast.error('Problem Deleting Report');
             }
-        })
+        });
     }
 };
 </script>
@@ -298,7 +329,7 @@ const permanentDelete = async (id) => {
 
     <AdminLayout>
         <main class="table-fixed flex flex-col gap-5 text-sm hide-scrollbar">
-            <div class="flex justify-between mt-3">
+            <div class="flex justify-between">
                 <div class="flex items-center gap-2">
                     <div>
                         <Link :href="backUrl">

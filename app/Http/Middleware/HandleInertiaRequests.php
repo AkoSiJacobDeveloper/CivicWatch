@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Closure;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -40,5 +41,15 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
             ],
         ];
+    }
+
+    public function handle($request, Closure $next)
+    {
+        // Force HTTPS for assets in production
+        if (app()->environment('production') || $request->header('X-Forwarded-Proto') === 'https') {
+            \URL::forceScheme('https');
+        }
+
+        return $next($request);
     }
 }

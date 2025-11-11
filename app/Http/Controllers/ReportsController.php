@@ -452,36 +452,30 @@ class ReportsController extends Controller
     
     public function markAsDuplicate(Request $request)
     {
-        // 1. Validate the incoming request
         $validated = $request->validate([
             'primary_report_id' => 'required|exists:reports,id',
             'duplicate_report_ids' => 'required|array|min:1',
             'duplicate_report_ids.*' => 'exists:reports,id|different:primary_report_id'
         ]);
 
-        // 2. Use a database transaction for safety
         DB::beginTransaction();
 
         try {
             // 3. Update all duplicate reports
             Report::whereIn('id', $validated['duplicate_report_ids'])
-                  ->update([
-                      'status' => 'duplicate', // Make sure this matches your closed status
-                      'duplicate_of_report_id' => $validated['primary_report_id'],
-                  ]);
+                ->update([
+                    'status' => 'duplicate',
+                    'duplicate_of_report_id' => $validated['primary_report_id'],
+                ]);
 
-            // 4. Commit the transaction if everything is successful
             DB::commit();
 
-            // 5. Return a success response
             return redirect()->back()->with('success', 'Reports successfully marked as duplicates.');
 
         } catch (\Exception $e) {
-            // 6. Rollback the transaction if any error occurs
             DB::rollBack();
             Log::error('Duplicate marking failed: ' . $e->getMessage());
 
-            // 7. Return an error response
             return redirect()->back()->with('error', 'Failed to mark reports as duplicates. Please try again.');
         }
     }

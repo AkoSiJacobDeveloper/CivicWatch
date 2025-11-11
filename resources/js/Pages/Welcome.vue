@@ -361,7 +361,12 @@ const scrollRightIssues = () => {
                     <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6] mt-2">Hear how we've made a difference.</p>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div v-if="!reviews || reviews.length === 0" class="text-center text-gray-500" data-observe>
+                    <p class="text-lg sm:text-xl mb-4 py-20">No reviews yet. Be the first to write one!</p>
+                </div>
+
+
+                <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     <div 
                         v-for="(review, index) in reviews" 
                         :key="review.id" 

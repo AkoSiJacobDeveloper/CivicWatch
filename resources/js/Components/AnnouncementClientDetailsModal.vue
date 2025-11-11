@@ -138,7 +138,7 @@ onUnmounted(() => {
         @click.self="handleBackdropClick"
     >
         <div 
-            class="bg-white rounded-lg max-w-full sm:max-w-2xl lg:max-w-3xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-0"
+            class="bg-white rounded-lg max-w-full sm:max-w-2xl lg:max-w-4xl w-full max-h-[90vh] overflow-y-auto mx-2 sm:mx-0"
             role="dialog"
             aria-labelledby="modal-title"
             aria-modal="true"

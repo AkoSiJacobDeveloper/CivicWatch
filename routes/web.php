@@ -80,9 +80,9 @@ Route::prefix('admin')->group(function () {
         Route::get('/rejected-reports', [ReportsController::class, 'rejectedReports'])->name('admin.rejected-reports');
         Route::get('/reports/{id}', [ReportsController::class, 'show'])->name('reports.show');
         Route::delete('/reports/{id}', [ReportsController::class, 'destroy'])->name('reports.destroy');
-        Route::put('/reports/approve/{report}', [ReportsController::class, 'approve'])->name('report.approve');
-        Route::put('/reports/resolved/{report}', [ReportsController::class, 'resolved'])->name('report.resolved');
-        Route::put('/reports/reject/{report}', [ReportsController::class, 'reject'])->name('report.rejected');
+        Route::post('/reports/approve/{report}', [ReportsController::class, 'approve'])->name('report.approve');
+        Route::post('/reports/resolved/{report}', [ReportsController::class, 'resolved'])->name('report.resolved');
+        Route::post('/reports/reject/{report}', [ReportsController::class, 'reject'])->name('report.rejected');
 
         // Bulk Actions
         Route::post('/reports/mark-duplicate', [ReportsController::class, 'markAsDuplicate'])->name('admin.reports.mark-duplicate');
