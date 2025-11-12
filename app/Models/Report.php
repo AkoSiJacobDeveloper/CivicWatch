@@ -28,6 +28,14 @@ class Report extends Model
         'status',
         'priority_level',
         'rejection_reason',
+        'approved_at',
+        'duplicate_at',
+        'rejected_at', 
+        'resolved_at',
+        'restore_at',
+        'resolution',
+        'is_anonymous',
+
     ];
 
     protected $casts = [
@@ -36,6 +44,7 @@ class Report extends Model
         'gps_accuracy' => 'float',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'is_anonymous' => 'boolean',
     ];
 
     public function getSenderAttribute()

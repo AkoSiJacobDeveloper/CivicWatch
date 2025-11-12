@@ -43,6 +43,7 @@ const form = useForm({
     latitude: null,
     longitude: null,
     gps_accuracy: null,
+    is_anonymous: false,
 });
 
 const restrictToNumbers = (event) => {
@@ -734,6 +735,8 @@ function continueSubmission(token) {
     formData.append('status', 'pending');
     formData.append('barangay_id', form.barangay_id || '');
     formData.append('sitio_id', form.sitio_id || '');
+
+    formData.append('is_anonymous', form.is_anonymous ? '1' : '0')
 
     // Add GPS data if available
     if (form.latitude && form.longitude) {

@@ -61,6 +61,7 @@ class ReportIssueController extends Controller
             'latitude' => 'sometimes|nullable|numeric|between:-90,90',
             'longitude' => 'sometimes|nullable|numeric|between:-180,180',
             'gps_accuracy' => 'sometimes|nullable|numeric|min:0',
+            'is_anonymous' => 'boolean',
         ]);
 
         $barangay = Barangay::find($request->barangay_id);
@@ -152,6 +153,7 @@ class ReportIssueController extends Controller
                     'latitude' => isset($validated['latitude']) ? (float)$validated['latitude'] : null,
                     'longitude' => isset($validated['longitude']) ? (float)$validated['longitude'] : null,
                     'gps_accuracy' => isset($validated['gps_accuracy']) ? (float)$validated['gps_accuracy'] : null,
+                    'is_anonymous' => $request->boolean('is_anonymous'),
                 ]);
 
                 break;

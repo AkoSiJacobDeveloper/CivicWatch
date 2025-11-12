@@ -11,6 +11,7 @@ import jsPDF from 'jspdf';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import FilterModal from '@/Components/FilterModal.vue';
 import ReportsDetailsModal from '@/Components/ReportsDetailsModal.vue';
+import ResolutionModal from '@/Components/ResolutionModal.vue';
 
 // Props from Laravel
 const props = defineProps({
@@ -44,6 +45,43 @@ const selectedReportDetails = ref(null);
 const issueTypes = ref(props.issueTypes);
 const barangays = ref(props.barangays);
 const sitios = ref(props.sitios);
+
+const showBulkResolutionModal = ref(false);
+
+const handleBulkResolve = () => {
+    showBulkResolutionModal.value = true;
+};
+
+const handleBulkResolutionConfirm = async (resolution) => {
+    Swal.fire({
+        title: 'Resolving Reports...',
+        text: `Processing ${selectedReports.value.length} reports`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        showConfirmButton: false
+    });
+
+    router.post(route('admin.reports.bulk-resolve'), {
+        report_ids: selectedReports.value,
+        resolution: resolution
+    }, {
+        onSuccess: () => {
+            Swal.close();
+            toast.success(`${selectedReports.value.length} reports resolved successfully!`);
+            selectedReports.value = [];
+            selectedBulkAction.value = bulkActions.value[0];
+        },
+        onError: (errors) => {
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed',
+                text: 'Failed to resolve reports. Please try again.'
+            });
+        }
+    });
+};
+
 
 const activeFilters = ref({
     barangay: '',
@@ -505,21 +543,7 @@ function handleBulkAction(action) {
         },
 
         'bulk-resolved': () => {
-            Swal.fire({
-                title: `Resolve ${selectedReports.value.length} report(s)?`,
-                text: 'This will mark the selected reports as resolved.',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                cancelButtonText: 'Cancel',
-                confirmButtonText: 'Resolve',
-                reverseButtons: true
-            }).then(result => {
-                if (result.isConfirmed) {
-                    executeBulkAction('admin.reports.bulk-resolve', 'Selected Reports Successfully Resolved!');
-                }
-            });
+            handleBulkResolve();
         },
 
         'bulk-delete': () => {
@@ -1806,6 +1830,14 @@ onUnmounted(() => {
                 @resolved="handleReportResolved"
                 @rejected="handleReportRejected"
                 @deleted="handleReportDeleted"
+            />
+
+            <ResolutionModal
+                :show="showBulkResolutionModal"
+                :isBulk="true"
+                :reportCount="selectedReports.length"
+                @close="showBulkResolutionModal = false"
+                @confirm="handleBulkResolutionConfirm"
             />
         </main>
     </AdminLayout>

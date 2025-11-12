@@ -11,9 +11,8 @@ const sortOrder = ref('desc')
 let pollInterval = null;
 
 const seenReviewIds = ref(new Set())
-const newReviewIds = ref(new Map()) // Changed to Map for timestamp support
+const newReviewIds = ref(new Map())
 
-// Use localStorage to persist seen review IDs
 const getStoredSeenReviews = () => {
     try {
         const stored = localStorage.getItem('seenReviewIds');
@@ -334,7 +333,7 @@ const handleNewReviewSubmitted = (newReview) => {
                                         class="h-8 w-8 sm:h-10 sm:w-10"
                                     />
                                 </div>
-                    
+                                
                                 <div>
                                     <span class="font-bold text-sm sm:text-base font-[Poppins]">
                                         {{ review.is_anonymous ? 'Anonymous User' : review.name }}

@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 
 import RejectingModal from '@/Components/RejectingModal.vue';
 import ReportMap from '@/Components/ReportMap.vue';
+import ResolutionModal from '@/Components/ResolutionModal.vue';
 
 const props = defineProps({
     show: {
@@ -23,6 +24,12 @@ const props = defineProps({
         default: true
     }
 })
+
+const showResolutionModal = ref(false);
+
+const resolveReport = () => {
+    showResolutionModal.value = true;
+};
 
 const emit = defineEmits(['close', 'approved', 'resolved', 'rejected', 'deleted'])
 
@@ -187,25 +194,10 @@ const approveReport = async (id) => {
     }
 };
 
-const resolveReport = async (id) => {
-    const result = await Swal.fire({
-        title: 'Mark as Resolved?',
-        text: "This will change the report status to 'Resolved'",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#2cc08f',
-        cancelButtonColor: '#6b7280',
-        cancelButtonText: 'Cancel',
-        confirmButtonText: 'Yes, mark as resolved',
-        reverseButtons: true,
-    });
-
-    if (!result.isConfirmed) {
-        return;
-    }
-
+const handleResolutionConfirm = async (resolution) => {
+    // Show loading
     Swal.fire({
-        title: 'Resolving...',
+        title: 'Resolving Report...',
         text: 'Please wait while we process your request',
         allowOutsideClick: false,
         didOpen: () => {
@@ -213,22 +205,46 @@ const resolveReport = async (id) => {
         }
     });
 
-    router.post(route('report.resolved', id), {}, {
-        onSuccess: () => {
-            Swal.close();
-            toast.success('Report resolved successfully!');
-            emit('resolved', id);
-            close();
-        },
-        onError: (errors) => {
-            Swal.fire({
-                title: 'Error!',
-                text: 'Failed to resolve report',
-                icon: 'error',
-                confirmButtonColor: '#ef4444'
-            });
-        }
-    });
+    try {
+        await router.post(route('report.resolved', props.report.id), 
+            { resolution: resolution },
+            {
+                onSuccess: () => {
+                    Swal.close();
+                    toast.success('Report resolved successfully!');
+                    emit('resolved', props.report.id);
+                    close();
+                },
+                onError: (errors) => {
+                    Swal.close();
+                    let errorMessage = 'Failed to resolve report';
+                    
+                    if (errors.message) {
+                        errorMessage = errors.message;
+                    } else if (typeof errors === 'string') {
+                        errorMessage = errors;
+                    } else if (errors.resolution) {
+                        errorMessage = errors.resolution[0];
+                    }
+                    
+                    Swal.fire({
+                        title: 'Error!',
+                        text: errorMessage,
+                        icon: 'error',
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+            }
+        );
+    } catch (error) {
+        Swal.close();
+        Swal.fire({
+            title: 'Error!',
+            text: 'An unexpected error occurred',
+            icon: 'error',
+            confirmButtonColor: '#ef4444'
+        });
+    }
 };
 
 const deleteReport = async (id) => {
@@ -634,12 +650,12 @@ onMounted(() => {
                     <h2 id="modal-title" class="text-2xl font-bold text-white">{{ report?.title }}</h2>
                     <div class="flex gap-5 mt-2">
                         <div class="flex gap-1 items-center">
-                            <img :src="'/Images/SVG/calendar (white).svg'" alt="Icon" class="h-4 w-4">
-                            <span class="text-white text-xs">{{ formatDate(report?.created_at) }}</span>
-                        </div>
-                        <div class="flex gap-1 items-center">
                             <img :src="'/Images/SVG/user (white).svg'" alt="Icon" class="h-4 w-4">
                             <span class="text-white text-xs">{{ report?.sender }}</span>
+                        </div>
+                        <div class="flex gap-1 items-center">
+                            <img :src="'/Images/SVG/calendar (white).svg'" alt="Icon" class="h-4 w-4">
+                            <span class="text-white text-xs">{{ formatDate(report?.created_at) }}</span>
                         </div>
                         <div class="flex gap-1 items-center">
                             <img :src="'/Images/SVG/map-pin-area.svg'" alt="Icon" class="h-4 w-4">
@@ -828,6 +844,7 @@ onMounted(() => {
                         </svg>
                         Export PDF
                     </button>
+                    
                     <!-- Action Buttons -->
                     <template v-if="report?.status === 'Pending'">
                         <button
@@ -848,7 +865,7 @@ onMounted(() => {
 
                     <button
                         v-if="report?.status === 'In Progress'"
-                        @click="resolveReport(report.id)"
+                        @click="resolveReport"
                         class="px-4 py-2 bg-[#2cc08f] text-white rounded-lg hover:bg-[#25a87b] transition-all duration-300 flex items-center gap-2"
                     >
                         <img :src="'/Images/SVG/check-circle.svg'" alt="Resolved Icon" class="w-4 h-4">
@@ -875,4 +892,11 @@ onMounted(() => {
         @close="showRejectModal = false"
         @confirm="handleReject"
     />
+
+    <ResolutionModal
+        :show="showResolutionModal"
+        @close="showResolutionModal = false"
+        @confirm="handleResolutionConfirm"
+    />
+
 </template>

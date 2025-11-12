@@ -108,6 +108,10 @@ class ReportsController extends Controller
             'created_at' => $report->created_at->format('M d, Y h:i A'),
             'updated_at' => $report->updated_at->format('M d, Y h:i A'),
             'duplicate_of_report_id' => $report->duplicate_of_report_id,
+            'approved_at' => $report->approved_at?->format('M d, Y h:i A'),
+            'resolved_at' => $report->resolved_at?->format('M d, Y h:i A'), 
+            'rejected_at' => $report->rejected_at?->format('M d, Y h:i A'),
+            'duplicate_at' => $report->duplicate_at?->format('M d, Y h:i A'),
         ];
     });
     
@@ -287,6 +291,64 @@ class ReportsController extends Controller
         ]);
     }
 
+    // Get reported reports to the Reported Issues component
+    public function reportedIssues(Request $request) {
+        $sortOrder = $request->get('sort', 'desc'); 
+        $search = $request->get('search', '');
+        $sitio = $request->get('sitio', '');
+        
+        $query = Report::with(['barangay', 'sitio', 'duplicates'])
+            ->select('*');
+        
+        // Apply search filter
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('issue_type', 'like', "%{$search}%");
+            });
+        }
+        
+        // Apply sitio filter - CORRECTED
+        if ($sitio) {
+            $query->where('sitio_name', $sitio); 
+        }
+        
+        // Apply sorting
+        $query->when($sortOrder === 'desc', function ($query) {
+            return $query->latest();
+        }, function ($query) {
+            return $query->oldest();
+        });
+        
+        $reports = $query->paginate(5)
+            ->through(function ($report) {
+                if ($report->is_anonymous == 0) {
+                    $report->sender_name = 'Anonymous';
+                }
+                return $report;
+            });
+
+        // Get sitios for the filter dropdown - CORRECTED
+        $sitios = Sitio::select('name')
+            ->where('is_available', 1)
+            ->orderBy('name')
+            ->get()
+            ->pluck('name')
+            ->unique()
+            ->values();
+
+        return Inertia::render('ReportedIssues', [
+            'reports' => $reports,
+            'filters' => [
+                'search' => $search,
+                'sitio' => $sitio,
+                'sort' => $sortOrder,
+            ],
+            'sitios' => $sitios,
+        ]);
+    }
+
     // Delete functionality
     public function destroy($id) {
         $report = Report::findOrFail($id);
@@ -298,7 +360,8 @@ class ReportsController extends Controller
     // Approving functionality
     public function approve(Report $report) {
         $report->update([
-            'status' => 'in_progress'
+            'status' => 'in_progress',
+            'approved_at' => now()
         ]);
 
         return redirect()
@@ -307,9 +370,15 @@ class ReportsController extends Controller
     }
 
     // Resolving functionality
-    public function resolved(Report $report) {
+    public function resolved(Request $request, Report $report) {
+        $validated = $request->validate([
+            'resolution' => 'required|string|min:10|max:1000'
+        ]);
+
         $report->update([
-            'status' => 'resolved'
+            'status' => 'resolved',
+            'resolution' => $validated['resolution'],
+            'resolved_at' => now()
         ]);
 
         return redirect()
@@ -436,6 +505,7 @@ class ReportsController extends Controller
 
         $report->status = 'rejected';
         $report->rejection_reason = $request->reason;
+        $report->rejected_at = now();
         $report->save();
 
         $report->refresh();
@@ -461,11 +531,11 @@ class ReportsController extends Controller
         DB::beginTransaction();
 
         try {
-            // 3. Update all duplicate reports
             Report::whereIn('id', $validated['duplicate_report_ids'])
                 ->update([
                     'status' => 'duplicate',
                     'duplicate_of_report_id' => $validated['primary_report_id'],
+                    'duplicate_at' => now()
                 ]);
 
             DB::commit();
@@ -488,7 +558,12 @@ class ReportsController extends Controller
         ]);
 
         Report::whereIn('id', $validated['report_ids'])
-                ->update(['status' => 'in_progress']);
+                ->update([
+                    'status' => 'in_progress',
+                    'approved_at' => now() 
+        ]);
+                
+                
 
         return redirect()->back()->with('success', 'Reports approved successfully!');
     }
@@ -496,11 +571,17 @@ class ReportsController extends Controller
     public function bulkResolved(Request $request) {
         $validated = $request->validate([
             'report_ids' => 'required|array|min:1',
-            'report_ids.*' => 'exists:reports,id'
+            'report_ids.*' => 'exists:reports,id',
+            'resolution' => 'required|string|min:10|max:1000'
         ]);
 
         Report::whereIn('id', $validated['report_ids'])
-                ->update(['status' => 'resolved']);
+                ->update([
+                    'status' => 'resolved',
+                    'resolution' => $validated['resolution'],
+                    'resolved_at' => now(),
+                    
+        ]);
             
         return redirect()->back()->with('success', 'Reports resolved successfully!');
     }

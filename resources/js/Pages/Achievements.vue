@@ -183,7 +183,7 @@ const closeModal = () => {
                     </div>
 
                     <!-- Sort and Refresh Buttons -->
-                    <div class="flex gap-1">
+                    <div class="flex items-center gap-3">
                         <!-- Refresh Button -->
                         <button
                             @click="pollForNewAchievements"

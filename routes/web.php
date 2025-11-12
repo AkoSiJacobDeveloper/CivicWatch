@@ -31,6 +31,8 @@ Route::get('/review', [ReviewController::class, 'index'])->name('review.index');
 Route::post('/review', [ReviewController::class, 'store'])->name('review.store');
 Route::get('/', [ReviewController::class, 'showInHome'])->name('review.showInHome');
 
+Route::get('/reported-issues', [ReportsController::class, 'reportedIssues'])->name('user.get.reportedIssues');
+
 Route::get('/user-announcements', [AnnouncementController::class, 'showInClient'])->name('user.get.announcements');
 Route::get('/brgy-achievements', [AchievementController::class, 'showInClient'])->name('user.get.achievements');
 
