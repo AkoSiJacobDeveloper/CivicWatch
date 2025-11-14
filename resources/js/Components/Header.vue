@@ -102,7 +102,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <header class="bg-blue-700 flex justify-between p-4 md:py-5 md:px-10 lg:px-32 fixed w-full z-50 dark:bg-[#1e1e1e] dark:text-[#FAF9F6]">
+    <header class="bg-blue-700 flex justify-between p-4 md:py-5 md:px-10 lg:px-32 fixed w-full z-[500] dark:bg-[#1e1e1e] dark:text-[#FAF9F6]">
         <div class="flex justify-between items-center w-full">
             <!-- Logo Section -->
             <div class="flex items-center gap-2">

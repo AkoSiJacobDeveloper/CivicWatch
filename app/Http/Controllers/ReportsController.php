@@ -309,7 +309,6 @@ class ReportsController extends Controller
             });
         }
         
-        // Apply sitio filter - CORRECTED
         if ($sitio) {
             $query->where('sitio_name', $sitio); 
         }

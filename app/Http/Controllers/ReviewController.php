@@ -9,29 +9,33 @@ use Inertia\Inertia;
 class ReviewController extends Controller
 {
     public function index(Request $request) {
-        $query = Review::select(
-            'id',
-            'name',
-            'location',
-            'review_message',
-            'is_anonymous',
-            'created_at',
-            'rating'
-        );
+    $query = Review::select(
+        'id',
+        'name',
+        'location',
+        'review_message',
+        'is_anonymous',
+        'created_at',
+        'rating',
+        'status'
+    )->approved();
 
-        if ($request->sort === 'asc') {
-            $query->orderBy('created_at', 'asc'); 
-        } else {
-            $query->latest();
-        }
-
-        $reviews = $query->paginate(6);
-
-        return Inertia::render('Review', [
-            'reviews' => $reviews,
-            'filters' => $request->only(['sort'])
-        ]);
+    $sort = $request->get('sort', 'desc');
+    
+    if ($sort === 'asc') {
+        $query->orderBy('created_at', 'asc'); 
+    } else {
+        $query->latest();
     }
+
+    $reviews = $query->paginate(6);
+
+    // Return the paginator instance directly - Inertia will handle it
+    return Inertia::render('Review', [
+        'reviews' => $reviews,
+        'filters' => $request->only(['sort'])
+    ]);
+}
 
     public function store(Request $request) {
         $validated = $request->validate([
@@ -42,10 +46,13 @@ class ReviewController extends Controller
             'rating' => 'nullable|integer|min:1|max:5'
         ]);
 
+        // Add pending status by default
+        $validated['status'] = 'pending';
+
         Review::create($validated);
 
         return redirect()->route('review.index')
-        ->with('message', 'Review Submitted Successfully!');
+            ->with('message', 'Review Submitted Successfully! It will be visible after admin approval.');
     }
 
     public function showInHome() {
@@ -58,6 +65,7 @@ class ReviewController extends Controller
             'created_at',
             'rating'
         )
+        ->approved()
         ->inRandomOrder()
         ->take(3)
         ->get();
@@ -68,6 +76,8 @@ class ReviewController extends Controller
     }
 
     public function showInAdmin(Request $request) {
+        $status = $request->status ?? 'pending'; // Default to pending reviews
+        
         $query = Review::select(
             'id',
             'name',
@@ -75,8 +85,17 @@ class ReviewController extends Controller
             'review_message',
             'is_anonymous',
             'created_at',
-            'rating'
+            'rating',
+            'status'
         );
+
+        if ($status === 'pending') {
+            $query->pending();
+        } elseif ($status === 'approved') {
+            $query->approved();
+        } elseif ($status === 'rejected') {
+            $query->rejected();
+        }
 
         if ($request->sort === 'asc') {
             $query->orderBy('created_at', 'asc'); 
@@ -88,8 +107,23 @@ class ReviewController extends Controller
 
         return Inertia::render('Admin/Reviews', [
             'reviews' => $reviews,
-            'filters' => $request->only('sort'),
+            'filters' => $request->only(['sort', 'status']),
+            'currentStatus' => $status
         ]);
+    }
+
+    public function approve($id) {
+        $review = Review::findOrFail($id);
+        $review->update(['status' => 'approved']);
+
+        return redirect()->back()->with('success', 'Review approved successfully.');
+    }
+
+    public function reject($id) {
+        $review = Review::findOrFail($id);
+        $review->update(['status' => 'rejected']);
+
+        return redirect()->back()->with('success', 'Review rejected successfully.');
     }
 
     public function destroy($id) {

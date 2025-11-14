@@ -4,9 +4,9 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
-class isAdmin
+
+class Admin
 {
     /**
      * Handle an incoming request.
@@ -15,16 +15,10 @@ class isAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Not logged in
-        if (!Auth::check()) {
-            return redirect('/admin/admin-login');
+        if (auth()->check() && in_array(auth()->user()->role, ['super_admin', 'admin'])) {
+            return $next($request);
         }
 
-        // Check if user has admin role (super_admin or admin)
-        if (!in_array(Auth::user()->role, ['super_admin', 'admin'])) {
-            abort(403, 'Admins only');
-        }
-
-        return $next($request);
+        return redirect('/')->with('error', 'Unauthorized access.');;
     }
 }

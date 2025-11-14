@@ -7,12 +7,13 @@ use DateTimeInterface;
 
 class Review extends Model
 {
-    protected $fillable = ['name', 'location', 'review_message', 'is_anonymous', 'created_at', 'rating'];
+    protected $fillable = ['name', 'location', 'review_message', 'is_anonymous', 'created_at', 'rating', 'status'];
 
     protected $casts = [
         'is_anonymous' => 'boolean',
         'rating' => 'integer'
     ];
+    
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('F j, Y');
@@ -26,5 +27,23 @@ class Review extends Model
     public function getDisplayLocationAttribute()
     {
         return $this->location;
+    }
+
+    // Scope for approved reviews
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
+
+    // Scope for pending reviews
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    // Scope for rejected reviews
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'rejected');
     }
 }

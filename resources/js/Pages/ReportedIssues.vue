@@ -1,16 +1,16 @@
 <script setup>
 import { Head, router, Link } from '@inertiajs/vue3';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed, onMounted, nextTick } from 'vue';
 import { debounce } from 'lodash';
+import { onClickOutside } from '@vueuse/core'
 
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-
 
 const props = defineProps({
     reports: Object,
     filters: Object,
     sitios: Array,
-})
+});
 
 const sortOrder = ref(props.filters.sort || 'desc');
 const search = ref(props.filters.search || '');
@@ -20,17 +20,34 @@ const dropdownButtonText = computed(() => {
     return selectedSitio.value || 'All Sitios';
 });
 
+const dropdownRef = ref(null)
+const contentKey = ref(0);
+
+onClickOutside(dropdownRef, () => {
+    dropdownOpen.value = false
+})
+
+watch(() => props.filters, (newFilters) => {
+    search.value = newFilters.search || '';
+    selectedSitio.value = newFilters.sitio || '';
+    sortOrder.value = newFilters.sort || 'desc';
+}, { deep: true, immediate: false });
+
+watch(() => props.reports, () => {
+    contentKey.value++;
+}, { deep: true });
 
 const toggleDropdown = () => {
     dropdownOpen.value = !dropdownOpen.value;
 };
 
-
 const selectSitio = (sitio) => {
     selectedSitio.value = sitio;
     dropdownOpen.value = false;
+    
+    // Trigger search immediately when sitio is selected
+    performSearch();
 };
-
 
 const performSearch = debounce(() => {
     router.get(route('user.get.reportedIssues'), {
@@ -40,14 +57,13 @@ const performSearch = debounce(() => {
     }, {
         preserveState: true,
         preserveScroll: true,
-        replace: true
+        replace: true,
     });
 }, 300);
 
 watch([search, selectedSitio], () => {
     performSearch();
 });
-
 
 const refreshData = () => {
     search.value = '';
@@ -59,7 +75,7 @@ const refreshData = () => {
     }, {
         preserveState: true,
         preserveScroll: true,
-        replace: true
+        replace: true,
     });
 };
 
@@ -73,10 +89,9 @@ const toggleSort = () => {
     }, {
         preserveState: true,
         preserveScroll: true,
-        replace: true
+        replace: true,
     });
 };
-
 
 const clearFilters = () => {
     search.value = '';
@@ -153,6 +168,11 @@ const displayName = (report) => {
     return report.sender_name;
 };
 
+onMounted(() => {
+    nextTick(() => {
+        contentKey.value++;
+    });
+});
 </script>
 
 <template>
@@ -160,7 +180,7 @@ const displayName = (report) => {
 
     <GuestLayout>
         <main class="dark:text-[#FAF9F6]">
-            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center" data-observe>
+            <section class="pt-52 lg:pt-0 hero-section min-h-screen text-[#000] px-4 md:px-10 lg:px-32 flex flex-col lg:flex-row items-center animate-fade-in-up">
                 <div class="w-full lg:w-1/2 flex justify-center items-center py-10 lg:py-0">
                     <div class="">
                         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold font-[Poppins] mb-5 text-blue-700">Tracking Every Issue in Your Neighborhood</h1>
@@ -175,23 +195,23 @@ const displayName = (report) => {
             </section>
 
             <!-- Reported Issue Section -->
-            <section class="px-4 sm:px-6 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 " data-observe>
+            <section class="px-4 sm:px-6 md:px-10 lg:px-32 py-10 lg:py-20 flex flex-col relative">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 animate-fade-in-up relative z-50" :style="{ animationDelay: '0.1s' }">
                     <div class="w-1/2">
                         <h2 class="text-2xl lg:text-4xl font-bold font-[Poppins] dark:text-white ">Reported Issues</h2>
                         <p class="text-sm md:text-base text-gray-500 dark:text-[#FAF9F6]">See what issues are already reported in your neighborhood</p>
                     </div>
 
                     <!-- Search with sitio dropdown -->
-                    <div class="w-1/2" data-observe>
+                    <div class="w-1/2 animate-fade-in-up" :style="{ animationDelay: '0.2s' }">
                         <form @submit.prevent="performSearch" class="w-full">
-                            <div class="flex">
+                            <div class="flex relative" ref="dropdownRef">
                                 <!-- Dropdown Button -->
                                 <button 
                                     id="dropdown-button" 
                                     @click="toggleDropdown"
                                     type="button"
-                                    class="shrink-0 z-10 inline-flex items-center py-3 px-4 text-sm font-medium text-center text-gray-900 bg-gray-100 border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700 dark:text-white dark:border-gray-600" 
+                                    class="shrink-0 inline-flex items-center py-3 px-4 text-sm font-medium text-center text-gray-900 bg-gray-100 border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700 dark:text-white dark:border-gray-600"
                                 >
                                     {{ dropdownButtonText }}
                                     <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
@@ -202,15 +222,15 @@ const displayName = (report) => {
                                 <!-- Dropdown Menu -->
                                 <div 
                                     v-show="dropdownOpen"
-                                    class="absolute top-full mt-1 z-20 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700 border border-gray-200 dark:border-gray-600"
+                                    class="absolute top-full mt-1 left-0 bg-white divide-y divide-gray-100 rounded-lg shadow-xl w-44 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 z-[100]"
                                 >
                                     <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
                                         <li>
                                             <button 
                                                 type="button" 
                                                 @click="selectSitio('')"
-                                                class="inline-flex text-xs w-full px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                                                :class="{ 'bg-blue-50 dark:bg-blue-900': !selectedSitio }"
+                                                class="inline-flex text-xs w-full px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
+                                                :class="{ 'bg-blue-50 dark:bg-blue-900': selectedSitio === '' }"
                                             >
                                                 All Sitios
                                             </button>
@@ -219,7 +239,7 @@ const displayName = (report) => {
                                             <button 
                                                 type="button" 
                                                 @click="selectSitio(sitio)"
-                                                class="inline-flex w-full text-xs px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                                                class="inline-flex w-full text-xs px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white text-left"
                                                 :class="{ 'bg-blue-50 dark:bg-blue-900': selectedSitio === sitio }"
                                             >
                                                 {{ sitio }}
@@ -233,7 +253,7 @@ const displayName = (report) => {
                                     <input 
                                         type="search" 
                                         v-model="search"
-                                        class="block p-3 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-e-lg border-s-gray-50 border-s-2 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-s-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500" 
+                                        class="block p-3 w-full text-sm text-gray-900 bg-gray-50 rounded-e-lg border-s-gray-50 border-s-2 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-s-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500" 
                                         placeholder="Search by title, description, or issue type..." 
                                     />
                                     <button 
@@ -252,7 +272,7 @@ const displayName = (report) => {
                 </div>
 
                 <!-- Refresh Button and Sort Button -->
-                <div class="flex items-center justify-end gap-3 mb-8">
+                <div class="flex items-center justify-end gap-3 mb-8 animate-fade-in-up relative z-40" :style="{ animationDelay: '0.3s' }">
                     <button
                         @click="refreshData"
                         class="border p-2 sm:p-3 rounded flex items-center gap-1 sm:gap-2 hover:bg-green-500 hover:text-white transition-colors group duration-300 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-green-600 text-sm sm:text-base"
@@ -273,7 +293,7 @@ const displayName = (report) => {
                     
                     <button
                         @click="toggleSort"
-                        class="border p-2 sm:p-3 rounded flex items-center gap-2 hover:bg-blue-500 hover:text-white dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors group duration-300 text-sm sm:text-base"
+                        class="border p-2 sm:p-3 rounded flex items-center gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300 text-sm sm:text-base"
                     >
                         <span>{{ sortOrder === 'desc' ? 'Newest' : 'Oldest' }}</span>
                         <svg 
@@ -291,17 +311,19 @@ const displayName = (report) => {
                 </div>
                 
 
-                <div v-if="!reports.data || reports.data.length === 0"  class="text-center text-gray-500" data-observe>
+                <div v-if="!reports.data || reports.data.length === 0"  class="text-center text-gray-500 animate-fade-in-up" :style="{ animationDelay: '0.4s' }">
                     <p class="text-lg sm:text-xl mb-4 py-20">No reports yet. Report</p>
                 </div>
 
                 <!-- Reports List -->
-                <div class="grid grid-cols-1 gap-5">
+                <div class="grid grid-cols-1 gap-5 relative z-0" :key="contentKey">
                     <div 
-                        v-for="report in reports.data"
+                        v-for="(report, index) in reports.data"
                         :key="report.id"
+                        class="animate-fade-in-up"
+                        :style="{ animationDelay: `${0.5 + (index * 0.1)}s` }"
                     >
-                        <div class="border p-3 flex gap-5 bg-white rounded-lg shadow-md dark:bg-[#2c2c2c] transition-all duration-500">
+                        <div class="border p-3 flex gap-5 bg-white rounded-lg shadow-md">
                             <div class="w-1/2">
                                 <div class=" h-96 w-full overflow-hidden">
                                     <img :src="`/storage/${report.image}`" alt="Report Image" class="w-full h-full object-cover rounded">
@@ -341,7 +363,7 @@ const displayName = (report) => {
                                 <!-- Description-->
                                 <div>
                                     <p class="font-medium text-base"> Description </p>
-                                    <div class="bg-blue-50 border-l-4 border-blue-600 p-2 rounded-md dark:bg-inherit  dark:border-t dark:border-r dark:border-b dark:border-l-4 dark:border-blue-600">
+                                    <div class="bg-blue-50 border-l-4 border-blue-600 p-2 rounded-md">
                                         <p class="mb-1 text-xs">Title: {{ report.title }}</p>
                                         <p class="text-justify text-blue-600 text-sm">{{ report.description }}</p>
                                     </div>
@@ -370,7 +392,7 @@ const displayName = (report) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="p-3 bg-gray-50 rounded-lg dark:bg-gray-700 transition-all duration-500">
+                                        <div class="p-3 bg-gray-50 rounded-lg">
                                             <h4 class="text-sm font-semibold mb-2">Current Status:</h4>
                                             <div class="flex flex-col gap-2 text-xs">
                                                 <div class="flex justify-between">
@@ -426,8 +448,7 @@ const displayName = (report) => {
                                     <div class="bg-purple-50 border-l-4 border-purple-600 p-3 rounded-md text-purple-600 text-sm">
                                         This is the original report for this issue with a Report ID of 
                                         <span class="font-semibold" v-for="(dup, index) in report.duplicates" :key="dup.id">
-                                            #{{ dup.id }}.
-                                            <span v-if="index < report.duplicates.length - 1">, </span>
+                                            #{{ dup.id }}<span v-if="index < report.duplicates.length - 1">, </span>
                                         </span>
                                         duplicate report(s) have been merged with this one to avoid duplication.
                                     </div>
@@ -438,48 +459,105 @@ const displayName = (report) => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="reports.data && reports.data.length > 0" class="flex justify-center sm:justify-end mt-10" data-observe>
-                    <div class="flex items-center gap-2 sm:gap-3 rounded">
-                        <template v-for="link in (reports.links || [])" :key="link?.label || 'empty'">
+                <div v-if="reports && reports.links && reports.links.length > 1" class="flex justify-center mt-10 relative z-0" data-observe>
+                    <div class="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+                        <template v-for="(link, index) in reports.links" :key="index">
+                            <!-- Previous Button with Icon -->
                             <Link
-                                v-if="link.url"
-                                :href="link.url"
+                                v-if="link.url && link.label.includes('Previous')"
+                                :href="link.url + (link.url.includes('?') ? '&' : '?') + `sort=${sortOrder}`"
                                 :preserve-state="true"
                                 :preserve-scroll="true"
-                                :class="['w-8 h-8 sm:w-10 sm:h-10 grid place-items-center border border-gray-400 rounded justify-center hover:bg-blue-400 transition-all duration-300 hover:text-[#FAF9F6] font-[Poppins] text-sm sm:text-base', link.active ? 'bg-blue-600 text-[#FAF9F6] border-none' : '']"
+                                :class="[
+                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
+                                    'border-blue-200 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-blue-600 dark:hover:border-blue-600'
+                                ]"
+                                title="Previous Page"
                             >
-                                <span v-if="link.label.includes('Previous')" class="">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">
-                                        <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
-                                    </svg>
-                                </span>
-                                <span v-else-if="link.label.includes('Next')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">
-                                        <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
-                                    </svg>
-                                </span>
-                                <span v-else v-html="link.label"></span>
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
+                                </svg>
                             </Link>
+                            
+                            <!-- Next Button with Icon -->
+                            <Link
+                                v-else-if="link.url && link.label.includes('Next')"
+                                :href="link.url + (link.url.includes('?') ? '&' : '?') + `sort=${sortOrder}`"
+                                :preserve-state="true"
+                                :preserve-scroll="true"
+                                :class="[
+                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
+                                    'border-blue-200 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-blue-600 dark:hover:border-blue-600'
+                                ]"
+                                title="Next Page"
+                            >
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
+                                </svg>
+                            </Link>
+                            
+                            <!-- Page Numbers -->
+                            <Link
+                                v-else-if="link.url && !link.label.includes('Previous') && !link.label.includes('Next')"
+                                :href="link.url + (link.url.includes('?') ? '&' : '?') + `sort=${sortOrder}`"
+                                :preserve-state="true"
+                                :preserve-scroll="true"
+                                :class="[
+                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
+                                    link.active 
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105' 
+                                        : 'border-blue-200 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-blue-600 dark:hover:border-blue-600'
+                                ]"
+                                v-html="link.label"
+                            />
+                            
                             <span
                                 v-else
-                                :class="'px-2 py-1 sm:px-3 sm:py-1 text-gray-500 cursor-not-allowed'"
+                                :class="[
+                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium',
+                                    link.label.includes('Previous') || link.label.includes('Next')
+                                        ? 'border-gray-300 text-gray-400 cursor-not-allowed dark:border-gray-700 dark:text-gray-600'
+                                        : 'border-blue-100 bg-blue-50 text-blue-400 cursor-not-allowed dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500'
+                                ]"
                             >
-                                <span v-if="link.label.includes('Previous')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">
+                                <template v-if="link.label.includes('Previous')">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
                                     </svg>
-                                </span>
-                                <span v-else-if="link.label.includes('Next')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#000000" viewBox="0 0 256 256">
+                                </template>
+                                <template v-else-if="link.label.includes('Next')">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
                                     </svg>
-                                </span>
-                                <span v-else v-html="link.label"></span>
+                                </template>
+                                <template v-else>
+                                    {{ link.label }}
+                                </template>
                             </span>
-                        </template> 
+                        </template>
                     </div>
                 </div>
             </section>
         </main>
     </GuestLayout>
 </template>
+
+<style scoped>
+.animate-fade-in-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.border:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+}
+</style>

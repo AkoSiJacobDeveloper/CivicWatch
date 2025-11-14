@@ -622,10 +622,9 @@ const removeImageWithConfirmation = (announcementId) => {
                 onSuccess: () => {
                     Swal.close();
                     
-                    // Update the local state
                     const announcement = announcementsState.pinned.find(a => a.id === announcementId) ||
-                                       announcementsState.regular.find(a => a.id === announcementId) ||
-                                       announcementsState.archived.find(a => a.id === announcementId);
+                                        announcementsState.regular.find(a => a.id === announcementId) ||
+                                        announcementsState.archived.find(a => a.id === announcementId);
                     
                     if (announcement) {
                         announcement.image = null;
@@ -669,7 +668,7 @@ onMounted(() => {
                     </div>
                     <div>
                         <h1 class="font-semibold text-3xl font-[Poppins]">Announcement</h1>
-                        <p class="text-gray-600 text-sm">Stay in the localeCompare</p>
+                        <p class="text-gray-600 text-sm">You see the latest updates that keep everyone informed about what is happening in the barangay</p>
                     </div>
                 </div>
 
@@ -697,23 +696,27 @@ onMounted(() => {
             </section>
             
             <section>
-                <div class="bg-blue-200 p-3 rounded-lg flex gap-2 border-l-4 border-blue-900">
-                    <div class="flex justify-center">
-                        <img 
-                            :src="'/Images/SVG/info (blue).svg'" 
-                            alt="Info Icon"
-                            class="h-10"
-                        >
+                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-blue-800">
+                                {{ activeStatus === 'pinned' ? 'Pinned Announcement' : 
+                                    activeStatus === 'regular' ? 'Regular Announcement' : 'Archived Announcement' }}
+                            </h3>
+                            <p class="text-blue-600 text-sm">
+                                {{ activeStatus === 'pinned' ? 'You check the updates that the barangay keeps at the top because they matter right now.' : 
+                                    activeStatus === 'regular' ? 'You read the usual updates that keep everyone in the loop about ongoing activities.' : 'You view the older updates stored for record and reference.'}}
+                            </p>
+                        </div>
                     </div>
-                    <p class="text-blue-900">
-                        Keep our Barangay community informed and engaged. This platform allows you to 
-                        share important updates, event invitations, safety alerts, and service announcements 
-                        with residents. Ensure timely communication by scheduling posts and targeting 
-                        specific community groups.
-                    </p>
                 </div>
             </section>
-
+            
             <!-- Tab Pill -->
             <div class="flex flex-col gap-2">
                 <div class="">
@@ -1069,7 +1072,7 @@ onMounted(() => {
                             alt="SVG" 
                             class="h-44"
                         >
-                        <p class="text-gray-500 text-lg">No archived announcements available.</p>
+                        <p class="text-gray-500 text-lg font-medium">No archived announcements available.</p>
                     </div>
 
                     <div 

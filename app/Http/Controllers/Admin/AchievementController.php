@@ -62,54 +62,54 @@ class AchievementController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(StoreAchievementRequest $request)
-{
-    $validated = $request->validated();
+    {
+        $validated = $request->validated();
 
-    $slug = Str::slug($validated['title']);
-    $originalSlug = $slug;
-    $counter = 1;
+        $slug = Str::slug($validated['title']);
+        $originalSlug = $slug;
+        $counter = 1;
 
-    while (Achievement::where('slug', $slug)->exists()) {
-        $slug = $originalSlug . '-' . $counter;
-        $counter++;
-    }
-
-    $validated['slug'] = $slug;
-    
-    $validated['status'] = 'published';
-
-    if ($request->hasFile('featured_image')) {
-        $validated['featured_image'] = $request->file('featured_image')->store('achievements', 'public');
-    }
-
-    $documentPaths = [];
-    if ($request->hasFile('document_attachments')) {
-        foreach ($request->file('document_attachments') as $file) {
-            $documentPaths[] = [
-                'path' => $file->store('achievements/documents', 'public'),
-                'original_name' => $file->getClientOriginalName(),
-                'file_size' => $file->getSize(),
-            ];
+        while (Achievement::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
         }
-    }
-    
-    $validated['document_attachments'] = !empty($documentPaths) ? $documentPaths : null;
 
-    $achievement = Achievement::create($validated);
+        $validated['slug'] = $slug;
+        
+        $validated['status'] = 'published';
 
-    if ($request->hasFile('gallery_images')) {
-        foreach ($request->file('gallery_images') as $index => $file) {
-            AchievementGallery::create([
-                'achievement_id' => $achievement->id,
-                'image_path' => $file->store('achievements/gallery', 'public'),
-                'caption' => '', 
-                'order_index' => $index
-            ]);
+        if ($request->hasFile('featured_image')) {
+            $validated['featured_image'] = $request->file('featured_image')->store('achievements', 'public');
         }
-    }
 
-    return redirect()->route('admin.get.achievements')->with('success', 'Achievement recorded successfully');
-}
+        $documentPaths = [];
+        if ($request->hasFile('document_attachments')) {
+            foreach ($request->file('document_attachments') as $file) {
+                $documentPaths[] = [
+                    'path' => $file->store('achievements/documents', 'public'),
+                    'original_name' => $file->getClientOriginalName(),
+                    'file_size' => $file->getSize(),
+                ];
+            }
+        }
+        
+        $validated['document_attachments'] = !empty($documentPaths) ? $documentPaths : null;
+
+        $achievement = Achievement::create($validated);
+
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $index => $file) {
+                AchievementGallery::create([
+                    'achievement_id' => $achievement->id,
+                    'image_path' => $file->store('achievements/gallery', 'public'),
+                    'caption' => '', 
+                    'order_index' => $index
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.get.achievements')->with('success', 'Achievement recorded successfully');
+    }
     /**
      * Display the specified resource.
      */

@@ -106,7 +106,7 @@ const submitReview = () => {
             form.post('/review', {
                 onSuccess: (page) => {
                     Swal.close();
-                    toast.success('Review submitted successfully!');
+                    toast.success('Review submitted successfully! It will be visible after admin approval.');
                     
                     // Emit the review-submitted event before resetting and closing
                     emit('review-submitted', {

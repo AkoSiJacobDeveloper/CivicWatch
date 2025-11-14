@@ -61,9 +61,9 @@ Route::get('/api/reports-data', function() {
     ]);
 });
 
-Route::middleware(['auth', \App\Http\Middleware\isAdmin::class])->group(function () {
-    Route::get('Admin/Dashboard', [ReportsController::class, 'index'])->name('admin.dashboard');
-});
+// Route::middleware(['auth', \App\Http\Middleware\isAdmin::class])->group(function () {
+//     Route::get('Admin/Dashboard', [ReportsController::class, 'index'])->name('admin.dashboard');
+// });
 
 Route::prefix('admin')->group(function () {    
     Route::get('/admin-login', [AuthenticatedSessionController::class, 'create'])->name('admin.login');
@@ -100,7 +100,9 @@ Route::prefix('admin')->group(function () {
         Route::post('/reports/bulk-force-delete', [ReportsController::class, 'bulkForceDelete'])->name('admin.reports.bulk-force-delete');
         // Review
         Route::get('/reviews', [ReviewController::class, 'showInAdmin'])->name('system.review');
-        Route::delete('/reviews/{id}', [ReviewController::class, 'destroy'])->name('reviews.delete');
+        Route::post('/reviews/{review}/approve', [ReviewController::class, 'approve'])->name('admin.reviews.approve');
+        Route::post('/reviews/{review}/reject', [ReviewController::class, 'reject'])->name('admin.reviews.reject');
+        Route::post('/reviews/{review}/delete', [ReviewController::class, 'destroy'])->name('admin.reviews.delete');
 
         Route::get('/locations', fn() => Inertia::render('Admin/Locations'));
         

@@ -450,7 +450,6 @@ const removeImageWithConfirmation = (achievementId) => {
                 }
             });
 
-            // Make the API call to remove the image
             router.post(route('admin.achievements.remove-image', { id: achievementId }), {}, {
                 preserveScroll: true,
                 onSuccess: () => {
@@ -537,23 +536,25 @@ const clearSelection = () => {
                         </button>
                     </div>
                 </div>
-
             </section>
 
             <section>
-                <div class="bg-blue-200 p-3 rounded-lg flex gap-2 border-l-4 border-blue-900">
-                    <div class="flex justify-center">
-                        <img 
-                            :src="'/Images/SVG/info (blue).svg'" 
-                            alt="Info Icon"
-                            class="h-10"
-                        >
+                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-blue-800">
+                                {{ activeStatus === 'active' ? 'Achievements' : 'Archive Achievements' }}
+                            </h3>
+                            <p class="text-blue-600 text-sm">
+                                {{ activeStatus === 'active' ? 'You see the wins your barangay pulled off. These are the completed projects, improvements, and milestones that boosted the community.' : 'You browse the past accomplishments that shaped the barangay. These are older projects kept here for reference and record.' }}
+                            </p>
+                        </div>
                     </div>
-                    <p class="text-blue-900">
-                        Celebrate the milestones of our Barangay community. This platform showcases completed projects, 
-                        awards, and recognitions that highlight our collective progress and dedication. Inspire others 
-                        by sharing the achievements that make our Barangay proud.
-                    </p>
                 </div>
             </section>
 
@@ -723,7 +724,7 @@ const clearSelection = () => {
                     alt="SVG" 
                     class="h-44"
                 >
-                <p class="text-gray-500 text-lg">
+                <p class="text-gray-500 text-lg font-medium">
                     {{ searchQuery ? `No achievements found for "${searchQuery}"` : 'No achievements available.' }}
                 </p>
                 <button 
@@ -806,7 +807,6 @@ const clearSelection = () => {
                             >
                         </div>
                     </div>
-                    
                 </div>
             </div> 
         </main>
