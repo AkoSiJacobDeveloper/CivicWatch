@@ -1,6 +1,6 @@
 <script setup>
 import { Head, router, Link } from '@inertiajs/vue3';
-import { ref, watch, computed, onMounted, nextTick } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { debounce } from 'lodash';
 import { onClickOutside } from '@vueuse/core'
 
@@ -22,6 +22,49 @@ const dropdownButtonText = computed(() => {
 
 const dropdownRef = ref(null)
 const contentKey = ref(0);
+
+// Polling setup
+let pollInterval = null;
+const previousReportsCount = ref(props.reports.total || 0);
+const currentReportIds = ref(new Set());
+const newReportIds = ref(new Map()); // Changed to Map to store timestamps
+
+// Intersection Observer setup
+const observer = ref(null);
+const observedElements = ref([]);
+
+// Storage functions for persistence
+const getStoredNewReports = () => {
+    try {
+        const stored = localStorage.getItem('newReportIds');
+        return stored ? new Map(Object.entries(JSON.parse(stored))) : new Map();
+    } catch {
+        return new Map();
+    }
+};
+
+const setStoredNewReports = (reportIdsMap) => {
+    try {
+        localStorage.setItem('newReportIds', JSON.stringify(Object.fromEntries(reportIdsMap)));
+    } catch (error) {
+        console.error('Failed to store new reports:', error);
+    }
+};
+
+// Function to clean up old new reports (older than 24 hours)
+const cleanOldNewReports = () => {
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    for (const [id, timestamp] of newReportIds.value.entries()) {
+        if (timestamp < oneDayAgo) {
+            newReportIds.value.delete(id);
+        }
+    }
+    setStoredNewReports(newReportIds.value);
+};
+
+const isNewReport = (reportId) => {
+    return newReportIds.value.has(reportId);
+};
 
 onClickOutside(dropdownRef, () => {
     dropdownOpen.value = false
@@ -65,18 +108,46 @@ watch([search, selectedSitio], () => {
     performSearch();
 });
 
-const refreshData = () => {
-    search.value = '';
-    selectedSitio.value = ''; 
-    sortOrder.value = 'desc';
-    
-    router.get(route('user.get.reportedIssues'), {
-        sort: 'desc'
-    }, {
+const pollForNewReports = () => {
+    router.reload({
         preserveState: true,
         preserveScroll: true,
-        replace: true,
+        only: ['reports'], 
+        onSuccess: (page) => {
+            const currentReportsCount = page.props.reports.total || 0;
+
+            if (currentReportsCount > previousReportsCount.value) {
+                page.props.reports.data.forEach(report => {
+                    if (!currentReportIds.value.has(report.id)) {
+                        // Store with timestamp
+                        newReportIds.value.set(report.id, Date.now());
+                        currentReportIds.value.add(report.id);
+                    }
+                });
+                
+                // Persist to localStorage
+                setStoredNewReports(newReportIds.value);
+                
+                previousReportsCount.value = currentReportsCount;
+            }
+
+            // Re-observe elements after reload
+            nextTick(() => {
+                const elements = document.querySelectorAll('[data-observe]');
+                elements.forEach((el) => {
+                    if (!observedElements.value.includes(el)) {
+                        observer.value?.observe(el);
+                        observedElements.value.push(el);
+                    }
+                });
+            });
+        }
     });
+};
+
+const refreshData = () => {
+    // Keep filters but reload data
+    pollForNewReports();
 };
 
 const toggleSort = () => {
@@ -169,9 +240,62 @@ const displayName = (report) => {
 };
 
 onMounted(() => {
+    // Load persisted new reports from localStorage
+    newReportIds.value = getStoredNewReports();
+    
+    // Clean up old new reports (older than 24 hours)
+    cleanOldNewReports();
+    
+    // Initialize current report IDs
+    props.reports.data.forEach(report => {
+        currentReportIds.value.add(report.id);
+    });
+    
+    // Start polling every 15 seconds
+    pollInterval = setInterval(pollForNewReports, 15000);
+
+    // Initialize Intersection Observer
+    observer.value = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                } else {
+                    entry.target.classList.remove('is-visible');
+                }
+            });
+        },
+        {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        }
+    );
+
+    // Observe elements with the data-observe attribute
     nextTick(() => {
+        const elements = document.querySelectorAll('[data-observe]');
+        elements.forEach((el) => {
+            observer.value.observe(el);
+            observedElements.value.push(el);
+        });
         contentKey.value++;
     });
+});
+
+onUnmounted(() => {
+    // Clear polling interval
+    if (pollInterval) {
+        clearInterval(pollInterval);
+    }
+
+    // Cleanup observer
+    if (observer.value) {
+        observedElements.value.forEach((el) => {
+            observer.value.unobserve(el);
+        });
+        observer.value.disconnect();
+    }
 });
 </script>
 

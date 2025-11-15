@@ -14,13 +14,48 @@ const sortOrder = ref(props.sort || 'desc')
 let pollInterval = null;
 const previousAnnouncementsCount = ref(props.announcements.total || 0);
 const currentAnnouncementIds = ref(new Set());
-const newAnnouncementIds = ref(new Set());
+const newAnnouncementIds = ref(new Map()); // Changed to Map to store timestamps
 
 // Intersection Observer setup
 const observer = ref(null);
 const observedElements = ref([]);
 
+// Storage functions for persistence
+const getStoredNewAnnouncements = () => {
+    try {
+        const stored = localStorage.getItem('newAnnouncementIds');
+        return stored ? new Map(Object.entries(JSON.parse(stored))) : new Map();
+    } catch {
+        return new Map();
+    }
+};
+
+const setStoredNewAnnouncements = (announcementIdsMap) => {
+    try {
+        localStorage.setItem('newAnnouncementIds', JSON.stringify(Object.fromEntries(announcementIdsMap)));
+    } catch (error) {
+        console.error('Failed to store new announcements:', error);
+    }
+};
+
+// Function to clean up old new announcements (older than 24 hours)
+const cleanOldNewAnnouncements = () => {
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    for (const [id, timestamp] of newAnnouncementIds.value.entries()) {
+        if (timestamp < oneDayAgo) {
+            newAnnouncementIds.value.delete(id);
+        }
+    }
+    setStoredNewAnnouncements(newAnnouncementIds.value);
+};
+
 onMounted(() => {
+    // Load persisted new announcements from localStorage
+    newAnnouncementIds.value = getStoredNewAnnouncements();
+    
+    // Clean up old new announcements (older than 24 hours)
+    cleanOldNewAnnouncements();
+    
     props.announcements.data.forEach(announcement => {
         currentAnnouncementIds.value.add(announcement.id);
     });
@@ -75,19 +110,19 @@ const pollForNewAnnouncements = () => {
         onSuccess: (page) => {
             const currentAnnouncementsCount = page.props.announcements.total || 0;
 
-            setTimeout(() => {
-                newAnnouncementIds.value.clear();
-            }, 5000);
+            // ✅ REMOVED the setTimeout that was clearing after 5 seconds
 
             if (currentAnnouncementsCount > previousAnnouncementsCount.value) {
-                const newAnnouncementsCount = currentAnnouncementsCount - previousAnnouncementsCount.value;
-                
                 page.props.announcements.data.forEach(announcement => {
                     if (!currentAnnouncementIds.value.has(announcement.id)) {
-                        newAnnouncementIds.value.add(announcement.id);
+                        // Store with timestamp
+                        newAnnouncementIds.value.set(announcement.id, Date.now());
                         currentAnnouncementIds.value.add(announcement.id);
                     }
                 });
+                
+                // Persist to localStorage
+                setStoredNewAnnouncements(newAnnouncementIds.value);
                 
                 previousAnnouncementsCount.value = currentAnnouncementsCount;
             }
@@ -263,43 +298,82 @@ const closeModal = () => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="announcements.data && announcements.data.length > 0" class="flex justify-center sm:justify-end mt-6 lg:mt-10" data-observe>
-                    <div class="flex items-center gap-2 sm:gap-3 rounded">
-                        <template v-for="link in (props.announcements.links || [])" :key="link?.label || 'empty'">
+                <div v-if="announcements && announcements.links && announcements.links.length > 1" class="flex justify-center mt-10" data-observe>
+                    <div class="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+                        <template v-for="(link, index) in announcements.links" :key="index">
+                            <!-- Previous Button with Icon -->
                             <Link
-                                v-if="link.url"
-                                :href="link.url"
-                                :class="['w-8 h-8 sm:w-10 sm:h-10 grid place-items-center border border-gray-400 rounded justify-center hover:bg-blue-400 transition-all duration-300 hover:text-[#FAF9F6] font-[Poppins] text-sm sm:text-base', link.active ? 'bg-blue-600 text-[#FAF9F6] border-none' : '']"
+                                v-if="link.url && link.label.includes('Previous')"
+                                :href="link.url + (link.url.includes('?') ? '&' : '?') + `sort=${sortOrder}`"
+                                :preserve-state="true"
+                                :preserve-scroll="true"
+                                :class="[
+                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
+                                    'border-blue-200 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-blue-600 dark:hover:border-blue-600'
+                                ]"
+                                title="Previous Page"
                             >
-                                <span v-if="link.label.includes('Previous')" class="">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
-                                        <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
-                                    </svg>
-                                </span>
-                                <span v-else-if="link.label.includes('Next')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
-                                        <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
-                                    </svg>
-                                </span>
-                                <span v-else v-html="link.label"></span>
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
+                                </svg>
                             </Link>
+                            
+                            <!-- Next Button with Icon -->
+                            <Link
+                                v-else-if="link.url && link.label.includes('Next')"
+                                :href="link.url + (link.url.includes('?') ? '&' : '?') + `sort=${sortOrder}`"
+                                :preserve-state="true"
+                                :preserve-scroll="true"
+                                :class="[
+                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
+                                    'border-blue-200 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-blue-600 dark:hover:border-blue-600'
+                                ]"
+                                title="Next Page"
+                            >
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
+                                    <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
+                                </svg>
+                            </Link>
+                            
+                            <!-- Page Numbers -->
+                            <Link
+                                v-else-if="link.url && !link.label.includes('Previous') && !link.label.includes('Next')"
+                                :href="link.url + (link.url.includes('?') ? '&' : '?') + `sort=${sortOrder}`"
+                                :preserve-state="true"
+                                :preserve-scroll="true"
+                                :class="[
+                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
+                                    link.active 
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105' 
+                                        : 'border-blue-200 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-blue-600 dark:hover:border-blue-600'
+                                ]"
+                                v-html="link.label"
+                            />
+                            
                             <span
                                 v-else
-                                :class="'px-2 py-1 text-gray-500 cursor-not-allowed text-sm sm:text-base'"
+                                :class="[
+                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium',
+                                    link.label.includes('Previous') || link.label.includes('Next')
+                                        ? 'border-gray-300 text-gray-400 cursor-not-allowed dark:border-gray-700 dark:text-gray-600'
+                                        : 'border-blue-100 bg-blue-50 text-blue-400 cursor-not-allowed dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500'
+                                ]"
                             >
-                                <span v-if="link.label.includes('Previous')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                                <template v-if="link.label.includes('Previous')">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
                                     </svg>
-                                </span>
-                                <span v-else-if="link.label.includes('Next')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256">
+                                </template>
+                                <template v-else-if="link.label.includes('Next')">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
                                     </svg>
-                                </span>
-                                <span v-else v-html="link.label"></span>
+                                </template>
+                                <template v-else>
+                                    {{ link.label }}
+                                </template>
                             </span>
-                        </template> 
+                        </template>
                     </div>
                 </div>
             </section>
