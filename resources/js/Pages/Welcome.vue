@@ -373,49 +373,46 @@ const scrollRightIssues = () => {
                         class="border p-6 md:p-8 gap-4 md:gap-6 scroll-observe dark:border-none rounded-[16px] md:rounded-[20px] bg-white shadow-[5px_5px_16px_#bdbdbd,-5px_-5px_16px_#ffffff] dark:bg-[#2c2c2c] dark:shadow-none"
                         :data-stagger="index"
                     >
-                        <div class="flex flex-col gap-3 mb-3">
-                            <div class="flex justify-between items-center">
-                                <img :src="'/Images/SVG/quote-30-double-open.svg'" alt="Quotation Icon" class="h-8 md:h-10">
-                                <p class="text-xs md:text-sm text-gray-600 dark:text-[#faf9f6]">{{ review.created_at }}</p>
+                        <div class="flex flex-col gap-5 mb-3">
+                            <!-- Details -->
+                            <div class="inline-flex gap-1">
+                                <div>
+                                    <img 
+                                        :src="'/Images/SVG/user-circle-fill.svg'"
+                                        :alt="Icon"
+                                        :class="review.is_anonymous ? 'opacity-55': 'opacity-100'"
+                                        class="h-16 w-16"
+                                    />
+                                </div>
+                                <div class="flex flex-col">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <h3 class="font-bold text-base font-[Poppins]">{{ review.name }}</h3>
+                                        
+                                    </div>
+                                    <p class="text-gray-600 text-xs font-medium">{{ review.location }}</p>
+                                    <p class="text-gray-600 text-xs">{{ review.created_at }}</p>
+                                    
+                                </div>
                             </div>
+
+                            <!-- Rating -->
+                            <div class="flex items-center space-x-1">
+                                <span
+                                    class="px-1 shadow rounded bg-blue-700"
+                                    v-for="star in 5" :key="star" 
+                                    :class="star <= review.rating ? 'text-yellow-400 text-xl' : 'text-gray-200 text-xl'">
+                                    ★
+                                </span>
+                            </div>
+
+                            <!-- Reveiew Message -->
                             <div class="h-32 md:h-36 overflow-y-auto">
                                 <p class="text-gray-600 text-sm md:text-base dark:text-[#faf9f6] leading-relaxed">{{ review.review_message }}</p>
                             </div>
                         </div>
                         
                         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                            <div class="flex items-center gap-2">
-                                <div>
-                                    <img 
-                                        :src="'/Images/SVG/user-circle-fill.svg'"
-                                        :alt="Icon"
-                                        :class="review.is_anonymous ? 'opacity-55': 'opacity-100'"
-                                        class="h-8 w-8 md:h-10 md:w-10"
-                                    />
-                                </div>
-                    
-                                <div>
-                                    <span class="font-bold text-sm md:text-base font-[Poppins] block dark:text-white">
-                                        {{ review.is_anonymous ? 'Anonymous User' : review.name }}
-                                    </span>
-                                    <p class="text-gray-600 text-xs dark:text-[#faf9f6]">
-                                        {{ review.location }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center justify-start sm:justify-end">
-                                <div class="flex items-center space-x-1">
-                                    <span v-for="star in 5" :key="star" 
-                                        :class="star <= review.rating ? 'text-yellow-400' : 'text-gray-300'"
-                                        class="text-sm md:text-base">
-                                        ★
-                                    </span>
-                                    <span v-if="review.rating" class="ml-1 text-xs md:text-sm text-gray-600">
-                                        ({{ review.rating }}/5)
-                                    </span>
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>

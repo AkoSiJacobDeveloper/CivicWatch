@@ -32,7 +32,7 @@ class ReportsController extends Controller
             'priority_level',
             'created_at',
             'updated_at',
-            'duplicate_of_report_id'
+            'duplicate_of_report_id',
         )
         ->latest();
     
@@ -244,13 +244,6 @@ class ReportsController extends Controller
     public function show($id) {
     $report = Report::with(['barangay', 'sitio', 'duplicates'])->findOrFail($id);
 
-    Log::info('Report data from database', [
-        'id' => $report->id,
-        'status' => $report->status,
-        'issue_type' => $report->issue_type,
-        'rejection_reason' => $report->rejection_reason
-    ]);
-    
     $reportData = [
         'id' => $report->id,
         'tracking_code' => $report->tracking_code,
@@ -275,6 +268,13 @@ class ReportsController extends Controller
         'latitude' => $report->latitude,
         'longitude' => $report->longitude,
         'gps_accuracy' => $report->gps_accuracy,
+        
+        // CRITICAL: Add all timeline date fields
+        'approved_at' => $report->approved_at?->format('M d, Y h:i A'),
+        'rejected_at' => $report->rejected_at?->format('M d, Y h:i A'),
+        'resolved_at' => $report->resolved_at?->format('M d, Y h:i A'),
+        'duplicate_at' => $report->duplicate_at?->format('M d, Y h:i A'),
+        'resolution' => $report->resolution,
 
         'duplicates' => $report->duplicates->map(fn($dup) => [
             'id' => $dup->id,
@@ -284,12 +284,10 @@ class ReportsController extends Controller
         ]),
     ];
 
-        Log::info('Data being sent to frontend', $reportData);
-
-        return Inertia::render('Admin/Details/ReportDetails', [
-            'report' => $reportData
-        ]);
-    }
+    return Inertia::render('Admin/Details/ReportDetails', [
+        'report' => $reportData
+    ]);
+}
 
     // Get reported reports to the Reported Issues component
     public function reportedIssues(Request $request) {

@@ -110,12 +110,9 @@ const pollForNewAnnouncements = () => {
         onSuccess: (page) => {
             const currentAnnouncementsCount = page.props.announcements.total || 0;
 
-            // ✅ REMOVED the setTimeout that was clearing after 5 seconds
-
             if (currentAnnouncementsCount > previousAnnouncementsCount.value) {
                 page.props.announcements.data.forEach(announcement => {
                     if (!currentAnnouncementIds.value.has(announcement.id)) {
-                        // Store with timestamp
                         newAnnouncementIds.value.set(announcement.id, Date.now());
                         currentAnnouncementIds.value.add(announcement.id);
                     }

@@ -65,6 +65,11 @@ Route::get('/api/reports-data', function() {
 //     Route::get('Admin/Dashboard', [ReportsController::class, 'index'])->name('admin.dashboard');
 // });
 
+// Legal Group Links
+Route::get('/privacy-policy', fn() => Inertia::render('PrivacyPolicy'));
+Route::get('/terms-and-condition', fn() => Inertia::render('TermsAndCondition'));
+Route::get('/data-usage-notice', fn() => Inertia::render('DataUsageNotice'));
+
 Route::prefix('admin')->group(function () {    
     Route::get('/admin-login', [AuthenticatedSessionController::class, 'create'])->name('admin.login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store']);

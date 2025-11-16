@@ -13,7 +13,6 @@ let pollInterval = null;
 const seenReviewIds = ref(new Set())
 const newReviewIds = ref(new Map())
 
-// Define functions FIRST before using them in watchers
 const getStoredSeenReviews = () => {
     try {
         const stored = localStorage.getItem('seenReviewIds');
@@ -31,7 +30,6 @@ const setStoredSeenReviews = (reviewIds) => {
     }
 };
 
-// Use localStorage to persist new review IDs with timestamps
 const getStoredNewReviews = () => {
     try {
         const stored = localStorage.getItem('newReviewIds');
@@ -49,10 +47,8 @@ const setStoredNewReviews = (reviewIdsMap) => {
     }
 };
 
-// Initialize from storage
 newReviewIds.value = getStoredNewReviews();
 
-// Function to clean up old new reviews (older than 24 hours)
 const cleanOldNewReviews = () => {
     const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
     for (const [id, timestamp] of newReviewIds.value.entries()) {
@@ -63,29 +59,23 @@ const cleanOldNewReviews = () => {
     setStoredNewReviews(newReviewIds.value);
 };
 
-// Check if a review is new
 const isNewReview = (reviewId) => {
     return newReviewIds.value.has(reviewId);
 };
 
-// Shared logic to initialize seen/new reviews from current data
 const initializeSeenAndNew = (currentReviewsData) => {
     const currentReviewIds = new Set(currentReviewsData.map(review => review.id));
     
-    // Load seen from storage
     const storedSeen = getStoredSeenReviews();
     
     let trulyNew = [];
     if (storedSeen.size === 0) {
-        // First visit: no new reviews, just set seen
         seenReviewIds.value = currentReviewIds;
     } else {
-        // Compute new reviews based on previously seen
         trulyNew = [...currentReviewIds].filter(id => !storedSeen.has(id));
         seenReviewIds.value = new Set([...storedSeen, ...currentReviewIds]);
     }
     
-    // Add any truly new to highlights
     if (trulyNew.length > 0) {
         trulyNew.forEach(reviewId => {
             newReviewIds.value.set(reviewId, Date.now());
@@ -93,15 +83,12 @@ const initializeSeenAndNew = (currentReviewsData) => {
         setStoredNewReviews(newReviewIds.value);
     }
     
-    // Store updated seen
     setStoredSeenReviews(seenReviewIds.value);
 };
 
-// Update logic after reload/navigation that affects reviews
 const updateAfterReload = (page) => {
     initializeSeenAndNew(page.props.reviews.data);
     
-    // Re-observe elements after update
     nextTick(() => {
         const elements = document.querySelectorAll('[data-observe]');
         elements.forEach((el) => {
@@ -113,13 +100,10 @@ const updateAfterReload = (page) => {
     });
 };
 
-// NOW define the watcher AFTER all functions are defined
-// Watch for changes in reviews prop (when pagination changes)
 watch(() => reviews, (newReviews) => {
     if (newReviews && newReviews.data) {
         initializeSeenAndNew(newReviews.data);
         
-        // Re-observe elements after data update
         nextTick(() => {
             const elements = document.querySelectorAll('[data-observe]');
             elements.forEach((el) => {
@@ -132,20 +116,16 @@ watch(() => reviews, (newReviews) => {
     }
 }, { immediate: true, deep: true });
 
-// Intersection Observer setup
 const observer = ref(null);
 const observedElements = ref([]);
 
 onMounted(() => {
-    // Clean up old new reviews
     cleanOldNewReviews();
     
-    // Initialize seen/new from current props
     initializeSeenAndNew(reviews.data);
     
     pollInterval = setInterval(pollForNewReviews, 15000);
 
-    // Initialize Intersection Observer
     observer.value = new IntersectionObserver(
         (entries) => {
             entries.forEach((entry) => {
@@ -163,7 +143,6 @@ onMounted(() => {
         }
     );
 
-    // Observe elements with the data-observe attribute
     nextTick(() => {
         const elements = document.querySelectorAll('[data-observe]');
         elements.forEach((el) => {
@@ -178,7 +157,6 @@ onUnmounted(() => {
         clearInterval(pollInterval);
     }
 
-    // Cleanup observer
     if (observer.value) {
         observedElements.value.forEach((el) => {
             observer.value.unobserve(el);
@@ -203,12 +181,11 @@ function openReviewModal() {
 function toggleSort() {
     sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
     
-    // Get current page from the reviews object
     const currentPage = reviews.current_page || 1;
     
     router.get('/review', { 
         sort: sortOrder.value,
-        page: currentPage // Preserve current page when sorting
+        page: currentPage
     }, {
         preserveState: true,
         preserveScroll: true,
@@ -217,40 +194,14 @@ function toggleSort() {
     })
 }
 
-// Function to handle when a new review is submitted
 const handleNewReviewSubmitted = (newReview) => {
-    // Close the modal
     showReviewModal.value = false;
     
-    // Force reload to get the latest reviews including the new one
     router.reload({
         preserveState: true,
-        preserveScroll: false,
+        preserveScroll: true,
         only: ['reviews'],
-        onSuccess: (page) => {
-            updateAfterReload(page);
-            
-            // Wait for the DOM to update
-            nextTick(() => {
-                // Scroll to the top of reviews section
-                const reviewsSection = document.querySelector('.grid');
-                if (reviewsSection) {
-                    reviewsSection.scrollIntoView({ 
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                    
-                    // Add highlight to the first review (the newest one)
-                    const firstReview = reviewsSection.querySelector('[data-review-id]');
-                    if (firstReview) {
-                        firstReview.classList.add('highlight-new-review');
-                        setTimeout(() => {
-                            firstReview.classList.remove('highlight-new-review');
-                        }, 3000);
-                    }
-                }
-            });
-        }
+        onSuccess: updateAfterReload
     });
 }
 </script>
@@ -339,48 +290,40 @@ const handleNewReviewSubmitted = (newReview) => {
                         ]"
                         data-observe
                     >
-                        <div class="flex flex-col gap-3">
-                            <div class="flex justify-between items-center">
-                                <img :src="'/Images/SVG/quote-30-double-open.svg'" alt="Quotation Icon" class="h-10 sm:h-12">
-                                <p class="text-xs sm:text-sm text-gray-600 dark:text-[#faf9f6]">{{ review.created_at }}</p>
-                            </div>
-                            <div class="h-[145px] overflow-y-auto">
-                                <p class="text-sm sm:text-base text-gray-600 dark:text-[#faf9f6]">{{ review.review_message }}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div class="flex items-center gap-1">
+                        <div class="flex justify-between">
+                            <div class="inline-flex gap-1">
                                 <div>
                                     <img 
                                         :src="'/Images/SVG/user-circle-fill.svg'"
                                         :alt="Icon"
                                         :class="review.is_anonymous ? 'opacity-55': 'opacity-100'"
-                                        class="h-8 w-8 sm:h-10 sm:w-10"
+                                        class="h-16 w-16"
                                     />
                                 </div>
-                                
-                                <div>
-                                    <span class="font-bold text-sm sm:text-base font-[Poppins]">
-                                        {{ review.is_anonymous ? 'Anonymous User' : review.name }}
-                                    </span>
-                                    <p class="text-gray-600 text-xs dark:text-[#faf9f6]">
-                                        {{ review.location }}
-                                    </p>
+                                <div class="flex flex-col">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <h3 class="font-bold text-base font-[Poppins]">{{ review.name }}</h3>
+                                        
+                                    </div>
+                                    <p class="text-gray-600 text-xs font-medium">{{ review.location }}</p>
+                                    <p class="text-gray-600 text-xs">{{ review.created_at }}</p>
+                                    
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-1">
+                            <span
+                                class="px-1 shadow rounded bg-blue-700"
+                                v-for="star in 5" :key="star" 
+                                :class="star <= review.rating ? 'text-yellow-400 text-xl' : 'text-gray-200 text-xl'">
+                                ★
+                            </span>
+                        </div>
 
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center space-x-1">
-                                    <span v-for="star in 5" :key="star" 
-                                        :class="star <= review.rating ? 'text-yellow-400' : 'text-gray-300'"
-                                        class="text-lg sm:text-xl">
-                                        ★
-                                    </span>
-                                    <span v-if="review.rating" class="ml-1 text-xs sm:text-sm text-gray-600">
-                                        ({{ review.rating }}/5)
-                                    </span>
-                                </div>
+                        <div class="flex flex-col gap-3">
+                            <div class="h-[145px] overflow-y-auto">
+                                <p class="text-gray-600 text-base">{{ review.review_message }}</p>
                             </div>
                         </div>
                     </div>

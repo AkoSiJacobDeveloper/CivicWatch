@@ -1128,6 +1128,7 @@ onUnmounted(() => {
     newReportIds.value.clear();
     previousReportIds.value = [];
 });
+
 </script>
 
 <template>

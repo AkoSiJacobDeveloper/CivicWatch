@@ -114,19 +114,28 @@ const pollForNewReports = () => {
         preserveScroll: true,
         only: ['reports'], 
         onSuccess: (page) => {
+            // ✅ Add safety checks for undefined values
+            if (!page?.props?.reports) {
+                console.warn('Reports data not available');
+                return;
+            }
+
             const currentReportsCount = page.props.reports.total || 0;
 
             if (currentReportsCount > previousReportsCount.value) {
-                page.props.reports.data.forEach(report => {
-                    if (!currentReportIds.value.has(report.id)) {
-                        // Store with timestamp
-                        newReportIds.value.set(report.id, Date.now());
-                        currentReportIds.value.add(report.id);
-                    }
-                });
-                
-                // Persist to localStorage
-                setStoredNewReports(newReportIds.value);
+                // ✅ Check if data array exists
+                if (page.props.reports.data && Array.isArray(page.props.reports.data)) {
+                    page.props.reports.data.forEach(report => {
+                        if (!currentReportIds.value.has(report.id)) {
+                            // Store with timestamp
+                            newReportIds.value.set(report.id, Date.now());
+                            currentReportIds.value.add(report.id);
+                        }
+                    });
+                    
+                    // Persist to localStorage
+                    setStoredNewReports(newReportIds.value);
+                }
                 
                 previousReportsCount.value = currentReportsCount;
             }
@@ -141,6 +150,9 @@ const pollForNewReports = () => {
                     }
                 });
             });
+        },
+        onError: (errors) => {
+            console.error('Error polling for new reports:', errors);
         }
     });
 };
@@ -246,14 +258,14 @@ onMounted(() => {
     // Clean up old new reports (older than 24 hours)
     cleanOldNewReports();
     
-    // Initialize current report IDs
-    props.reports.data.forEach(report => {
-        currentReportIds.value.add(report.id);
-    });
+    // ✅ Add safety check for reports.data
+    if (props.reports && props.reports.data && Array.isArray(props.reports.data)) {
+        // Initialize current report IDs
+        props.reports.data.forEach(report => {
+            currentReportIds.value.add(report.id);
+        });
+    }
     
-    // Start polling every 15 seconds
-    pollInterval = setInterval(pollForNewReports, 15000);
-
     // Initialize Intersection Observer
     observer.value = new IntersectionObserver(
         (entries) => {
@@ -284,11 +296,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    // Clear polling interval
-    if (pollInterval) {
-        clearInterval(pollInterval);
-    }
-
     // Cleanup observer
     if (observer.value) {
         observedElements.value.forEach((el) => {

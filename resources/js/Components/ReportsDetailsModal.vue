@@ -213,6 +213,10 @@ const handleResolutionConfirm = async (resolution) => {
                     Swal.close();
                     toast.success('Report resolved successfully!');
                     emit('resolved', props.report.id);
+                    
+                    // ADD THIS LINE - Close the resolution modal
+                    showResolutionModal.value = false;
+                    
                     close();
                 },
                 onError: (errors) => {
@@ -617,6 +621,54 @@ onUnmounted(() => {
 onMounted(() => {
     initTooltips();
 })
+
+const getStatusTimeline = (report) => {
+    const timeline = [];
+    
+    timeline.push({
+        status: 'Reported',
+        date: report.created_at,
+        icon: '📝'
+    });
+    
+    // Approved date
+    if (report.approved_at) {
+        timeline.push({
+            status: 'Approved',
+            date: report.approved_at,
+            icon: '✅'
+        });
+    }
+    
+    // Rejected date
+    if (report.rejected_at) {
+        timeline.push({
+            status: 'Rejected',
+            date: report.rejected_at,
+            icon: '❌'
+        });
+    }
+    
+    // Resolved date
+    if (report.resolved_at) {
+        timeline.push({
+            status: 'Resolved',
+            date: report.resolved_at,
+            icon: '🏁'
+        });
+    }
+
+    // Duplicate
+    if (report.duplicate_at) {
+        timeline.push({
+            status: 'Duplicate',
+            date: report.duplicate_at,
+            icon: '📋'
+        })
+    }
+    
+    return timeline;
+}
 </script>
 
 <template>
@@ -676,46 +728,6 @@ onMounted(() => {
             <!-- Modal Content -->
             <div class="h-96 overflow-y-auto">
                 <div class="px-6 py-4">
-                    <!-- Notes for Duplicates Reports -->
-                    <div class="mb-4">
-                        <div
-                            v-if="report?.status === 'Duplicate' && report?.duplicate_of_report_id"
-                            class="flex items-center border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 p-3 rounded-lg flex-1"
-                        >
-                            <img :src="'/Images/SVG/info (blue).svg'" alt="Icon" class="h-5 w-5">
-                            <p class="ml-2 text-sm">
-                                This report has been identified as a duplicate and consolidated with Report ID: 
-                                <span class="font-semibold">#{{ report.duplicate_of_report_id }}</span>.
-                            </p>
-                        </div>
-
-                        <div
-                            v-if="report?.duplicates && report.duplicates.length > 0"
-                            class="mb-2 flex items-center border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 p-3 rounded-lg flex-1"
-                        >
-                            <img :src="'/Images/SVG/info (blue).svg'" alt="Icon" class="h-5 w-5">
-                            <p class="ml-2 text-sm">
-                                This is the primary report for this issue with a Report ID of 
-                                <span class="font-semibold" v-for="(dup, index) in report.duplicates" :key="dup.id">
-                                    #{{ dup.id }}.
-                                    <span v-if="index < report.duplicates.length - 1">, </span>
-                                </span>
-                                Duplicate reports consolidated here.
-                            </p>
-                        </div>
-
-                        <!-- Reason for Rejection -->
-                        <div
-                            v-if="report?.status === 'Rejected'"
-                            class="flex items-center border-l-4 border-red-800 bg-gradient-to-r from-red-200 to-red-100 p-3 rounded-lg flex-1"
-                        >
-                            <img :src="'/Images/SVG/warning.svg'" alt="Warning" class="h-5 w-5">
-                            <div class="flex flex-col ml-2 text-sm">
-                                <p>Rejection reason: <span class="font-semibold">{{ report.rejection_reason }}</span></p>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="border border-gray-200 grid grid-cols-4 rounded-lg shadow-lg mb-6">
                         <div class="p-4">
                             <div class="text-center">
@@ -822,6 +834,84 @@ onMounted(() => {
                             <p class="text-xs text-gray-500">This shows the exact location where the report was submitted from.</p>
                         </div>
                     </div>
+
+                    <div>
+                        <p class="text-sm mb-2 font-[Poppins] font-semibold">Status History</p>
+                        <div class="">
+                            <div class="flex flex-col gap-2 mb-3">
+                                <!-- Dynamic Timeline -->
+                                <div class="space-y-2">
+                                    <div v-for="(event, index) in getStatusTimeline(report)" :key="index" 
+                                        class="flex items-center gap-3 p-2 rounded border">
+                                        <span class="text-lg">{{ event.icon }}</span>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium">{{ event.status }}</p>
+                                            <p class="text-xs text-gray-500">{{ formatDate(event.date) }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <h4 class="text-sm font-semibold mb-2">Current Status:</h4>
+                                    <div class="flex flex-col gap-2 text-xs">
+                                        <div class="flex justify-between">
+                                            <span class="text-amber-500">Reported:</span>
+                                            <span class="font-medium text-amber-500">{{ formatDate(report.created_at) }}</span>
+                                        </div>
+                                        <div v-if="report.approved_at" class="flex justify-between">
+                                            <span class="text-blue-500">Approved:</span>
+                                            <span class="font-medium text-blue-500">{{ formatDate(report.approved_at) }}</span>
+                                        </div>
+                                        <div v-if="report.resolved_at" class="flex justify-between">
+                                            <span class="text-green-500">Resolved:</span>
+                                            <span class="font-medium text-green-500">{{ formatDate(report.resolved_at) }}</span>
+                                        </div>
+                                        <div v-if="report.rejected_at" class="flex justify-between">
+                                            <span class="text-red-500">Rejected:</span>
+                                            <span class="font-medium text-red-500">{{ formatDate(report.rejected_at) }}</span>
+                                        </div>
+                                        <div v-if="report.duplicate_at" class="flex justify-between">
+                                            <span class="text-purple-500">Duplicate:</span>
+                                            <span class="font-medium text-purple-500">{{ formatDate(report.duplicate_at) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div v-if="report.resolution" class="">
+                            <p class="font-medium text-sm mb-1">Resolution</p>
+                            <div class="bg-green-50 border-l-4 border-green-600 p-3 rounded-md">
+                                <p class="text-green-600 text-sm">{{ report.resolution }}</p>
+                            </div>
+                        </div>
+                        
+                        <div v-if="report.rejection_reason" class="">
+                            <p class="font-medium text-sm mb-1">Rejection Reason</p>
+                            <div class="bg-red-50 border-l-4 border-red-600 p-3 rounded-md mb-2">
+                                <p class="text-red-600 text-sm">{{ report.rejection_reason }}</p>
+                            </div>
+                        </div>
+
+                        <div v-if="report.status === 'Duplicate'" class="">
+                            <p class="font-medium text-sm mb-1">Duplicate</p>
+                            <div class="bg-purple-50 border-l-4 border-purple-600 p-3 rounded-md">
+                                <p class="text-purple-600 text-sm">This report has been identified as a duplicate of ID: #{{ report.duplicate_of_report_id }}
+                                    All updates and resolutions will be tracked under the main report.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div v-if="report.duplicates && report.duplicates.length > 0">
+                            <p class="font-medium text-sm mb-1">Primary Report</p>
+                            <div class="bg-purple-50 border-l-4 border-purple-600 p-3 rounded-md text-purple-600 text-sm">
+                                This is the original report for this issue with a Report ID of 
+                                <span class="font-semibold" v-for="(dup, index) in report.duplicates" :key="dup.id">
+                                    #{{ dup.id }}<span v-if="index < report.duplicates.length - 1">, </span>
+                                </span>
+                                duplicate report(s) have been merged with this one to avoid duplication.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -886,7 +976,6 @@ onMounted(() => {
         </div>
     </div>
 
-    <!-- Only RejectingModal remains -->
     <RejectingModal
         :show="showRejectModal"
         @close="showRejectModal = false"

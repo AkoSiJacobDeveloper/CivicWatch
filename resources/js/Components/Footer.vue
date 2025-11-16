@@ -3,12 +3,10 @@ import { Link } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import ApplicationLogo from './ApplicationLogo.vue';
 
-// Enhanced data structure with better organization
 const legalLinks = [
     { name: 'Privacy Policy', url: '/privacy-policy', icon: ['fas', 'shield-alt'] },
     { name: 'Terms & Conditions', url: '/terms-and-condition', icon: ['fas', 'file-contract'] },
     { name: 'Data Usage Notice', url: '/data-usage-notice', icon: ['fas', 'database'] },
-    { name: 'Cookie Policy', url: '/cookie-policy', icon: ['fas', 'cookie-bite'] }
 ];
 
 const quickLinks = [

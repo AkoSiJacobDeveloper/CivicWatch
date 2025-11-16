@@ -247,6 +247,54 @@ const values = computed(() => {
         },
     ];
 });
+
+const getStatusTimeline = (report) => {
+    const timeline = [];
+    
+    timeline.push({
+        status: 'Reported',
+        date: report.created_at,
+        icon: '📝'
+    });
+    
+    // Approved date
+    if (report.approved_at) {
+        timeline.push({
+            status: 'Approved',
+            date: report.approved_at,
+            icon: '✅'
+        });
+    }
+    
+    // Rejected date
+    if (report.rejected_at) {
+        timeline.push({
+            status: 'Rejected',
+            date: report.rejected_at,
+            icon: '❌'
+        });
+    }
+    
+    // Resolved date
+    if (report.resolved_at) {
+        timeline.push({
+            status: 'Resolved',
+            date: report.resolved_at,
+            icon: '🏁'
+        });
+    }
+
+    // Duplicate
+    if (report.duplicate_at) {
+        timeline.push({
+            status: 'Duplicate',
+            date: report.duplicate_at,
+            icon: '📋'
+        })
+    }
+    
+    return timeline;
+}
 </script>
 
 <template>
@@ -340,25 +388,7 @@ const values = computed(() => {
                             <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
                                 <h1 class="font-bold text-xl sm:text-2xl font-[Poppins] dark:text-[#faf9f6]">Report Summary</h1>
 
-                                <!-- If the status of the report is duplicate -->
-                                <div
-                                    v-if="report.status === 'Duplicate' && report.duplicate_of_report_id"
-                                    class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-full sm:w-[40%] p-3 rounded-lg"
-                                >
-                                    <p class="ml-1 text-sm">
-                                        Your report has been consolidated with a similar submission to ensure efficient resolution. All updates will be reflected under the primary case.
-                                    </p>
-                                </div>
-
-                                <!-- The primary report of the duplicate report -->
-                                <div
-                                    v-if="report.duplicates && report.duplicates.length > 0"
-                                    class="border-l-4 border-blue-800 bg-gradient-to-r from-blue-200 to-blue-100 w-full sm:w-[40%] p-3 rounded-lg"
-                                >
-                                    <p class="ml-1 text-sm">
-                                        Your report is serving as the primary case for this issue. We're addressing similar reports collectively for comprehensive resolution.
-                                    </p>
-                                </div>  
+                                
                             </div>
                             
                             <!--Upper Part-->
@@ -479,6 +509,82 @@ const values = computed(() => {
                                             </p>
                                         </div>
                                     </div>  
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="flex flex-col gap-2 mb-3">
+                                    <p class="font-medium text-base">Status Timeline</p>
+                                    <!-- Dynamic Timeline -->
+                                    <div class="space-y-2">
+                                        <div v-for="(event, index) in getStatusTimeline(report)" :key="index" 
+                                            class="flex items-center gap-3 p-2 rounded border">
+                                            <span class="text-lg">{{ event.icon }}</span>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium">{{ event.status }}</p>
+                                                <p class="text-xs text-gray-500">{{ formatDate(event.date) }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-3 bg-gray-50 rounded-lg">
+                                        <h4 class="text-sm font-semibold mb-2">Current Status:</h4>
+                                        <div class="flex flex-col gap-2 text-xs">
+                                            <div class="flex justify-between">
+                                                <span class="text-amber-500">Reported:</span>
+                                                <span class="font-medium text-amber-500">{{ formatDate(report.created_at) }}</span>
+                                            </div>
+                                            <div v-if="report.approved_at" class="flex justify-between">
+                                                <span class="text-blue-500">Approved:</span>
+                                                <span class="font-medium text-blue-500">{{ formatDate(report.approved_at) }}</span>
+                                            </div>
+                                            <div v-if="report.resolved_at" class="flex justify-between">
+                                                <span class="text-green-500">Resolved:</span>
+                                                <span class="font-medium text-green-500">{{ formatDate(report.resolved_at) }}</span>
+                                            </div>
+                                            <div v-if="report.rejected_at" class="flex justify-between">
+                                                <span class="text-red-500">Rejected:</span>
+                                                <span class="font-medium text-red-500">{{ formatDate(report.rejected_at) }}</span>
+                                            </div>
+                                            <div v-if="report.duplicate_at" class="flex justify-between">
+                                                <span class="text-purple-500">Duplicate:</span>
+                                                <span class="font-medium text-purple-500">{{ formatDate(report.duplicate_at) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div v-if="report.resolution" class="">
+                                <p class="font-medium text-base">Resolution</p>
+                                <div class="bg-green-50 border-l-4 border-green-600 p-3 rounded-md">
+                                    <p class="text-green-600 text-sm">{{ report.resolution }}</p>
+                                </div>
+                            </div>
+
+                            <div v-if="report.rejection_reason" class="">
+                                <p class="font-medium text-base">Rejection Reason</p>
+                                <div class="bg-red-50 border-l-4 border-red-600 p-3 rounded-md">
+                                    <p class="text-red-600 text-sm">{{ report.rejection_reason }}</p>
+                                </div>
+                            </div>
+
+                            <div v-if="report.status === 'Duplicate'" class="">
+                                <p class="font-medium text-base">Duplicate</p>
+                                <div class="bg-purple-50 border-l-4 border-purple-600 p-3 rounded-md">
+                                    <p class="text-purple-600 text-sm">This report has been identified as a duplicate of ID: #{{ report.duplicate_of_report_id }}
+                                        All updates and resolutions will be tracked under the main report.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div v-if="report.duplicates && report.duplicates.length > 0">
+                                <p class="font-medium text-base">Primary Report</p>
+                                <div class="bg-purple-50 border-l-4 border-purple-600 p-3 rounded-md text-purple-600 text-sm">
+                                    This is the original report for this issue with a Report ID of 
+                                    <span class="font-semibold" v-for="(dup, index) in report.duplicates" :key="dup.id">
+                                        #{{ dup.id }}<span v-if="index < report.duplicates.length - 1">, </span>
+                                    </span>
+                                    duplicate report(s) have been merged with this one to avoid duplication.
                                 </div>
                             </div>
                         </div>

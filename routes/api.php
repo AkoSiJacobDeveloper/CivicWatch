@@ -38,6 +38,11 @@ Route::get('/reports/{id}/details', function ($id) {
         'latitude' => $report->latitude,
         'longitude' => $report->longitude,
         'gps_accuracy' => $report->gps_accuracy,
+        'approved_at' => $report->approved_at,
+        'rejected_at' => $report->rejected_at,
+        'resolved_at' => $report->resolved_at,
+        'duplicate_at' => $report->duplicate_at,
+        'resolution' => $report->resolution,
         'duplicates' => $report->duplicates->map(fn($dup) => [
             'id' => $dup->id,
             'tracking_code' => $dup->tracking_code,

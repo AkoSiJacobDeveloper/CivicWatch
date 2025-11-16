@@ -787,6 +787,7 @@ onUnmounted(() => {
         URL.revokeObjectURL(imagePreview.value);
     }
 });
+
 async function loadTensorFlowModel() {
     if (isTFLoaded.value || isTFLoading.value) return;
 
@@ -1727,13 +1728,14 @@ onMounted(async () => {
                 :tracking-code="trackingCode"
                 @close="showModal = false"
             />
+
             <!-- Emergency Alert Popup -->
-            <div v-if="emergencyDetected" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+            <div v-if="emergencyDetected"  class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[500]">
                 <div class="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
                     <!-- Modal Header -->
-                    <div class="bg-red-600 text-white p-4 rounded-t-lg">
+                    <div class="bg-red-600 text-white px-4 py-5 rounded-t-lg">
                         <h3 class="text-lg font-semibold flex items-center gap-2">
-                            🚨 Emergency Situation Detected
+                            Emergency Situation Detected
                         </h3>
                     </div>
                 
@@ -1747,23 +1749,32 @@ onMounted(async () => {
                             <h4 class="font-semibold text-red-800 mb-2">Please contact emergency services immediately:</h4>
                             <ul class="text-sm text-red-700 space-y-2">
                                 <li class="flex items-center gap-2">
-                                    <span class="font-bold">🏥 Medical Emergency:</span>
-                                    <span class="flex-1">911</span>
+                                    <span class="font-bold">🚓 Tubigon Police:</span>
+                                    <span class="flex-1 text-right">0998-598-6445</span>
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <span class="font-bold">🚒 Fire Department:</span>
-                                    <span class="flex-1">911</span>
-                                    
+                                    <span class="flex-1 text-right">0963-774-5972</span>
                                 </li>
                                 <li class="flex items-center gap-2">
-                                    <span class="font-bold">🚓 Police:</span>
-                                    <span class="flex-1">911</span>
-                                    
+                                    <span class="font-bold">🚒 Terssu (Globe):</span>
+                                    <span class="flex-1 text-right">0927-454-5496</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <span class="font-bold">🚒 Terssu (Smart):</span>
+                                    <span class="flex-1 text-right">0930-785-0655</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <span class="font-bold">🚒 Control (Smart):</span>
+                                    <span class="flex-1 text-right">0930-785-0653</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <span class="font-bold">🚒 Coast Guard:</span>
+                                    <span class="flex-1 text-right">0927-429-7581</span>
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <span class="font-bold">📍 Barangay Hotline:</span>
-                                    <span class="flex-1">(02) 123-4567</span>
-                                    
+                                    <span class="flex-1 text-right">(02) 123-4567</span>
                                 </li>
                             </ul>
                         </div>

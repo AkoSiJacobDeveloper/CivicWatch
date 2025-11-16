@@ -108,7 +108,6 @@ const submitReview = () => {
                     Swal.close();
                     toast.success('Review submitted successfully! It will be visible after admin approval.');
                     
-                    // Emit the review-submitted event before resetting and closing
                     emit('review-submitted', {
                         name: form.name,
                         location: form.location,
@@ -117,7 +116,6 @@ const submitReview = () => {
                         rating: form.rating,
                     });
                     
-                    // Reset form
                     form.reset()
                     form.is_anonymous = false;
                     form.rating = 0;
@@ -141,7 +139,7 @@ defineProps({
 
 <template>
     <div v-if="show" class="fixed z-[1000] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center p-4">
-        <div class="w-full max-w-md sm:max-w-lg md:max-w-xl lg:w-[35%] bg-white flex flex-col rounded-lg">
+        <div class="w-full max-w-md sm:max-w-lg md:max-w-xl lg:w-[50%] bg-white flex flex-col rounded-lg">
             <div class="flex justify-between p-4 sm:p-6 lg:p-8 bg-blue-700 rounded-t-md">
                 <!-- Header -->
                 <div class="flex-1">
@@ -157,62 +155,75 @@ defineProps({
             <!-- Card Content -->
             <div class="flex flex-col px-4 sm:p-6 lg:px-8 pt-4 pb-6 sm:pb-8">
                 <form @submit.prevent="submitReview" class="flex flex-col gap-3 sm:gap-4">
-                    <!-- Name -->
-                    <div class="relative">
-                        <input
-                            v-model="form.name"
-                            type="text" 
-                            id="floating_outlined" 
-                            class="block p-3 sm:p-4 w-full text-sm sm:text-base bg-white text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-                            placeholder=" " />
-                        <label 
-                            for="name" 
-                            class="absolute text-sm sm:text-base text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-gray-900 px-2 sm:px-5 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">Full Name</label>
+                    <div class="grid grid-rows lg:grid-cols-2 gap-1">
+                        <div>
+                            <!-- Name -->
+                            <label
+                                for="name"
+                                class="mb-2 block text-xs md:text-sm font-medium text-gray-900 dark:text-white">Title
+                            </label>
+                            <input
+                                v-model="form.name"
+                                type="text"
+                                id="title"
+                                class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3 md:p-4 dark:bg-[#2c2c2c] dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Uncollected Garbage"
+                                required
+                            />
+                        </div>
+                        
+                        <div>
+                            <!-- Location -->
+                            <div class="relative">
+                                <label
+                                    for="location"
+                                    class="mb-2 block text-xs md:text-sm font-medium text-gray-900 dark:text-white">Location
+                                </label>
+                                <Listbox v-model="form.location">
+                                    <ListboxButton
+                                        class="flex justify-between items-center text-left p-3 sm:p-4 w-full text-sm sm:text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:outline-none focus:ring-0 focus:border-blue-600"
+                                    >
+                                        <span class="block truncate" :class="{ 'text-gray-500 text-sm': !form.location }">
+                                            {{ form.location || 'Select Location' }}
+                                        </span>
+                                        <span class="pointer-events-none flex items-center">
+                                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                            </svg>
+                                        </span>
+                                    </ListboxButton>
+
+                                    <ListboxOptions
+                                        class="text-sm absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-300 max-h-56 overflow-y-auto"
+                                    >
+                                        <ListboxOption
+                                            v-for="location in locations"
+                                            :key="location.id"
+                                            :value="location.place"
+                                            v-slot="{ active, selected }"
+                                            class="cursor-pointer select-none relative py-2 pl-3 pr-9"
+                                            :class="active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'"
+                                        >
+                                            <span class="block truncate" :class="selected ? 'text-xs ' : ' text-sm'">
+                                                {{ location.place }}
+                                            </span>
+                                            <span v-if="selected" class="absolute inset-y-0 right-0 flex items-center pr-4 text-blue-600">
+                                                <svg class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                            </span>
+                                        </ListboxOption>
+                                    </ListboxOptions>
+                                </Listbox>
+                            </div>
+                        </div>
                     </div>
-
-                    <!-- Location -->
-                    <div class="relative">
-                        <Listbox v-model="form.location">
-                            <ListboxButton
-                                class="flex justify-between items-center text-left p-3 sm:p-4 w-full text-sm sm:text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:outline-none focus:ring-0 focus:border-blue-600"
-                            >
-                                <span class="block truncate" :class="{ 'text-gray-500': !form.location }">
-                                    {{ form.location || 'Select Location' }}
-                                </span>
-                                <span class="pointer-events-none flex items-center">
-                                    <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                                    </svg>
-                                </span>
-                            </ListboxButton>
-
-                            <ListboxOptions
-                                class="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-300 max-h-56 overflow-y-auto"
-                            >
-                                <ListboxOption
-                                    v-for="location in locations"
-                                    :key="location.id"
-                                    :value="location.place"
-                                    v-slot="{ active, selected }"
-                                    class="cursor-pointer select-none relative py-2 pl-3 pr-9"
-                                    :class="active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'"
-                                >
-                                    <span class="block truncate text-sm sm:text-base" :class="selected ? 'font-medium' : 'font-normal'">
-                                        {{ location.place }}
-                                    </span>
-                                    <span v-if="selected" class="absolute inset-y-0 right-0 flex items-center pr-4 text-blue-600">
-                                        <svg class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                        </svg>
-                                    </span>
-                                </ListboxOption>
-                            </ListboxOptions>
-                        </Listbox>
-                    </div>
-
+                
                     <!-- Star Rating-->
                     <div class="">
-                        <label class="block text-sm font-semibold font-[Poppins] mb-1">Rating <span class="text-blue-500 text-xs font-normal">(Optional)</span></label>
+                        <label
+                            for="rating"
+                            class="mb-2 block text-xs md:text-sm font-medium text-gray-900 dark:text-white">Rating
+                        </label>
                         <div class="border rounded-lg p-3 sm:p-4">
                             <div class="flex items-center space-x-1">
                                 <button
@@ -222,7 +233,7 @@ defineProps({
                                     @click="setRating(star)"
                                     @mouseenter="setHoverRating(star)"
                                     @mouseleave="resetHoverRating"
-                                    class="text-xl sm:text-2xl focus:outline-none transition-transform hover:scale-110"
+                                    class="text-xl sm:text-2xl focus:outline-none transition-transform hover:scale-110 px-1 shadow rounded"
                                     :class="(hoverRating || form.rating) >= star ? 'text-yellow-400' : 'text-gray-300'"
                                 >
                                     ★
@@ -236,10 +247,13 @@ defineProps({
 
                     <!-- Message or Description-->
                     <div>
-                        <label class="block text-sm font-semibold font-[Poppins] mb-1" for="review_message">Review</label>
+                        <label
+                            for="description"
+                            class="mb-2 block text-xs md:text-sm font-medium text-gray-900 dark:text-white">Review
+                        </label>
                         <textarea 
                             v-model="form.review_message" 
-                            class="block p-2.5 h-32 sm:h-40 w-full text-sm sm:text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none" 
+                            class="block p-2.5 h-32 sm:h-40 w-full text-sm sm:text-base bg-white text-gray-900 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 resize-none placeholder:text-sm" 
                             id="message" 
                             name="message"  
                             placeholder="Type your review here"

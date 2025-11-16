@@ -406,22 +406,21 @@ onUnmounted(() => {
                             </div>
 
                             <div class="flex items-center space-x-1">
-                                <span 
-                                    v-for="star in 1" :key="star" 
-                                    :class="star <= review.rating ? 'text-yellow-400 text-2xl' : 'text-gray-300'">
-                                    ★
-                                </span>
-                                <span v-if="review.rating" class="ml-1 text-lg text-gray-600">
-                                    {{ review.rating }}
+                                <span
+                                    class="px-1 shadow rounded bg-blue-700"
+                                    v-for="star in 5" :key="star" 
+                                    :class="star <= review.rating ? 'text-yellow-400 text-xl' : 'text-gray-200 text-xl'">
+                                ★
                                 </span>
                             </div>
+                            
                             
                         </div>
                         
 
                         <div class="flex flex-col gap-3">
                             <!-- Status Badge -->
-                            <div class="flex gap-1">
+                            <div class="flex items-center gap-1">
                                 <span 
                                     :class="['px-3 py-1 text-xs font-medium rounded-full border capitalize', getStatusBadgeClass(review.status)]"
                                 >
@@ -434,6 +433,7 @@ onUnmounted(() => {
                                     Anonymous
                                 </span>
                             </div> 
+                            
                             <div class="h-[145px] overflow-y-auto">
                                 <p class="text-gray-600 text-base">{{ review.review_message }}</p>
                             </div>

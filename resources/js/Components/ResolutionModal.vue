@@ -1,4 +1,5 @@
 <script setup>
+// In ResolutionModal.vue
 import { ref, watch } from 'vue';
 
 const emit = defineEmits(['close', 'confirm']);
@@ -22,10 +23,11 @@ const resetFields = () => {
     errorMessage.value = ''
 }
 
+// ADD THIS WATCHER to handle external close events
 watch(
     () => props.show,
     (newVal) => {
-        if(newVal) {
+        if (!newVal) {
             resetFields()
         }
     }
@@ -50,14 +52,15 @@ function confirmResolution() {
     errorMessage.value = ''
     emit('confirm', resolutionText.value.trim())
     resetFields()
+    // Don't emit close here - let the parent handle it after successful API call
 }
 </script>
 
 <template>
-    <div v-if="show" class="fixed z-[50] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
-        <div class="w-full max-w-2xl mx-4 rounded-lg shadow-lg bg-white">
+    <div v-if="show" class="fixed z-[70] inset-0 backdrop-blur-sm bg-white/20 flex justify-center items-center">
+        <div class="w-full max-w-xl mx-4 rounded-lg shadow-lg bg-white">
             <!-- Header -->
-            <div class="flex justify-between items-center p-5 border-b bg-green-600 rounded-t-lg">
+            <div class="flex justify-between items-center px-4 py-5 border-b bg-green-600 rounded-t-lg">
                 <div>
                     <h3 class="text-lg font-semibold font-[Poppins] text-white">
                         {{ isBulk ? `Resolve ${reportCount} Reports` : 'Mark as Resolved' }}
@@ -74,7 +77,7 @@ function confirmResolution() {
             </div>
             <div class="flex flex-col p-5">
                 <!-- Modal Content -->
-                <div class="flex flex-col h-auto overflow-y-auto">
+                <div class="flex flex-col h-auto">
                     <p class="text-sm text-gray-600 mb-4">
                         {{ isBulk 
                             ? `Please describe how these ${reportCount} reports were resolved. This will be visible to the reporters.`
@@ -93,7 +96,7 @@ function confirmResolution() {
                         <textarea 
                             v-model="resolutionText"
                             placeholder="Describe what actions were taken to resolve this issue, any solutions implemented, or final outcomes..."
-                            class="w-full h-40 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
+                            class="w-full h-40 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none placeholder:text-sm text-sm"
                             :class="{ 'border-red-300': errorMessage }"
                         ></textarea>
                         <div class="flex justify-between text-xs text-gray-500 mt-1">
@@ -125,10 +128,10 @@ function confirmResolution() {
                     </button>
                     <button 
                         @click="confirmResolution" 
-                        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-all duration-300 flex-1 flex items-center justify-center gap-2"
+                        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-all duration-300 flex-1 flex items-center justify-center gap-1"
                     >
                         <img :src="'/Images/SVG/check-circle.svg'" alt="Resolve Icon" class="w-4 h-4">
-                        {{ isBulk ? `Resolve ${reportCount} Reports` : 'Mark as Resolved' }}
+                        {{ isBulk ? `Resolve ${reportCount} Reports` : 'Resolved' }}
                     </button>
                 </div>
             </div>
