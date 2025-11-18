@@ -76,41 +76,42 @@ class ReviewController extends Controller
     }
 
     public function showInAdmin(Request $request) {
-        $status = $request->status ?? 'pending'; // Default to pending reviews
-        
-        $query = Review::select(
-            'id',
-            'name',
-            'location',
-            'review_message',
-            'is_anonymous',
-            'created_at',
-            'rating',
-            'status'
-        );
+    $status = $request->status ?? 'pending';
+    
+    $query = Review::query();
 
-        if ($status === 'pending') {
-            $query->pending();
-        } elseif ($status === 'approved') {
-            $query->approved();
-        } elseif ($status === 'rejected') {
-            $query->rejected();
-        }
-
-        if ($request->sort === 'asc') {
-            $query->orderBy('created_at', 'asc'); 
-        } else {
-            $query->latest();
-        }
-
-        $reviews = $query->paginate(6);
-
-        return Inertia::render('Admin/Reviews', [
-            'reviews' => $reviews,
-            'filters' => $request->only(['sort', 'status']),
-            'currentStatus' => $status
-        ]);
+    if ($status === 'pending') {
+        $query->pending();
+    } elseif ($status === 'approved') {
+        $query->approved();
+    } elseif ($status === 'rejected') {
+        $query->rejected();
     }
+
+    if ($request->sort === 'asc') {
+        $query->orderBy('created_at', 'asc'); 
+    } else {
+        $query->latest();
+    }
+
+    $reviews = $query->paginate(6);
+
+    // Get counts using a single query for better performance
+    $counts = Review::selectRaw('
+        COUNT(CASE WHEN status = "pending" THEN 1 END) as pending_count,
+        COUNT(CASE WHEN status = "approved" THEN 1 END) as approved_count,
+        COUNT(CASE WHEN status = "rejected" THEN 1 END) as rejected_count
+    ')->first();
+
+    return Inertia::render('Admin/Reviews', [
+        'reviews' => $reviews,
+        'pending_count' => $counts->pending_count ?? 0,
+        'approved_count' => $counts->approved_count ?? 0,
+        'rejected_count' => $counts->rejected_count ?? 0,
+        'filters' => $request->only(['sort', 'status']),
+        'currentStatus' => $status
+    ]);
+}
 
     public function approve($id) {
         $review = Review::findOrFail($id);

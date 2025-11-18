@@ -229,7 +229,7 @@ const closeModal = () => {
                         <!-- Sort Button -->
                         <button
                             @click="toggleSort"
-                            class="border p-2 sm:p-3 rounded flex items-center gap-1 sm:gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300 text-sm sm:text-base"
+                            class="border p-2 sm:p-3 rounded flex items-center gap-1 sm:gap-2 hover:bg-blue-500 hover:text-white dark:hover:bg-gray-700 transition-colors group duration-300 text-sm sm:text-base dark:border-gray-600"
                         >
                             <span>{{ sortOrder === 'desc' ? 'Newest' : 'Oldest' }}</span>
                             <svg 
@@ -295,8 +295,8 @@ const closeModal = () => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="announcements && announcements.links && announcements.links.length > 1" class="flex justify-center mt-10" data-observe>
-                    <div class="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+                <div v-if="announcements && announcements.links && announcements.links.length > 1" class="flex justify-center mt-10 relative z-0" data-observe>
+                    <div class="flex flex-wrap items-center justify-center gap-2 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
                         <template v-for="(link, index) in announcements.links" :key="index">
                             <!-- Previous Button with Icon -->
                             <Link
@@ -305,12 +305,12 @@ const closeModal = () => {
                                 :preserve-state="true"
                                 :preserve-scroll="true"
                                 :class="[
-                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
+                                    'min-w-8 h-8 sm:min-w-10 sm:h-10 px-2 sm:px-3 flex items-center justify-center border-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
                                     'border-blue-200 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-blue-600 dark:hover:border-blue-600'
                                 ]"
                                 title="Previous Page"
                             >
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 256 256">
                                     <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
                                 </svg>
                             </Link>
@@ -322,12 +322,12 @@ const closeModal = () => {
                                 :preserve-state="true"
                                 :preserve-scroll="true"
                                 :class="[
-                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
+                                    'min-w-8 h-8 sm:min-w-10 sm:h-10 px-2 sm:px-3 flex items-center justify-center border-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
                                     'border-blue-200 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-blue-600 dark:hover:border-blue-600'
                                 ]"
                                 title="Next Page"
                             >
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 256 256">
                                     <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
                                 </svg>
                             </Link>
@@ -339,7 +339,7 @@ const closeModal = () => {
                                 :preserve-state="true"
                                 :preserve-scroll="true"
                                 :class="[
-                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
+                                    'min-w-8 h-8 sm:min-w-10 sm:h-10 px-2 sm:px-3 flex items-center justify-center border-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95',
                                     link.active 
                                         ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105' 
                                         : 'border-blue-200 text-blue-700 hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-blue-600 dark:hover:border-blue-600'
@@ -350,19 +350,19 @@ const closeModal = () => {
                             <span
                                 v-else
                                 :class="[
-                                    'min-w-10 h-10 px-3 flex items-center justify-center border-2 rounded-lg text-sm font-medium',
+                                    'min-w-8 h-8 sm:min-w-10 sm:h-10 px-2 sm:px-3 flex items-center justify-center border-2 rounded-lg text-xs sm:text-sm font-medium',
                                     link.label.includes('Previous') || link.label.includes('Next')
                                         ? 'border-gray-300 text-gray-400 cursor-not-allowed dark:border-gray-700 dark:text-gray-600'
                                         : 'border-blue-100 bg-blue-50 text-blue-400 cursor-not-allowed dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500'
                                 ]"
                             >
                                 <template v-if="link.label.includes('Previous')">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
+                                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"></path>
                                     </svg>
                                 </template>
                                 <template v-else-if="link.label.includes('Next')">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256">
+                                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 256 256">
                                         <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
                                     </svg>
                                 </template>

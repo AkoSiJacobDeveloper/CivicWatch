@@ -1,7 +1,9 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
-import ReminderModal from '@/Components/ReminderModal.vue'
+import Swal from 'sweetalert2';
+
+// import ReminderModal from '@/Components/ReminderModal.vue'
 
 const form = useForm({
     email: '',
@@ -58,6 +60,54 @@ onMounted(() => {
             localStorage.removeItem('rateLimitEndTime')
         }
     }
+
+    // Check if admin reminder was previously dismissed
+    const adminReminderDismissed = localStorage.getItem('adminReminderDismissed')
+    
+    if (!adminReminderDismissed) {
+        Swal.fire({
+            title: '<strong>Admin Access Only</strong>',
+            icon: 'warning',
+            html: `
+            <div class="">
+                <p class="mb-3 text-center font-[Poppins] text-base font-medium">This is the <span class="font-bold text-red-600">ADMINISTRATOR LOGIN PAGE</span> for authorized personnel only.</p>
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm">
+                    <p class="font-medium text-red-800 text-left">Important Notice:</p>
+                    <ul class="list-disc ml-4 my-2 text-left text-red-700">
+                        <li class="text-sm">This area is restricted to authorized administrators only</li>
+                        <li class="text-sm">Unauthorized access attempts are prohibited</li>
+                        <li class="text-sm">All activities are monitored and logged</li>
+                    </ul>
+                </div>
+                <p class="text-sm text-left mt-3 text-red-600 font-semibold">If you are not an authorized administrator, please return to the main site.</p>
+                <div class="mt-4 flex items-center justify-center">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="dontShowAgain" class="rounded border-gray-300">
+                        <span class="text-sm text-gray-600">Don't show this message again</span>
+                    </label>
+                </div>
+            </div>
+            `,
+            showCloseButton: true,
+            confirmButtonText: 'I Understand',
+            confirmButtonColor: '#dc2626',
+            showCancelButton: true,
+            cancelButtonText: 'Return to Home',
+            cancelButtonColor: '#6b7280',
+            preConfirm: () => {
+                const dontShowAgain = document.getElementById('dontShowAgain').checked;
+                if (dontShowAgain) {
+                    localStorage.setItem('adminReminderDismissed', 'true');
+                }
+                return true;
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                // User clicked "Return to Home"
+                window.location.href = '/';
+            }
+        });
+    }
 })
 
 function submit() {
@@ -76,9 +126,9 @@ function submit() {
 
 <template>
     <main class="flex items-center justify-center parent-container">
-        <div class="flex w-[70%] gap-1">
+        <div class="lg:flex lg:w-[70%] gap-1">
             <!-- Left Section - Logo -->
-            <section class="hidden md:flex w-3/5 items-center justify-center relative p-10 rounded left-container">
+            <section class="hidden lg:flex lg:w-3/5 items-center justify-center relative p-10 rounded left-container">
                 <!-- Back Button -->
                 <Link href="/" class="absolute top-8 left-8 group">
                     <img 
@@ -86,7 +136,6 @@ function submit() {
                         alt="Back Icon"
                         class="h-10 w-10 transition-transform duration-300 group-hover:scale-110"
                     >
-                    
                 </Link>
                 
                 <div class="transform transition-transform duration-500 hover:scale-105">
@@ -103,16 +152,14 @@ function submit() {
             </section>
         
             <!-- Right Section - Login Form -->
-            <section class="w-2/5 flex items-center justify-center p-8 rounded right-container">
+            <section class="lg:w-2/5 lg:flex items-center justify-center p-8 rounded right-container">
                 <div class="w-full max-w-sm space-y-8">
                     <!-- Header -->
                     <div class="space-y-2">
                         <h1 class="text-2xl font-semibold text-white font-[Poppins]">
-                            Welcome Back
+                            Welcome Back!
                         </h1>
-                        <p class="text-sm text-gray-500">
-                            <p class="text-xs text-gray-300">Your role matters. Let’s get things done for the community.</p>
-                        </p>
+                        <p class="text-xs text-gray-300">Your role matters. Let’s get things done for the community.</p>
                     </div>
 
                     <!-- Error Messages -->
@@ -131,7 +178,7 @@ function submit() {
                         <!-- Email Field -->
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-300">
-                                Email
+                                Admin Email
                             </label>
                             <div class="relative">
                                 <div class="absolute left-3 top-1/2 -translate-y-1/2">
@@ -144,7 +191,7 @@ function submit() {
                                 <input
                                     v-model="form.email"
                                     type="email"
-                                    placeholder="admin@example.com"
+                                    placeholder="admin@cabulijan.gov"
                                     @focus="emailFocused = true"
                                     @blur="emailFocused = false"
                                     :class="[
@@ -193,8 +240,8 @@ function submit() {
                             :class="[
                                 'w-full py-3 rounded-lg font-medium text-white transition-all duration-200',
                                 countdown === null && !isLoading
-                                    ? 'bg-blue-500 hover:bg-blue-700 active:scale-[0.99]'
-                                    : 'bg-blue-300 cursor-not-allowed'
+                                    ? 'bg-blue-700 hover:bg-blue-900 active:scale-[0.99]'
+                                    : 'bg-blue-400 cursor-not-allowed'
                             ]"
                         >
                             <span v-if="isLoading" class="flex items-center justify-center gap-2">
@@ -206,7 +253,7 @@ function submit() {
                             </span>
                             <span v-else-if="countdown === null" class="flex items-center justify-center gap-2">
                                 <img :src="'/Images/SVG/sign-in.svg'" alt="Signin" class="h-5 w-5">
-                                Sign In
+                                Admin Sign In
                             </span>
                             <span v-else>Locked ({{ countdown }}s)</span>
                         </button>
@@ -215,7 +262,7 @@ function submit() {
                     <!-- Back to Home Link -->
                     <div class="text-center md:hidden">
                         <Link 
-                            class="text-sm text-gray-600 hover:text-gray-900 transition-colors inline-flex items-center gap-1.5"
+                            class="text-sm text-white hover:text-gray-900 transition-colors inline-flex items-center gap-1.5"
                             href="/"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,7 +275,7 @@ function submit() {
             </section>
         </div>
 
-        <ReminderModal />
+        <!-- <ReminderModal /> -->
     </main>
 </template>
 
@@ -237,7 +284,7 @@ function submit() {
     background-image: url('/Images/vector-line.jpg');
     background-position: center;
     background-repeat: no-repeat;
-    background-size: cover; /* ✅ this makes it fill the screen properly */
+    background-size: cover; 
     height: 100vh;
     width: 100vw;
 }
@@ -250,12 +297,11 @@ box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 backdrop-filter: blur(5.2px);
 -webkit-backdrop-filter: blur(5.2px);
 }
-/* Smooth transitions */
+
 * {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Remove default focus rings and add custom ones */
 input:focus {
     outline: none;
 }

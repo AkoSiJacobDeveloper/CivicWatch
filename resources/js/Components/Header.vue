@@ -14,9 +14,6 @@ const links = [
     { name: 'Review', url: '/review' }, 
     { name: 'Announcements', url: '/user-announcements' },
     { name: 'Achievements', url: '/brgy-achievements' },
-    // { name: 'FAQ', url: '/faq' },
-    // { name: 'About', url: '/about' },
-    // { name: 'Contact Us', url: '/contact-us' },
 ];
 
 const mblinks = [...links];
@@ -26,7 +23,6 @@ const isDark = ref(false);
 
 function toggleMenu() {
     isOpen.value = !isOpen.value;
-    // Prevent body scroll when menu is open
     if (isOpen.value) {
         document.body.style.overflow = 'hidden';
     } else {
@@ -41,7 +37,6 @@ function closeMenu() {
 
 const isActiveLink = (linkUrl) => {
     const currentUrl = page.url;
-
     if (linkUrl === '/') {
         return currentUrl === '/';
     }
@@ -73,7 +68,7 @@ const toggleDarkMode = () => {
     }
 };
 
-// Close menu when clicking outside - FIXED VERSION
+// Close menu when clicking outside
 const handleClickOutside = (event) => {
     const headerElement = document.querySelector('header');
     if (isOpen.value && headerElement && !headerElement.contains(event.target)) {
@@ -97,22 +92,21 @@ onMounted(() => {
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside);
     document.removeEventListener('keydown', handleEscapeKey);
-    document.body.style.overflow = ''; // Cleanup
+    document.body.style.overflow = '';
 });
 </script>
 
 <template>
-    <header class="bg-blue-700 flex justify-between p-4 md:py-5 md:px-10 lg:px-32 fixed w-full z-[500] dark:bg-[#1e1e1e] dark:text-[#FAF9F6]">
+    <header class="bg-blue-700 flex justify-between p-3 sm:p-4 md:py-4 md:px-8 lg:px-16 xl:px-32 fixed w-full z-[500] dark:bg-[#1e1e1e] dark:text-[#FAF9F6]">
         <div class="flex justify-between items-center w-full">
             <!-- Logo Section -->
             <div class="flex items-center gap-2">
                 <ApplicationLogo />
-                
             </div>
 
             <!-- Desktop Navigation -->
-            <nav class="hidden md:flex items-center">
-                <ul class="flex flex-wrap text-white space-x-2">
+            <nav class="hidden lg:flex items-center">
+                <ul class="flex flex-wrap text-white space-x-1 xl:space-x-2">
                     <li v-for="(link, index) in links" :key="index">
                         <div :class="[
                             'pb-1 transition-all duration-200',
@@ -122,7 +116,7 @@ onUnmounted(() => {
                         ]">
                             <Link 
                                 :href="link.url" 
-                                class="text-sm lg:text-base px-2 py-1 transition-colors duration-200 whitespace-nowrap"
+                                class="text-sm xl:text-base px-2 py-1 transition-colors duration-200 whitespace-nowrap"
                             >
                                 {{ link.name }}
                             </Link>
@@ -132,23 +126,23 @@ onUnmounted(() => {
             </nav>
 
             <!-- Right Section - Dark Mode Toggle & Mobile Menu -->
-            <div class="flex items-center space-x-3 md:space-x-4">
+            <div class="flex items-center space-x-2 sm:space-x-3 md:space-x-4">
                 <!-- Dark Mode Toggle -->
                 <button 
                     @click="toggleDarkMode" 
-                    class="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 backdrop-blur-sm"
+                    class="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 backdrop-blur-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
                     aria-label="Toggle dark mode"
                 >
                     <font-awesome-icon 
                         :icon="isDark ? 'sun' : 'moon'" 
-                        class="text-white size-4 md:size-5 transition-transform duration-300 hover:scale-110" 
+                        class="text-white size-4 sm:size-5 transition-transform duration-300 hover:scale-110" 
                     />
                 </button>
 
                 <!-- Mobile Hamburger Button -->
                 <button 
                     @click="toggleMenu" 
-                    class="md:hidden flex items-center justify-center p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200"
+                    class="lg:hidden flex items-center justify-center p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200 min-h-[44px] min-w-[44px]"
                     aria-label="Toggle menu"
                 >
                     <svg 
@@ -177,10 +171,10 @@ onUnmounted(() => {
         <!-- Mobile Navigation Menu -->
         <div 
             v-if="isOpen" 
-            class="md:hidden absolute top-full left-0 w-full bg-blue-700  shadow-lg border-t border-blue-600 dark:border-gray-700 transition-all duration-300 ease-in-out z-40 max-h-[80vh] overflow-y-auto"
+            class="lg:hidden absolute top-full left-0 w-full bg-blue-700 shadow-lg border-t border-blue-600 dark:border-gray-700 transition-all duration-300 ease-in-out z-40 max-h-[80vh] overflow-y-auto"
             :class="isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'"
         >
-            <div class="px-6 py-4">
+            <div class="px-4 sm:px-6 py-4">
                 <ul class="space-y-1">
                     <li 
                         v-for="(mblink, index) in mblinks" 
@@ -191,7 +185,7 @@ onUnmounted(() => {
                             :href="mblink.url" 
                             @click="closeMenu"
                             :class="[
-                                'block py-4 text-base font-medium transition-all duration-200 px-3 rounded-lg',
+                                'py-4 text-base font-medium transition-all duration-200 px-3 rounded-lg min-h-[44px] flex items-center',
                                 isActiveLink(mblink.url)
                                     ? 'text-white bg-blue-600/20 dark:bg-blue-500/20 border-l-4 border-white dark:border-blue-400'
                                     : 'text-white/90 hover:text-white hover:bg-white/10'
@@ -208,26 +202,12 @@ onUnmounted(() => {
         <div 
             v-if="isOpen" 
             @click="closeMenu"
-            class="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30 top-16"
+            class="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30 top-16"
         ></div>
     </header>
 </template>
 
 <style scoped>
-/* Improve mobile touch targets */
-@media (max-width: 768px) {
-    button {
-        min-height: 44px;
-        min-width: 44px;
-    }
-    
-    a {
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-    }
-}
-
 /* Custom scrollbar for mobile menu */
 .scrollbar-hide {
     -ms-overflow-style: none;
@@ -236,5 +216,12 @@ onUnmounted(() => {
 
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
+}
+
+/* Smooth transitions for mobile menu */
+@media (max-width: 1024px) {
+    header {
+        transition: all 0.3s ease;
+    }
 }
 </style>

@@ -23,5 +23,15 @@ class AdminSeeder extends Seeder
                 'is_admin' => 1
             ]
         );
+
+        User::updateOrCreate(
+            ['email' => 'civicwatch.brgy@gmail.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('civicwatch123'),
+                'role' => 'admin',
+                'is_admin' => 1
+            ]
+        );
     }
 }

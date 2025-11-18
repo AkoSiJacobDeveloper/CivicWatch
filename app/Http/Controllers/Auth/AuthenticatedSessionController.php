@@ -40,19 +40,11 @@ class AuthenticatedSessionController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        // Add admin check to credentials
+        $adminCredentials = array_merge($credentials, ['is_admin' => 1]);
+
+        if (Auth::attempt($adminCredentials)) {
             $request->session()->regenerate();
-
-            // Get the authenticated user properly
-            $user = Auth::user();
-            
-            if (!$user || !$user->is_admin) {
-                Auth::logout();
-                return back()->withErrors([
-                    'email' => 'You do not have admin privileges.',
-                ])->onlyInput('email');
-            }
-
             RateLimiter::clear(Str::lower($request->input('email')) . '|' . $request->ip());
 
             return redirect()->intended('/admin/dashboard');
@@ -61,9 +53,8 @@ class AuthenticatedSessionController extends Controller
         RateLimiter::hit(Str::lower($request->input('email')) . '|' . $request->ip());
 
         return back()->withErrors([
-            'credentials' => 'The provided credentials do not match our records.',
+            'credentials' => 'Invalid credentials or insufficient privileges.',
         ])->onlyInput('email');
-
     }
 
     /**

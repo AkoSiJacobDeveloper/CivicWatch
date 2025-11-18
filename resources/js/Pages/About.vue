@@ -157,8 +157,8 @@ const teams = [
         role: '4th Year - Web Developer', 
         course: 'Bachelor of Science in Information Technology',
         socials: [
-            { link: '#', icon: 'facebook' },
-            { link: '#', icon: 'instagram' },
+            { link: 'https://www.facebook.com/pauljacob.tocmo', icon: 'facebook' },
+            { link: 'https://www.instagram.com/paaul_jcb/', icon: 'instagram' },
             { link: '#', icon: 'twitter' },
         ]
     },
@@ -168,8 +168,8 @@ const teams = [
         role: '4th Year - Web Developer', 
         course: 'Bachelor of Science in Information Technology',
         socials: [
-            { link: '#', icon: 'facebook' },
-            { link: '#', icon: 'instagram' },
+            { link: 'https://www.facebook.com/danchristian.aguillon.1', icon: 'facebook' },
+            { link: 'https://www.instagram.com/dansoy_555/', icon: 'instagram' },
             { link: '#', icon: 'twitter' },
         ]
     },
@@ -179,8 +179,8 @@ const teams = [
         role: '4th Year - Web Developer', 
         course: 'Bachelor of Science in Information Technology',
         socials: [
-            { link: '#', icon: 'facebook' },
-            { link: '#', icon: 'instagram' },
+            { link: 'https://www.facebook.com/jarred.ruba', icon: 'facebook' },
+            { link: 'https://www.instagram.com/jarredbaliar/', icon: 'instagram' },
             { link: '#', icon: 'twitter' },
         ]
     },
@@ -190,8 +190,8 @@ const teams = [
         role: '4th Year - Web Developer', 
         course: 'Bachelor of Science in Information Technology',
         socials: [
-            { link: '#', icon: 'facebook' },
-            { link: '#', icon: 'instagram' },
+            { link: 'https://www.facebook.com/ogskipper0', icon: 'facebook' },
+            { link: 'https://www.instagram.com/itsmemakoy.0/', icon: 'instagram' },
             { link: '#', icon: 'twitter' },
         ]
     },
@@ -333,9 +333,12 @@ const teams = [
                                 <div class="">
                                     <ul class="flex gap-2">
                                         <li v-for="(social, i) in team.socials" :key="i">
-                                            <Link :href="social.link">
+                                            <a 
+                                                target="_blank"
+                                                :href="social.link"
+                                            >
                                                 <font-awesome-icon :icon="['fab', social.icon]" class="text-lg lg:text-xl" />
-                                            </Link>
+                                            </a>
                                         </li>
                                     </ul>
                                 </div>

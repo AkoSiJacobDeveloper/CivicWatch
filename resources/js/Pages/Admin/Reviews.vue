@@ -14,6 +14,19 @@ const props = defineProps({
     currentStatus: {
         type: String,
         default: 'pending'
+    },
+    // ADD THESE PROPS:
+    pending_count: {
+        type: Number,
+        default: 0
+    },
+    approved_count: {
+        type: Number,
+        default: 0
+    },
+    rejected_count: {
+        type: Number,
+        default: 0
     }
 })
 
@@ -25,11 +38,34 @@ const previousReviewsCount = ref(props.reviews.total || 0);
 const currentReviewIds = ref(new Set());
 const newReviewIds = ref(new Set());
 
-const statusOptions = [
-    { value: 'pending', label: 'Pending Review', count: props.reviews.pending_count || 0 },
-    { value: 'approved', label: 'Approved', count: props.reviews.approved_count || 0 },
-    { value: 'rejected', label: 'Rejected', count: props.reviews.rejected_count || 0 }
-];
+const statusOptions = computed(() => {
+    return [
+        { 
+            value: 'pending', 
+            label: 'Pending Review', 
+            count: typeof props.pending_count !== 'undefined' ? props.pending_count : 0 
+        },
+        { 
+            value: 'approved', 
+            label: 'Approved', 
+            count: typeof props.approved_count !== 'undefined' ? props.approved_count : 0 
+        },
+        { 
+            value: 'rejected', 
+            label: 'Rejected', 
+            count: typeof props.rejected_count !== 'undefined' ? props.rejected_count : 0 
+        }
+    ];
+});
+const debugProps = computed(() => {
+    return {
+        reviews: props.reviews,
+        pending_count: props.pending_count,
+        approved_count: props.approved_count,
+        rejected_count: props.rejected_count,
+        all_props: props
+    };
+});
 
 function applyFilter(value) {
     statusFilter.value = value;
