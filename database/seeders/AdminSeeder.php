@@ -14,16 +14,18 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
+        // Monitoring Account
         User::updateOrCreate(
-            ['email' => 'civicwatch@gmail.com'],
+            ['email' => 'spectate@gmail.com'],
             [
-                'name' => 'Admin User',
+                'name' => 'Spectate User',
                 'password' => Hash::make('admin123'),
                 'role' => 'admin',
                 'is_admin' => 1
             ]
         );
 
+        // Official Account
         User::updateOrCreate(
             ['email' => 'civicwatch.brgy@gmail.com'],
             [

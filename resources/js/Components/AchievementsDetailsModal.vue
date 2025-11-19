@@ -272,17 +272,22 @@ const deleteAchievement = (id) => {
                 }
             });
             
-            // Then delete the announcement
-            router.delete(route('admin.delete.achievement', { id: id }), {
+            // FIX: Use proper POST format
+            router.post(route('admin.delete.achievement', { id: id }), {}, {
                 preserveScroll: true,
                 onSuccess: () => {
                     Swal.close();
                     emit('deleted', id)
-                    toast.success('Achievement(s) deleted successfully')
+                    toast.success('Achievement deleted successfully')
+                    close();
                 },
-                onError: () => {
+                onError: (errors) => {
                     Swal.close();
-                    toast.error('Achievements(s) failed to delete')
+                    console.error('Delete error:', errors);
+                    toast.error('Failed to delete achievement')
+                },
+                onFinish: () => {
+                    Swal.close();
                 }
             })
         }

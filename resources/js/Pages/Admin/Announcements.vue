@@ -435,7 +435,7 @@ const tabs = computed(() => [
     {
         text: 'Archive Announcement',
         value: 'archive',
-        count: filteredArchivedAnnouncements.value.length // Fixed: Use actual archived count
+        count: filteredArchivedAnnouncements.value.length 
     }
 ])
 

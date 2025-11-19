@@ -385,18 +385,21 @@ const deleteBulkAchievements = (ids) => {
             cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200'
         }
     }).then((result) => {
-        Swal.fire({
-            icon: 'info',
-            title: 'Deleting...',
-            text: 'Please wait...',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
         if (result.isConfirmed) {
-            router.delete(route('admin.bulk-deletes.achievement'), { 
-                data: { ids },
+            Swal.fire({
+                icon: 'info',
+                title: 'Deleting...',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // FIX: Remove the 'data' wrapper and use proper POST format
+            router.post(route('admin.bulk-deletes.achievement'), { 
+                ids: ids 
+            }, {
                 preserveScroll: true,
                 onSuccess: () => {
                     Swal.close();
@@ -406,9 +409,13 @@ const deleteBulkAchievements = (ids) => {
                     selectedAchievements.value.clear();
                     
                     toast.success('Achievement(s) deleted successfully!');
+                    
+                    // Force reload to refresh the data
+                    router.reload({ only: ['achievements'] });
                 },
                 onError: (errors) => {
                     Swal.close();
+                    console.error('Delete error:', errors);
                     Swal.fire({
                         title: 'Error!',
                         text: 'Failed to delete achievements. Please try again.',
@@ -416,6 +423,9 @@ const deleteBulkAchievements = (ids) => {
                         confirmButtonColor: '#d33',
                         confirmButtonText: 'OK'
                     });
+                },
+                onFinish: () => {
+                    Swal.close();
                 }
             });
         }

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { useToast } from 'vue-toastification'
+import axios from 'axios'
 
 const props = defineProps({
     show: Boolean
@@ -23,18 +24,29 @@ const showPassword = ref({
 })
 
 const submit = () => {
-    form.put(route('password.update'), {
+    form.post(route('admin.password.update'), {
+        _method: 'PUT',
         preserveScroll: true,
         onSuccess: () => {
             form.reset()
             emit('close')
             toast.success('Password updated successfully!')
         },
+        onError: (errors) => {
+            if (errors.current_password) {
+                toast.error(errors.current_password)
+            } else if (errors.password) {
+                toast.error(errors.password)
+            } else {
+                toast.error('Failed to update password. Please try again.')
+            }
+        }
     })
 }
 
 const close = () => {
     form.reset()
+    form.clearErrors()
     emit('close')
 }
 
@@ -42,7 +54,6 @@ const togglePasswordVisibility = (field) => {
     showPassword.value[field] = !showPassword.value[field]
 }
 </script>
-
 <template>
     <div v-if="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[50]">
             <!-- Modal panel -->

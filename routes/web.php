@@ -114,8 +114,8 @@ Route::prefix('admin')->group(function () {
         // Issue Type Route
         Route::get('/issue-type', [IssueController::class, 'index'])->name('admin.issue-type.index');
         Route::post('/issue-type', [IssueController::class, 'store'])->name('admin.issue-type.store');
-        Route::put('/issue-type/{issueType}', [IssueController::class, 'update'])->name('admin.issue-type.update');
-        Route::delete('/issue-type/{issueType}', [IssueController::class, 'destroy'])->name('admin.issue-type.delete');
+        Route::post('/issue-type/{issueType}/update', [IssueController::class, 'update'])->name('admin.issue-type.update');
+        Route::post('/issue-type/{issueType}/deactivate', [IssueController::class, 'deactivate'])->name('admin.issue-type.deactivate');
 
         Route::get('/announcements/create-announcement', [AnnouncementController::class, 'index'])->name('admin.announcement.index');
         Route::post('/announcements', [AnnouncementController::class, 'store'])->name('admin.announcement.store');
@@ -126,7 +126,6 @@ Route::prefix('admin')->group(function () {
         Route::post('/announcements/archive/{id}', [AnnouncementController::class, 'archive'])->name('admin.archive.announcement');
         Route::post('/announcements/restore/{id}', [AnnouncementController::class, 'restore'])->name('admin.restore.announcement');
         Route::delete('/announcements/destroy/{id}', [AnnouncementController::class, 'destroy'])->name('admin.delete.announcement');
-
 
         Route::get('/achievements/create-achievements', [AchievementController::class, 'create'])->name('admin.create.achievements');
         Route::get('/achievements', [AchievementController::class, 'index'])->name('admin.get.achievements');
@@ -142,15 +141,16 @@ Route::prefix('admin')->group(function () {
         Route::post('/achievements/restore/{achievement}', [AchievementController::class, 'restore'])->name('admin.restore.achievement');
         Route::get('/achievements/{achievement}/edit', [AchievementController::class, 'edit'])->name('admin.edit.achievement');
         Route::put('/achievements/{achievement}', [AchievementController::class, 'update'])->name('admin.update.achievement');
-        Route::delete('/achievements/{achievement}/destroy', [AchievementController::class, 'destroy'])->name('admin.delete.achievement');
+        Route::post('/achievements/{achievement}/destroy', [AchievementController::class, 'destroy'])->name('admin.delete.achievement');
 
         Route::post('/achievements/bulk-archive', [AchievementController::class, 'bulkArchive'])->name('admin.bulk-archived.achievement');
         Route::post('/achievements/bulk-restore', [AchievementController::class, 'bulkRestore'])->name('admin.bulk-restore.achievement');
-        Route::delete('/achievements/bulk-delete', [AchievementController::class, 'bulkDelete'])->name('admin.bulk-deletes.achievement');
+        Route::post('/achievements/bulk-delete', [AchievementController::class, 'bulkDelete'])->name('admin.bulk-deletes.achievement');
 
         Route::get('/settings', fn() => Inertia::render('Admin/Settings'))->name('admin.settings');
-        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('password.update');
+
     }); 
+    Route::post('/password-update', [App\Http\Controllers\Auth\PasswordController::class, 'update'])->name('admin.password.update');
 });
 
 

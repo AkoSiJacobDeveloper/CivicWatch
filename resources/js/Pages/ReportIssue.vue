@@ -1665,7 +1665,7 @@ onMounted(async () => {
             </div>
 
             <!-- Image Preview Modal -->
-            <div v-if="showImagePreviewModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+            <div v-if="showImagePreviewModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[500]">
                 <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
                     <!-- Modal Header -->
                     <div class="flex justify-between items-center p-4 border-b bg-blue-600 text-white">
@@ -1687,7 +1687,7 @@ onMounted(async () => {
                         <img
                             :src="imagePreview"
                             alt="Image Preview"
-                            class="max-w-full max-h-[50vh] lg:max-h-[70vh] object-contain rounded-lg"
+                            class="max-w-full max-h-[50vh] lg:max-h-[60vh] object-contain rounded-lg"
                         />
                     </div>
                 

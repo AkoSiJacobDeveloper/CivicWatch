@@ -54,7 +54,7 @@ class IssueController extends Controller
         return back()->with('success', 'Type of Issue updated successfully!');
     }
 
-    public function destroy(IssueType $issueType) {
+    public function deactivate(IssueType $issueType) {
         $issueType->update(['active' => false]);
         return back()->with('success', 'Type of issue deactivated successfully!');
     }

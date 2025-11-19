@@ -4,6 +4,7 @@ import { ref, onMounted, computed } from 'vue';
 import { initTooltips } from 'flowbite';
 import { useToast } from 'vue-toastification'
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
+import Swal from 'sweetalert2';
 
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
@@ -20,7 +21,6 @@ const getLocalDateString = (dateString) => {
     
     const date = new Date(dateString);
     
-    // Force local timezone by creating a new date with local components
     const localDate = new Date(
         date.getFullYear(),
         date.getMonth(),
@@ -33,7 +33,6 @@ const getLocalDateString = (dateString) => {
     
     return `${year}-${month}-${day}`;
 }
-
 
 const form = useForm({
     title: props.achievement?.title || '',
@@ -112,13 +111,32 @@ const handleImageChange = (event) => {
     }
 }
 
-// Remove featured image
-const removeFeaturedImage = () => {
-    removedFeaturedImage.value = true;
-    form.featured_image = null;
-    form.existing_featured_image = null;
-    featuredImagePreview.value = null;
-    if (imageInputRef.value) imageInputRef.value.value = '';
+// Remove featured image with SweetAlert2 confirmation
+const removeFeaturedImage = async () => {
+    const result = await Swal.fire({
+        title: 'Remove Featured Image?',
+        text: "Are you sure you want to remove the featured image?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, remove it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+        removedFeaturedImage.value = true;
+        form.featured_image = null;
+        form.existing_featured_image = null;
+        featuredImagePreview.value = null;
+        if (imageInputRef.value) imageInputRef.value.value = '';
+        
+        Swal.fire(
+            'Removed!',
+            'Featured image has been removed.',
+            'success'
+        );
+    }
 }
 
 const handleGalleryImagesChange = (event) => {
@@ -140,17 +158,53 @@ const handleGalleryImagesChange = (event) => {
     form.gallery_images = [...form.gallery_images, ...files];
 }
 
-// Remove single gallery image
-const removeGalleryImage = (index) => {
-    form.gallery_images.splice(index, 1);
-    galleryPreviews.value.splice(index, 1);
+// Remove single gallery image with SweetAlert2 confirmation
+const removeGalleryImage = async (index) => {
+    const result = await Swal.fire({
+        title: 'Remove Image?',
+        text: "Are you sure you want to remove this gallery image?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, remove it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+        form.gallery_images.splice(index, 1);
+        galleryPreviews.value.splice(index, 1);
+        
+        Swal.fire(
+            'Removed!',
+            'Gallery image has been removed.',
+            'success'
+        );
+    }
 }
 
-// Remove existing gallery image
-const removeExistingGallery = (galleryId) => {
-    if (confirm('Are you sure you want to remove this gallery image?')) {
+// Remove existing gallery image with SweetAlert2 confirmation
+const removeExistingGallery = async (galleryId) => {
+    const result = await Swal.fire({
+        title: 'Remove Gallery Image?',
+        text: "Are you sure you want to remove this gallery image?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, remove it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
         removedGalleries.value.push(galleryId);
         form.existing_galleries = form.existing_galleries.filter(gallery => gallery.id !== galleryId);
+        
+        Swal.fire(
+            'Removed!',
+            'Gallery image has been removed.',
+            'success'
+        );
     }
 }
 
@@ -160,22 +214,87 @@ const handleAttachmentsChange = (event) => {
     form.document_attachments = [...form.document_attachments, ...files];
 }
 
-// Remove single attachment
-const removeAttachment = (index) => {
-    form.document_attachments.splice(index, 1);
-}
+// Remove single attachment with SweetAlert2 confirmation
+const removeAttachment = async (index) => {
+    const result = await Swal.fire({
+        title: 'Remove Attachment?',
+        text: "Are you sure you want to remove this attachment?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, remove it!',
+        cancelButtonText: 'Cancel'
+    });
 
-// Remove existing attachment
-const removeExistingAttachment = (index) => {
-    const attachment = form.existing_document_attachments[index];
-    if (attachment && attachment.id) {
-        removedAttachments.value.push(attachment.id);
+    if (result.isConfirmed) {
+        form.document_attachments.splice(index, 1);
+        
+        Swal.fire(
+            'Removed!',
+            'Attachment has been removed.',
+            'success'
+        );
     }
-    form.existing_document_attachments.splice(index, 1);
 }
 
-// Submit form
-const submitForm = () => {
+// Remove existing attachment with SweetAlert2 confirmation
+const removeExistingAttachment = async (index) => {
+    const attachment = form.existing_document_attachments[index];
+    
+    const result = await Swal.fire({
+        title: 'Remove Attachment?',
+        text: "Are you sure you want to remove this attachment?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, remove it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+        if (attachment && attachment.id) {
+            removedAttachments.value.push(attachment.id);
+        }
+        form.existing_document_attachments.splice(index, 1);
+        
+        Swal.fire(
+            'Removed!',
+            'Attachment has been removed.',
+            'success'
+        );
+    }
+}
+
+// Submit form with SweetAlert2 processing indicator
+const submitForm = async () => {
+    // Show confirmation dialog first
+    const result = await Swal.fire({
+        title: 'Update Achievement?',
+        text: "Are you sure you want to update this achievement?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, update it!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) {
+        return;
+    }
+
+    // Show loading indicator
+    Swal.fire({
+        title: 'Updating Achievement...',
+        text: 'Please wait while we update your achievement.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
     // Create a new FormData to handle files properly
     const formData = new FormData();
     
@@ -221,12 +340,22 @@ const submitForm = () => {
     router.post(route('admin.update.achievement', { achievement: props.achievement.id }), formData, {
         preserveScroll: true,
         onSuccess: () => {
+            Swal.close();
             toast.success('Achievement updated successfully!');
             router.visit(route('admin.get.achievements'));
         },
         onError: (errors) => {
+            Swal.close();
             toast.error('Failed to update achievement');
             console.log('VALIDATION ERRORS:', errors);
+            
+            // Show error alert
+            Swal.fire({
+                title: 'Update Failed!',
+                text: 'There was an error updating the achievement. Please check the form and try again.',
+                icon: 'error',
+                confirmButtonColor: '#3085d6',
+            });
         }
     });
 }
@@ -241,8 +370,6 @@ const formattedDateOfAchievement = computed({
         form.date_of_achievement = value;
     }
 });
-
-
 
 onMounted(() => {
     initTooltips();

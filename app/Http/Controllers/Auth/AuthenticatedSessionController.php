@@ -40,7 +40,6 @@ class AuthenticatedSessionController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        // Add admin check to credentials
         $adminCredentials = array_merge($credentials, ['is_admin' => 1]);
 
         if (Auth::attempt($adminCredentials)) {

@@ -46,7 +46,7 @@ const selectedPriority = ref('all');
 
 const createForm = useForm({
     name: '',
-    priority_level: '', // Add priority level to create form
+    priority_level: '', 
 });
 
 const editForm = useForm({
@@ -119,7 +119,7 @@ function updateIssueType() {
         }
     });
 
-    editForm.put(`/admin/issue-type/${editingCategory.value.id}`, {
+    editForm.post(`/admin/issue-type/${editingCategory.value.id}/update`, {
         preserveScroll: true,
         onSuccess: () => {
             Swal.close();
@@ -154,7 +154,7 @@ function deleteCategory(issueType) {
     Swal.fire({
         title: 'Deactivate Category?',
         text: `Are you sure you want to deactivate this issue?
-               This will hide it from the report form but keep existing reports intact.`,
+                This will hide it from the report form but keep existing reports intact.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -178,7 +178,8 @@ function deleteCategory(issueType) {
             });
 
             const form = useForm();
-            form.delete(`/admin/issue-type/${issueType.id}`, {
+            form.post(`/admin/issue-type/${issueType.id}/deactivate`, {
+                
                 preserveScroll: true,
                 onFinish: () => {
                     Swal.close();
@@ -217,6 +218,7 @@ function deleteCategory(issueType) {
                     <div>
                         <h1 class="font-semibold text-3xl font-[Poppins]">Issues</h1>
                         <p class="text-gray-600 text-sm">Categorize and resolve what matters</p>
+                        
                     </div>
                 </div>
 
@@ -377,7 +379,7 @@ function deleteCategory(issueType) {
                                     v-model="createForm.name"
                                     type="text"
                                     placeholder="e.g., Water Supply Issues"
-                                    class="w-full border border-gray-300 rounded px-3 py-2"
+                                    class="w-full border border-gray-300 rounded-md p-3.5"
                                     required
                                 />
                                 <div v-if="createForm.errors.name" class="text-red-500 text-sm mt-1">
@@ -421,17 +423,6 @@ function deleteCategory(issueType) {
                                         </ListboxOption> 
                                     </ListboxOptions>
                                 </Listbox>
-
-                                <!-- <label class="block text-sm font-medium text-gray-700 mb-2">Priority Level</label>
-                                <select 
-                                    v-model="createForm.priority_level"
-                                    class="w-full border border-gray-300 rounded px-3 py-2"
-                                    required
-                                >
-                                    <option value="high">High Priority</option>
-                                    <option value="medium">Medium Priority</option>
-                                    <option value="low">Low Priority</option>
-                                </select> -->
                                 <div v-if="createForm.errors.priority_level" class="text-red-500 text-sm mt-1">
                                     {{ createForm.errors.priority_level }}
                                 </div>
