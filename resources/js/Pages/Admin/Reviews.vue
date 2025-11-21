@@ -497,6 +497,7 @@ onUnmounted(() => {
                                 </button>
                             </template>
                             <button 
+                                v-if="review.status === 'approved'"
                                 @click="confirmDelete(review)"
                                 class="p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200"
                                 title="Delete Review"
