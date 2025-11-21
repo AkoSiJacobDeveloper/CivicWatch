@@ -15,7 +15,6 @@ const props = defineProps({
         type: String,
         default: 'pending'
     },
-    // ADD THESE PROPS:
     pending_count: {
         type: Number,
         default: 0

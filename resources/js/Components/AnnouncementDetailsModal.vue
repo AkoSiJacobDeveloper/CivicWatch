@@ -92,7 +92,6 @@ const getFileType = (filePath) => {
 }
 
 const getFileSize = (filePath) => {
-    // Since we don't have file size stored, show placeholder
     return 'Unknown size';
 }
 
@@ -127,8 +126,8 @@ const editAnnouncement = (id) => {
     router.get(`/admin/announcements/edit/${id}`)
 }
 
-const deleteAnnouncement = (id) => {
-    Swal.fire({
+const deleteAnnouncement = async (id) => {
+    const result = await Swal.fire({
         title: 'You are about to delete an announcement',
         text: 'Are you sure you want to delete this announcement? This action cannot be undone.',
         icon: 'warning',
@@ -142,33 +141,34 @@ const deleteAnnouncement = (id) => {
             confirmButton: 'swal2-confirm',
             cancelButton: 'swal2-cancel'
         }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Swal.fire({
-                icon: 'info',
-                title: 'Deleting...',
-                text: 'Please wait...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            // Then delete the announcement
-            router.delete(route('admin.delete.announcement', { id: id }), {
-                preserveScroll: true,
+    })
+    
+    if(!result.isConfirmed) return;
+
+    Swal.fire({
+        title: 'Deleting...',
+        text: 'Please wait while we permanently delete the report',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading();
+        
+            router.post(route('admin.delete.announcement', { id: id }), {}, {
                 onSuccess: () => {
                     Swal.close();
-                    emit('deleted', id)
-                    toast.success('Announcement deleted successfully')
+                    toast.success('Announcement permanently deleted!');
+                    // Emit the deleted event so parent can close modal and update list
+                    emit('deleted', id);
+                    close(); // Also close the modal
                 },
                 onError: () => {
                     Swal.close();
-                    toast.error('Announcement failed to delete')
+                    toast.error('Problem deleting announcement');
                 }
-            })
-        }
-    })
+            });
+        },
+        showConfirmButton: false
+    });
 }
 
 const archiveAnnouncement = (id) => {

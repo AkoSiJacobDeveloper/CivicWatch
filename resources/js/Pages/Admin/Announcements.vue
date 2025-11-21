@@ -335,7 +335,6 @@ const sortStates = ref({
     archived: 'newest'
 })
 
-// Sorting function
 const sortAnnouncements = (announcements, sortType) => {
     const sorted = [...announcements];
     
@@ -616,7 +615,6 @@ const removeImageWithConfirmation = (announcementId) => {
                 }
             });
 
-            // Make the API call to remove the image
             router.post(route('admin.announcements.remove-image', { id: announcementId }), {}, {
                 preserveScroll: true,
                 onSuccess: () => {

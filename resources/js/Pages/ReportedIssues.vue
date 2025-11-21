@@ -445,7 +445,6 @@ onUnmounted(() => {
 
                 <div v-if="!reports.data || reports.data.length === 0" class="text-center text-gray-500 animate-fade-in-up py-20" :style="{ animationDelay: '0.4s' }">
                     <p class="text-lg sm:text-xl mb-4">No reports found.</p>
-                    <p class="text-sm text-gray-400">Try adjusting your search filters or check back later.</p>
                 </div>
 
                 <!-- Reports List -->

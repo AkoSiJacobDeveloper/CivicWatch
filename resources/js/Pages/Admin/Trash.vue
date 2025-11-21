@@ -222,11 +222,11 @@ const batchPermanentDelete = async () => {
                 Swal.close();
                 selectedReports.value.clear();
                 updateSelectionState();
-                toast.success(`${selectedCount.value} report(s) permanently deleted!`);
+                toast.success('Report(s) permanently deleted!');
             },
             onError: () => {
                 Swal.close();
-                toast.error('Problem deleting reports');
+                toast.error('Problem deleting reports!');
             }
         });
     }
@@ -300,28 +300,32 @@ const permanentDelete = async (id) => {
         reverseButtons: true
     });
     
-    if(result.isConfirmed) {
-        Swal.fire({
-            title: 'Deleting...',
-            text: 'Please wait while we permanently delete the report',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            didOpen: () => Swal.showLoading(),
-            showConfirmButton: false
-        });
+    if(!result.isConfirmed) return;
+
+    Swal.fire({
+        title: 'Deleting...',
+        text: 'Please wait while we permanently delete the report',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading();
         
-        router.delete(route('admin.reports.force-delete', { report: id}), {
-            onSuccess: () => {
-                Swal.close();
-                toast.success('Report Permanently Deleted!');
-            },
-            onError: () => {
-                Swal.close();
-                toast.error('Problem Deleting Report');
-            }
-        });
-    }
+            router.post(route('admin.reports.force-delete', { report: id }), {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    Swal.close();
+                    toast.success('Report Permanently Deleted!');
+                },
+                onError: () => {
+                    Swal.close();
+                    toast.error('Problem Deleting Report');
+                }
+            });
+        },
+        showConfirmButton: false
+    });
 };
+
 </script>
 
 <template>

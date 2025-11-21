@@ -100,7 +100,7 @@ Route::prefix('admin')->group(function () {
 
         // Soft delete routes
         Route::post('/reports/{report}/restore', [ReportsController::class, 'restore'])->name('admin.reports.restore');
-        Route::delete('/reports/{report}/force-delete', [ReportsController::class, 'forceDelete'])->name('admin.reports.force-delete');
+        Route::post('/reports/{report}/force-delete', [ReportsController::class, 'forceDelete'])->name('admin.reports.force-delete');
         Route::post('/reports/bulk-restore', [ReportsController::class, 'bulkRestore'])->name('admin.reports.bulk-restore');
         Route::post('/reports/bulk-force-delete', [ReportsController::class, 'bulkForceDelete'])->name('admin.reports.bulk-force-delete');
         // Review
@@ -125,7 +125,7 @@ Route::prefix('admin')->group(function () {
         Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy'])->name('admin.deletes.announcement');
         Route::post('/announcements/archive/{id}', [AnnouncementController::class, 'archive'])->name('admin.archive.announcement');
         Route::post('/announcements/restore/{id}', [AnnouncementController::class, 'restore'])->name('admin.restore.announcement');
-        Route::delete('/announcements/destroy/{id}', [AnnouncementController::class, 'destroy'])->name('admin.delete.announcement');
+        Route::post('/announcements/destroy/{id}', [AnnouncementController::class, 'destroy'])->name('admin.delete.announcement');
 
         Route::get('/achievements/create-achievements', [AchievementController::class, 'create'])->name('admin.create.achievements');
         Route::get('/achievements', [AchievementController::class, 'index'])->name('admin.get.achievements');
